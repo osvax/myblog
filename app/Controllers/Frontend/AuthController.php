@@ -102,19 +102,164 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => $result['error']], 401);
         }
 
-        // Начинаем сессию
         \user_start_session();
+
+        // Двухфакторная аутентификация: на первом шаге сессию не открываем,
+        // ждём код из приложения-аутентификатора (5 минут на ввод)
+        if (!empty($result['user']['totp_enabled'])) {
+            $_SESSION['user_2fa_pending'] = [
+                'id' => $result['user']['id'],
+                'expires' => time() + 300,
+            ];
+            return $this->json(['success' => true, 'require_2fa' => true]);
+        }
+
+        return $this->completeLogin($result['user']);
+    }
+
+    /**
+     * Подтвердить вход кодом TOTP (второй шаг двухфакторной аутентификации).
+     */
+    public function handleVerify2fa($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        \user_start_session();
+
+        $pending = $_SESSION['user_2fa_pending'] ?? null;
+        if (!is_array($pending) || (int) ($pending['expires'] ?? 0) < time()) {
+            unset($_SESSION['user_2fa_pending']);
+            return $this->json(['success' => false, 'error' => 'Время на ввод кода истекло — войдите заново'], 401);
+        }
+
+        $input = $request->json();
+        $code = isset($input['code']) && is_string($input['code']) ? trim($input['code']) : '';
+        if ($code === '') {
+            return $this->json(['success' => false, 'error' => 'Введите код из приложения'], 400);
+        }
+
+        $user = (new User())->findById((int) $pending['id']);
+        if (!$user || empty($user['totp_enabled']) || empty($user['totp_secret'])) {
+            unset($_SESSION['user_2fa_pending']);
+            return $this->json(['success' => false, 'error' => 'Двухфакторная аутентификация недоступна — войдите заново'], 401);
+        }
+
+        if (!\App\Core\Totp::verify($user['totp_secret'], $code)) {
+            return $this->json(['success' => false, 'error' => 'Неверный код'], 401);
+        }
+
+        unset($_SESSION['user_2fa_pending']);
+
+        return $this->completeLogin([
+            'id' => (int) $user['id'],
+            'email' => $user['email'],
+            'name' => $user['name'],
+            'role' => $user['role'],
+        ]);
+    }
+
+    /**
+     * Завершить вход: создать защищённую сессию пользователя.
+     */
+    private function completeLogin(array $user)
+    {
         if (!session_regenerate_id(true)) {
             return $this->json(['success' => false, 'error' => 'Не удалось создать сессию'], 500);
         }
 
         $_SESSION['user_authenticated'] = true;
-        $_SESSION['user_id'] = $result['user']['id'];
-        $_SESSION['user_email'] = $result['user']['email'];
-        $_SESSION['user_name'] = $result['user']['name'];
-        $_SESSION['user_role'] = $result['user']['role'];
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['user_email'] = $user['email'];
+        $_SESSION['user_name'] = $user['name'];
+        $_SESSION['user_role'] = $user['role'];
         $_SESSION['user_authenticated_at'] = time();
 
+        return $this->json(['success' => true]);
+    }
+
+    /**
+     * Сгенерировать секрет TOTP для включения двухфакторной аутентификации.
+     */
+    public function setup2fa($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $user = current_user();
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Не авторизован'], 401);
+        }
+
+        $secret = \App\Core\Totp::generateSecret();
+        (new User())->setTotpSecret((int) $user['id'], $secret);
+
+        return $this->json([
+            'success' => true,
+            'secret' => $secret,
+            'uri' => \App\Core\Totp::uri($secret, $user['email']),
+        ]);
+    }
+
+    /**
+     * Включить двухфакторную аутентификацию после подтверждения кода.
+     */
+    public function enable2fa($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $user = current_user();
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Не авторизован'], 401);
+        }
+
+        $input = $request->json();
+        $code = isset($input['code']) && is_string($input['code']) ? trim($input['code']) : '';
+
+        $full = (new User())->findById((int) $user['id']);
+        if (!$full || empty($full['totp_secret'])) {
+            return $this->json(['success' => false, 'error' => 'Сначала запустите настройку'], 400);
+        }
+        if (!\App\Core\Totp::verify($full['totp_secret'], $code)) {
+            return $this->json(['success' => false, 'error' => 'Неверный код'], 401);
+        }
+
+        (new User())->setTotpEnabled((int) $user['id'], true);
+        return $this->json(['success' => true]);
+    }
+
+    /**
+     * Выключить двухфакторную аутентификацию (требуется код).
+     */
+    public function disable2fa($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $user = current_user();
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Не авторизован'], 401);
+        }
+
+        $input = $request->json();
+        $code = isset($input['code']) && is_string($input['code']) ? trim($input['code']) : '';
+
+        $full = (new User())->findById((int) $user['id']);
+        if (!$full || empty($full['totp_secret']) || empty($full['totp_enabled'])) {
+            return $this->json(['success' => false, 'error' => 'Двухфакторная аутентификация не включена'], 400);
+        }
+        if (!\App\Core\Totp::verify($full['totp_secret'], $code)) {
+            return $this->json(['success' => false, 'error' => 'Неверный код'], 401);
+        }
+
+        $model = new User();
+        $model->setTotpEnabled((int) $user['id'], false);
+        $model->setTotpSecret((int) $user['id'], '');
         return $this->json(['success' => true]);
     }
 

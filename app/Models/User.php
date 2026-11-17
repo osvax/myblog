@@ -68,7 +68,8 @@ class User
         $db = Database::connection();
         $stmt = $db->prepare(
             "SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
-                    last_visit, last_ip, phone, about, position, bio, timezone, language
+                    last_visit, last_ip, phone, about, position, bio, timezone, language,
+                    totp_secret, totp_enabled
              FROM users WHERE id = :id LIMIT 1"
         );
         $stmt->execute([':id' => $id]);
@@ -118,6 +119,7 @@ class User
                 'last_ip' => $user['last_ip'] ?? '',
                 'timezone' => $user['timezone'] ?? '',
                 'language' => $user['language'] ?? '',
+                'totp_enabled' => !empty($user['totp_enabled']),
             ],
         ];
     }
@@ -302,6 +304,36 @@ class User
     public function updateProfile(int $id, string $name, string $avatarPath = ''): array
     {
         return $this->updateFullProfile($id, $name);
+    }
+
+    /**
+     * Сохранить секрет TOTP (двухфакторная аутентификация) и сбросить флаг включения
+     * до подтверждения кода из приложения-аутентификатора.
+     */
+    public function setTotpSecret(int $userId, string $secret): array
+    {
+        $db = Database::connection();
+        $stmt = $db->prepare(
+            "UPDATE users SET totp_secret = :secret, totp_enabled = 0, updated_at = NOW() WHERE id = :id"
+        );
+        $stmt->execute(['secret' => $secret, 'id' => $userId]);
+        return ['success' => true];
+    }
+
+    /**
+     * Включить или выключить двухфакторную аутентификацию.
+     */
+    public function setTotpEnabled(int $userId, bool $enabled): array
+    {
+        $db = Database::connection();
+        $stmt = $db->prepare(
+            "UPDATE users SET totp_enabled = :enabled, updated_at = NOW() WHERE id = :id"
+        );
+        $stmt->execute([
+            'enabled' => $enabled ? 1 : 0,
+            'id' => $userId,
+        ]);
+        return ['success' => true];
     }
 
     /**

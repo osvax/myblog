@@ -29,6 +29,34 @@
             e.preventDefault();
             hideError('loginError');
 
+            if (pending2fa) {
+                var code = document.getElementById('login2faCode').value.trim();
+                if (code === '') {
+                    showError('loginError', 'Введите код из приложения');
+                    return;
+                }
+                fetch('/api/auth/user/verify-2fa', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: code })
+                })
+                    .then(function (response) {
+                        return response.json().then(function (data) {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.error || 'Неверный код');
+                            }
+                            return data;
+                        });
+                    })
+                    .then(function () {
+                        window.location.href = '/';
+                    })
+                    .catch(function (error) {
+                        showError('loginError', error.message);
+                    });
+                return;
+            }
+
             var email = document.getElementById('loginEmail').value.trim();
             var password = document.getElementById('loginPassword').value;
 
@@ -45,7 +73,13 @@
                         return data;
                     });
                 })
-                .then(function () {
+                .then(function (data) {
+                    if (data.require_2fa) {
+                        show2faStep(true);
+                        var codeField = document.getElementById('login2faCode');
+                        if (codeField) codeField.focus();
+                        return;
+                    }
                     window.location.href = '/';
                 })
                 .catch(function (error) {
@@ -302,6 +336,86 @@
                 .catch(function (error) {
                     showError('deleteError', error.message);
                 });
+        });
+    }
+    // ---------- Двухфакторная аутентификация: вход ----------
+    var pending2fa = false;
+    var loginStep1 = document.getElementById('loginStep1');
+    var loginStep2 = document.getElementById('loginStep2');
+    var login2faBack = document.getElementById('login2faBack');
+    var loginSubmitBtn = loginForm ? loginForm.querySelector('button[type="submit"]') : null;
+
+    function show2faStep(show) {
+        pending2fa = show;
+        if (loginStep1) loginStep1.hidden = show;
+        if (loginStep2) loginStep2.hidden = !show;
+        if (login2faBack) login2faBack.hidden = !show;
+        if (loginSubmitBtn) loginSubmitBtn.textContent = show ? 'Подтвердить' : 'Войти';
+        var emailField = document.getElementById('loginEmail');
+        if (emailField) emailField.required = !show;
+        var passwordField = document.getElementById('loginPassword');
+        if (passwordField) passwordField.required = !show;
+    }
+
+    if (login2faBack) {
+        login2faBack.addEventListener('click', function () {
+            hideError('loginError');
+            show2faStep(false);
+        });
+    }
+
+    // ---------- Двухфакторная аутентификация: настройка в профиле ----------
+    function topfRequest(path, payload) {
+        return fetch(path, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload || {})
+        }).then(function (response) {
+            return response.json().then(function (data) {
+                if (!response.ok || !data.success) {
+                    throw new Error(data.error || 'Ошибка запроса');
+                }
+                return data;
+            });
+        });
+    }
+
+    var totpSetupBtn = document.getElementById('totpSetupBtn');
+    if (totpSetupBtn) {
+        totpSetupBtn.addEventListener('click', function () {
+            hideError('totpError');
+            hideError('totpSuccess');
+            topfRequest('/api/auth/user/2fa/setup').then(function (data) {
+                document.getElementById('totpSecretText').textContent = data.secret;
+                var link = document.getElementById('totpUriLink');
+                link.href = data.uri;
+                document.getElementById('totpSetupDetails').hidden = false;
+                totpSetupBtn.hidden = true;
+            }).catch(function (error) {
+                showError('totpError', error.message);
+            });
+        });
+
+        document.getElementById('totpEnableBtn').addEventListener('click', function () {
+            hideError('totpError');
+            var code = document.getElementById('totpEnableCode').value.trim();
+            topfRequest('/api/auth/user/2fa/enable', { code: code }).then(function () {
+                showSuccess('totpSuccess', 'Двухфакторная аутентификация включена');
+                setTimeout(function () { location.reload(); }, 1200);
+            }).catch(function (error) {
+                showError('totpError', error.message);
+            });
+        });
+
+        document.getElementById('totpDisableBtn').addEventListener('click', function () {
+            hideError('totpError');
+            var code = document.getElementById('totpDisableCode').value.trim();
+            topfRequest('/api/auth/user/2fa/disable', { code: code }).then(function () {
+                showSuccess('totpSuccess', 'Двухфакторная аутентификация отключена');
+                setTimeout(function () { location.reload(); }, 1200);
+            }).catch(function (error) {
+                showError('totpError', error.message);
+            });
         });
     }
 })();

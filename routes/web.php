@@ -77,6 +77,10 @@ return function (Router $router) {
 
     // ---------- API авторизации ----------
     $router->post('/api/auth/user/login', [$auth, 'handleLogin']);
+    $router->post('/api/auth/user/verify-2fa', [$auth, 'handleVerify2fa']);
+    $router->post('/api/auth/user/2fa/setup', [$auth, 'setup2fa']);
+    $router->post('/api/auth/user/2fa/enable', [$auth, 'enable2fa']);
+    $router->post('/api/auth/user/2fa/disable', [$auth, 'disable2fa']);
     $router->post('/api/auth/register', [$auth, 'handleRegister']);
     $router->post('/api/auth/forgot-password', [$auth, 'handleForgotPassword']);
     $router->post('/api/auth/reset-password', [$auth, 'handleResetPassword']);

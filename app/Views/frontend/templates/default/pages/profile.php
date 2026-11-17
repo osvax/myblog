@@ -50,6 +50,35 @@
         </form>
     </div>
 
+    <div class="profile-section">
+        <h2 class="section-title">Двухфакторная аутентификация</h2>
+        <p class="text-muted">
+            <?= !empty($totpEnabled) ? 'Включена: при входе запрашивается код из приложения-аутентификатора.' : 'Не включена. Дополнительная защита входа одноразовым кодом (Google Authenticator, Яндекс.Ключ и др.).' ?>
+        </p>
+        <div id="totpError" class="alert alert-danger" style="display:none;"></div>
+        <div id="totpSuccess" class="alert alert-success" style="display:none;"></div>
+        <div id="totpEnabledActions" <?= !empty($totpEnabled) ? '' : 'hidden' ?>>
+            <div class="form-group">
+                <label for="totpDisableCode" class="form-label">Код из приложения для отключения</label>
+                <input type="text" id="totpDisableCode" class="form-control" placeholder="6-значный код" inputmode="numeric" maxlength="6">
+            </div>
+            <button type="button" id="totpDisableBtn" class="btn btn-outline-danger">Отключить 2FA</button>
+        </div>
+        <div id="totpSetupBlock" <?= !empty($totpEnabled) ? 'hidden' : '' ?>>
+            <div id="totpSetupDetails" hidden class="mb-3">
+                <p class="mb-2">1. Добавьте ключ в приложение-аутентификатор — вручную или по ссылке:</p>
+                <p class="font-monospace text-break" id="totpSecretText"></p>
+                <a id="totpUriLink" href="#" class="btn btn-outline-dark btn-sm mb-3">Открыть в приложении</a>
+                <p class="mb-2">2. Введите текущий код для подтверждения:</p>
+                <div class="form-group">
+                    <input type="text" id="totpEnableCode" class="form-control" placeholder="6-значный код" inputmode="numeric" maxlength="6">
+                </div>
+                <button type="button" id="totpEnableBtn" class="btn btn-orange">Включить 2FA</button>
+            </div>
+            <button type="button" id="totpSetupBtn" class="btn btn-orange">Включить 2FA</button>
+        </div>
+    </div>
+
     <div class="profile-section profile-danger-zone">
         <h2 class="section-title text-danger">Опасная зона</h2>
         <p class="text-muted">Удаление аккаунта необратимо. Все ваши данные будут удалены.</p>

@@ -15,10 +15,13 @@ class ProfileController extends Controller
             return Response::redirect('/login.html');
         }
 
+        $full = (new User())->findById((int) $user['id']);
+
         return $this->page('frontend', 'profile', [
             'title' => 'Профиль — МойБлог',
             'activePage' => 'profile',
             'user' => $user,
+            'totpEnabled' => $full !== null && !empty($full['totp_enabled']),
             'isAdmin' => $user['role'] === 'admin',
             'includeAuthScript' => true,
         ]);
