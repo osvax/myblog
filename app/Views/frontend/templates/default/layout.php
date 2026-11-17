@@ -37,7 +37,7 @@
                                 <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form method="post" action="/api/auth/logout" style="display:inline;">
+                                    <form method="post" action="/api/auth/user/logout" style="display:inline;">
                                         <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right"></i> Выйти</button>
                                     </form>
                                 </li>

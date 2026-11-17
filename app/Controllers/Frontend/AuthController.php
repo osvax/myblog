@@ -103,9 +103,7 @@ class AuthController extends Controller
         }
 
         // Начинаем сессию
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        \user_start_session();
         if (!session_regenerate_id(true)) {
             return $this->json(['success' => false, 'error' => 'Не удалось создать сессию'], 500);
         }
@@ -251,9 +249,7 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
 
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        \user_start_session();
 
         $_SESSION = [];
 
@@ -278,9 +274,7 @@ class AuthController extends Controller
      */
     public function checkAuth()
     {
-        if (session_status() === PHP_SESSION_NONE) {
-            session_start();
-        }
+        \user_start_session();
 
         if (!empty($_SESSION['user_authenticated'])) {
             return $this->json([
