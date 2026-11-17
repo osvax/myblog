@@ -21,3 +21,4 @@ require_once APP_ROOT . '/app/Core/custom-fields.php';
 require_once APP_ROOT . '/app/Core/slug.php';
 require_once APP_ROOT . '/app/Core/assets.php';
 require_once APP_ROOT . '/app/Core/calculator.php';
+require_once APP_ROOT . '/app/Core/menu.php';

@@ -81,7 +81,11 @@
 
         form.addEventListener('submit', function (event) {
             event.preventDefault();
-            if (!form.reportValidity()) return;
+            if (!form.reportValidity()) {
+                // Видимая ошибка вместо молчаливого отказа
+                window.AdminNotifications.show(false, 'Проверьте выделенные браузером поля — в них ошибки заполнения.');
+                return;
+            }
 
             var updated = {};
             Array.from(form.elements).forEach(function (field) {

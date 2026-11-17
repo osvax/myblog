@@ -45,6 +45,7 @@ class PageController extends Controller
                 ['slug' => 'categories', 'url' => '/admin/categories.html', 'icon' => 'bi-tags', 'label' => 'Рубрики'],
                 ['slug' => 'portfolio', 'url' => '/admin/portfolio.html', 'icon' => 'bi-briefcase', 'label' => 'Портфолио'],
                 ['slug' => 'landing-pages', 'url' => '/admin/landing-pages.html', 'icon' => 'bi-window-desktop', 'label' => 'Страницы'],
+                ['slug' => 'menus', 'url' => '/admin/menus.html', 'icon' => 'bi-menu-button-wide', 'label' => 'Меню'],
                 ['slug' => 'templates', 'url' => '/admin/templates.html', 'icon' => 'bi-code-slash', 'label' => 'Шаблоны'],
             ]],
             ['type' => 'group', 'id' => 'group-orders', 'icon' => 'bi-cart3', 'label' => 'Заказы', 'items' => [

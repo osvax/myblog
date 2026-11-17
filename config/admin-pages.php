@@ -104,10 +104,18 @@ return array (
     ),
     'standalone' => true,
   ),
-  'messages' => 
+  'menus' =>
+  array (
+    'title' => 'Меню сайта',
+    'scripts' =>
+    array (
+      0 => 'js/menus.js',
+    ),
+  ),
+  'messages' =>
   array (
     'title' => 'Сообщения — обратная связь и комментарии',
-    'scripts' => 
+    'scripts' =>
     array (
       0 => 'js/messages.js',
     ),

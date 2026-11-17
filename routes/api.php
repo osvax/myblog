@@ -9,6 +9,7 @@ use App\Controllers\Admin\FileManagerController;
 use App\Controllers\Admin\LandingPageAdminController;
 use App\Controllers\Admin\LandingPageController;
 use App\Controllers\Admin\MediaController;
+use App\Controllers\Admin\MenuController;
 use App\Controllers\Admin\SiteSettingsController;
 use App\Controllers\Admin\SystemController;
 use App\Controllers\Admin\TemplateController;
@@ -31,6 +32,7 @@ return function (Router $router) {
     $siteSettings = new SiteSettingsController();
     $customFields = new CustomFieldController();
     $calculator = new CalculatorController();
+    $menus = new MenuController();
     $landingPage = new LandingPageController();
     $landingPageAdmin = new LandingPageAdminController();
 
@@ -82,6 +84,12 @@ return function (Router $router) {
     // ---------- Калькулятор заказа ----------
     $router->get('/api/admin/calculator', [$calculator, 'get']);
     $router->post('/api/admin/calculator', [$calculator, 'save']);
+
+    // ---------- Меню сайта ----------
+    $router->get('/api/admin/menus', [$menus, 'handle']);
+    $router->post('/api/admin/menus', [$menus, 'handle']);
+    $router->delete('/api/admin/menus/{id}/delete-item', [$menus, 'deleteItem']);
+    $router->delete('/api/admin/menus/{name}/delete-menu', [$menus, 'deleteMenu']);
 
     $router->post('/api/forms/order', [$forms, 'order']);
     $router->post('/api/forms/feedback', [$forms, 'feedback']);

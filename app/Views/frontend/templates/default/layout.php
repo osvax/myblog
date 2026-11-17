@@ -20,11 +20,11 @@
             </button>
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto fw-bold align-items-center gap-2">
-                    <li class="nav-item"><a class="nav-link<?= ($activePage ?? '') === 'home' ? ' active' : '' ?>" href="/">Главная</a></li>
-                    <li class="nav-item"><a class="nav-link<?= ($activePage ?? '') === 'blog' ? ' active' : '' ?>" href="/blog.html">Блог</a></li>
-                    <li class="nav-item"><a class="nav-link<?= ($activePage ?? '') === 'portfolio' ? ' active' : '' ?>" href="/portfolio.html">Портфолио</a></li>
-                    <li class="nav-item"><a class="nav-link<?= ($activePage ?? '') === 'order' ? ' active' : '' ?>" href="/order.html">Заказать</a></li>
-                    <li class="nav-item"><a class="nav-link<?= ($activePage ?? '') === 'contacts' ? ' active' : '' ?>" href="/contacts.html">Контакты</a></li>
+                    <?php
+                    // Основное меню из базы (редактируется в админке → «Меню»);
+                    // при пустом меню — стандартные пункты
+                    echo menu_items_html('main');
+                    ?>
                     <?php if (!empty($user)): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">

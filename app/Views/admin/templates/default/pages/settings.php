@@ -102,7 +102,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="heroPrimaryUrl" class="form-label fw-bold">Ссылка главной кнопки</label>
-                                    <input type="url" id="heroPrimaryUrl" class="form-control" value="/blog.html" maxlength="240">
+                                    <input type="text" id="heroPrimaryUrl" class="form-control" value="/blog.html" maxlength="240" placeholder="/blog.html или https://…">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="heroSecondaryText" class="form-label fw-bold">Текст второй кнопки</label>
@@ -110,7 +110,7 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="heroSecondaryUrl" class="form-label fw-bold">Ссылка второй кнопки</label>
-                                    <input type="url" id="heroSecondaryUrl" class="form-control" value="/order.html" maxlength="240">
+                                    <input type="text" id="heroSecondaryUrl" class="form-control" value="/order.html" maxlength="240" placeholder="/order.html или https://…">
                                 </div>
                                 <div class="col-md-4">
                                     <label for="step1Title" class="form-label fw-bold">Шаг 1 — заголовок</label>
