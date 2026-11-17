@@ -2,6 +2,7 @@
     'use strict';
 
     document.addEventListener('DOMContentLoaded', function () {
+        var templateSelect = document.getElementById('templateName');
         var fileSelect = document.getElementById('templateFile');
         var themeSelect = document.getElementById('editorTheme');
         var saveButton = document.getElementById('saveTemplate');
@@ -10,6 +11,7 @@
         var previewContainer = document.getElementById('previewContainer');
         var previewFrame = document.getElementById('templatePreview');
         var errorBox = document.getElementById('templateError');
+        var activeBadge = document.getElementById('templateActiveBadge');
         var editor = CodeMirror.fromTextArea(document.getElementById('templateEditor'), {
             mode: 'htmlmixed',
             lineNumbers: true,
@@ -20,15 +22,16 @@
             autoCloseBrackets: true,
             matchBrackets: true
         });
-        var csrfToken = '';
         var currentHash = '';
-        var savedContent = '';
+        var currentFile = null; // {type: 'file'|'asset'|'page', ...}
+        var pageState = null;   // данные статической страницы (title, is_active, edit_id)
         var loading = false;
         var themeStorageKey = 'myblog.admin.templates.theme.v1';
 
+        // Светлая (default) и тёмная (material-darker) темы CodeMirror
         try {
             var storedTheme = localStorage.getItem(themeStorageKey);
-            if (storedTheme === 'default' || storedTheme === 'dracula') {
+            if (storedTheme === 'default' || storedTheme === 'material-darker') {
                 themeSelect.value = storedTheme;
             }
         } catch (error) {
@@ -63,120 +66,237 @@
             });
         }
 
+        // Режим подсветки по типу файла
+        function modeFor(file) {
+            if (!file) return 'htmlmixed';
+            if (file.type === 'page') return 'htmlmixed';
+            if (file.type === 'asset') return file.path.toLowerCase().endsWith('.css') ? 'text/css' : 'javascript';
+            var lower = file.path.toLowerCase();
+            if (lower.endsWith('.css')) return 'text/css';
+            if (lower.endsWith('.js')) return 'javascript';
+            return 'application/x-httpd-php';
+        }
+
+        function loadTemplates() {
+            return request('../api/admin/templates?action=templates', { credentials: 'same-origin' }).then(function (data) {
+                templateSelect.textContent = '';
+                (data.templates || []).forEach(function (name) {
+                    var option = document.createElement('option');
+                    option.value = name;
+                    var labels = [];
+                    if (data.active && data.active.frontend === name) labels.push('фронтенд');
+                    if (data.active && data.active.admin === name) labels.push('админка');
+                    option.textContent = labels.length ? name + ' (активен: ' + labels.join(' + ') + ')' : name;
+                    templateSelect.appendChild(option);
+                });
+                updateActiveBadge(data.active);
+            });
+        }
+
+        function updateActiveBadge(active) {
+            if (!activeBadge) return;
+            activeBadge.textContent = active
+                ? 'Активный шаблон: ' + (active.frontend || 'default') + ' (сайт) / ' + (active.admin || 'default') + ' (админка)'
+                : '';
+        }
+
+        function optionFor(value, label) {
+            var option = document.createElement('option');
+            option.value = value;
+            option.textContent = label;
+            return option;
+        }
+
+        function loadFiles() {
+            var template = templateSelect.value || 'default';
+            showError('');
+            return request('../api/admin/templates?action=files&template=' + encodeURIComponent(template), {
+                credentials: 'same-origin'
+            }).then(function (data) {
+                fileSelect.textContent = '';
+                var frontendGroup = document.createElement('optgroup');
+                frontendGroup.label = 'PHP — фронтенд сайта';
+                (data.php || []).forEach(function (file) {
+                    if (file.area === 'frontend') {
+                        frontendGroup.appendChild(optionFor('file:frontend:' + file.path, file.path));
+                    }
+                });
+                var adminGroup = document.createElement('optgroup');
+                adminGroup.label = 'PHP — админ-панель';
+                (data.php || []).forEach(function (file) {
+                    if (file.area === 'admin') {
+                        adminGroup.appendChild(optionFor('file:admin:' + file.path, file.path));
+                    }
+                });
+                var assetsGroup = document.createElement('optgroup');
+                assetsGroup.label = 'Общие CSS и JS';
+                (data.assets || []).forEach(function (asset) {
+                    assetsGroup.appendChild(optionFor('asset:' + asset.path, asset.path));
+                });
+                if (frontendGroup.children.length) fileSelect.appendChild(frontendGroup);
+                if (adminGroup.children.length) fileSelect.appendChild(adminGroup);
+                if (assetsGroup.children.length) fileSelect.appendChild(assetsGroup);
+
+                // Статические страницы — отдельной группой
+                return request('../api/admin/pages', { credentials: 'same-origin' }).then(function (pagesData) {
+                    var pagesGroup = document.createElement('optgroup');
+                    pagesGroup.label = 'Статические страницы (база данных)';
+                    (pagesData.pages || []).forEach(function (page) {
+                        pagesGroup.appendChild(optionFor('page:' + page.slug, '/' + page.slug + '.html — ' + (page.title || page.slug)));
+                    });
+                    if (pagesGroup.children.length) fileSelect.appendChild(pagesGroup);
+                    if (!fileSelect.children.length) {
+                        fileSelect.appendChild(optionFor('', 'Файлы не найдены'));
+                    }
+                });
+            });
+        }
+
+        function applyContent(content, hash) {
+            editor.setValue(content);
+            editor.setOption('mode', modeFor(currentFile));
+            currentHash = hash || '';
+            fileSelect.dataset.previous = fileSelect.value;
+            saveButton.disabled = false;
+            if (!previewContainer.hidden) updatePreview();
+        }
+
         function loadFile() {
-            if (!fileSelect.value) return Promise.resolve();
+            if (!fileSelect.value || fileSelect.value.indexOf(':') === -1) return Promise.resolve();
             loading = true;
             saveButton.disabled = true;
             showError('');
-            return request('../api/admin/templates?action=read&file=' + encodeURIComponent(fileSelect.value), {
-                credentials: 'same-origin'
-            }).then(function (data) {
-                editor.setValue(data.content);
-                savedContent = data.content;
-                currentHash = data.hash;
-                fileSelect.dataset.previous = fileSelect.value;
-                saveButton.disabled = false;
-                if (!previewContainer.hidden) updatePreview();
+
+            var parts = fileSelect.value.split(':');
+            var type = parts[0];
+
+            // PHP-файл шаблона
+            if (type === 'file') {
+                currentFile = { type: 'file', area: parts[1], path: parts.slice(2).join(':') };
+                pageState = null;
+                return request('../api/admin/templates?action=read&template=' + encodeURIComponent(templateSelect.value) +
+                    '&area=' + encodeURIComponent(currentFile.area) + '&path=' + encodeURIComponent(currentFile.path), {
+                    credentials: 'same-origin'
+                }).then(function (data) {
+                    applyContent(data.content, data.hash);
+                }).catch(handleLoadError).finally(function () { loading = false; });
+            }
+
+            // Общий CSS/JS
+            if (type === 'asset') {
+                currentFile = { type: 'asset', path: parts.slice(1).join(':') };
+                pageState = null;
+                return request('../api/admin/templates?action=read&template=' + encodeURIComponent(templateSelect.value) +
+                    '&area=assets&path=' + encodeURIComponent(currentFile.path), {
+                    credentials: 'same-origin'
+                }).then(function (data) {
+                    applyContent(data.content, data.hash);
+                }).catch(handleLoadError).finally(function () { loading = false; });
+            }
+
+            // Статическая страница из базы
+            if (type === 'page') {
+                var slug = parts.slice(1).join(':');
+                currentFile = { type: 'page', slug: slug };
+                return request('../api/admin/pages/' + encodeURIComponent(slug), { credentials: 'same-origin' })
+                    .then(function (data) {
+                        pageState = {
+                            editId: data.page ? data.page.id : 0,
+                            title: data.page ? data.page.title : slug,
+                            isActive: data.page ? Number(data.page.is_active) === 1 : true
+                        };
+                        applyContent(data.page ? (data.page.html_content || '') : '', '');
+                    }).catch(handleLoadError).finally(function () { loading = false; });
+            }
+
+            loading = false;
+            return Promise.resolve();
+        }
+
+        function handleLoadError(error) {
+            showError(error.message || 'Не удалось загрузить файл');
+            window.AdminNotifications.show('error', error.message || 'Не удалось загрузить файл');
+        }
+
+        function saveFile() {
+            if (loading || !currentFile) return;
+            showError('');
+            var content = editor.getValue();
+
+            // AdminApi.save сам добавляет CSRF-токен и JSON-заголовок
+            var requestPromise;
+            if (currentFile.type === 'page') {
+                requestPromise = window.AdminApi.save('/api/admin/pages', 'POST', {
+                    slug: currentFile.slug,
+                    title: (pageState && pageState.title) || currentFile.slug,
+                    html_content: content,
+                    is_active: pageState ? (pageState.isActive ? 1 : 0) : 1,
+                    edit_id: pageState ? (pageState.editId || 0) : 0
+                }).then(function (data) {
+                    if (pageState) pageState.editId = data.id || pageState.editId;
+                    currentHash = '';
+                });
+            } else {
+                requestPromise = window.AdminApi.save('/api/admin/templates', 'POST', {
+                    template: templateSelect.value,
+                    area: currentFile.type === 'asset' ? 'assets' : currentFile.area,
+                    path: currentFile.path,
+                    content: content,
+                    expectedHash: currentHash
+                }).then(function (data) {
+                    currentHash = data.hash || '';
+                });
+            }
+
+            requestPromise.then(function () {
+                savedFlash();
+                window.AdminNotifications.show('success', 'Файл сохранён');
             }).catch(function (error) {
-                showError(error.message);
-                window.AdminNotifications.show(false, error.message);
-            }).finally(function () {
-                loading = false;
+                showError(error.message || 'Не удалось сохранить файл');
+                window.AdminNotifications.show('error', error.message || 'Не удалось сохранить файл');
             });
+        }
+
+        function savedFlash() {
+            saveButton.disabled = false;
+            if (!previewContainer.hidden) updatePreview();
         }
 
         function updatePreview() {
-            var previewDocument = new DOMParser().parseFromString(editor.getValue(), 'text/html');
-            var base = previewDocument.createElement('base');
-            base.href = new URL('../', window.location.href).href;
-            previewDocument.head.prepend(base);
-            previewFrame.srcdoc = '<!doctype html>\n' + previewDocument.documentElement.outerHTML;
+            var content = editor.getValue();
+            if (currentFile && currentFile.type === 'asset' && currentFile.path.toLowerCase().endsWith('.css')) {
+                previewFrame.setAttribute('srcdoc', '<style>' + content + '</style><div class="container py-4"><h1>Заголовок</h1><p>Пример текста и <a href="#">ссылка</a>.</p><button class="btn btn-primary">Кнопка</button></div>');
+            } else if (currentFile && currentFile.type === 'asset') {
+                previewFrame.setAttribute('srcdoc', '<script>try{' + content + '}catch(e){document.body.textContent="Ошибка JS: "+e.message;}<\/script>');
+            } else {
+                previewFrame.setAttribute('srcdoc', content);
+            }
         }
 
-        request('../api/auth/csrf', { credentials: 'same-origin' }).then(function (data) {
-            csrfToken = data.token;
-            return request('../api/admin/templates?action=list', { credentials: 'same-origin' });
-        }).then(function (data) {
-            fileSelect.innerHTML = data.files.map(function (file) {
-                return '<option value="' + file.replace(/[&<>"']/g, '') + '">' + file.replace(/[&<>"']/g, '') + '</option>';
-            }).join('');
-            return loadFile();
-        }).catch(function (error) {
-            showError(error.message);
-            window.AdminNotifications.show(false, error.message);
-        });
-
-        fileSelect.addEventListener('change', function () {
-            fileSelect.dataset.previous = fileSelect.value;
-            loadFile();
-        });
-
-        reloadButton.addEventListener('click', function () {
-            if (editor.getValue() !== savedContent &&
-                !window.confirm('Перезагрузить файл и потерять несохранённые изменения?')) return;
-            loadFile();
-        });
-
-        saveButton.addEventListener('click', function () {
-            if (loading || !csrfToken) {
-                window.AdminNotifications.show(false, 'Редактор ещё загружается. Обновите страницу, если проблема повторится.');
-                return;
-            }
-            saveButton.disabled = true;
-            showError('');
-            request('../api/admin/templates', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-Token': csrfToken
-                },
-                credentials: 'same-origin',
-                body: JSON.stringify({
-                    file: fileSelect.value,
-                    content: editor.getValue(),
-                    expectedHash: currentHash
-                })
-            }).then(function (data) {
-                savedContent = editor.getValue();
-                currentHash = data.hash;
-                window.AdminNotifications.show(true, 'Шаблон сохранён. Резервная копия создана.');
-            }).catch(function (error) {
-                showError(error.message);
-                window.AdminNotifications.show(false, error.message);
-            }).finally(function () {
-                saveButton.disabled = false;
+        templateSelect.addEventListener('change', function () {
+            loadFiles().then(function () {
+                return loadFile();
             });
         });
-
-        previewButton.addEventListener('click', function () {
-            var show = previewContainer.hidden;
-            editor.getWrapperElement().hidden = show;
-            previewContainer.hidden = !show;
-            previewButton.setAttribute('aria-pressed', String(show));
-            previewButton.innerHTML = show
-                ? '<i class="bi bi-eye-slash"></i>'
-                : '<i class="bi bi-eye"></i>';
-            previewButton.setAttribute('aria-label', show ? 'Скрыть предпросмотр' : 'Предпросмотр');
-            previewButton.title = show ? 'Скрыть предпросмотр' : 'Предпросмотр';
-            if (show) {
-                updatePreview();
-            } else {
-                window.requestAnimationFrame(function () {
-                    editor.refresh();
-                });
-            }
-            window.AdminNotifications.show('info', show ? 'Предпросмотр включён' : 'Предпросмотр скрыт');
+        fileSelect.addEventListener('change', function () {
+            if (fileSelect.dataset.previous === fileSelect.value) return;
+            loadFile();
         });
-
-        editor.on('change', function () {
+        saveButton.addEventListener('click', saveFile);
+        reloadButton.addEventListener('click', function () {
+            loadFile();
+        });
+        previewButton.addEventListener('click', function () {
+            previewContainer.hidden = !previewContainer.hidden;
+            previewButton.setAttribute('aria-pressed', String(!previewContainer.hidden));
             if (!previewContainer.hidden) updatePreview();
         });
 
-        window.addEventListener('beforeunload', function (event) {
-            if (editor.getValue() !== savedContent) {
-                event.preventDefault();
-                event.returnValue = '';
-            }
-        });
+        loadTemplates()
+            .then(loadFiles)
+            .then(loadFile)
+            .catch(function (error) {
+                showError(error.message || 'Не удалось загрузить редактор');
+            });
     });
 }());

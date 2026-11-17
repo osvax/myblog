@@ -80,6 +80,18 @@ class PageController extends Controller
             }
         }
 
+        // Стили страницы (например, темы CodeMirror) — тот же формат, что и scripts
+        $styles = [];
+        foreach ($pages[$slug]['styles'] ?? [] as $style) {
+            if (strpos($style, '://') !== false || strpos($style, '/') === 0) {
+                $styles[] = $style;
+            } elseif (strpos($style, '../') === 0) {
+                $styles[] = '/' . ltrim(substr($style, 3), '/');
+            } else {
+                $styles[] = '/admin/' . ltrim($style, '/');
+            }
+        }
+
         // Логируем посещение админ-страницы
         self::logVisit();
 
@@ -97,6 +109,7 @@ class PageController extends Controller
             'pageTitle' => $pages[$slug]['title'] ?? 'Панель управления',
             'navigation' => $navigation,
             'pageScripts' => $scripts,
+            'pageStyles' => $styles,
             'adminUser' => $adminUser,
             'currentUserId' => \admin_get_user_id(),
             'userRole' => $adminUser['role'] ?? '',

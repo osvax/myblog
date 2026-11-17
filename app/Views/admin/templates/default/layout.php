@@ -9,6 +9,9 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
     <link rel="stylesheet" href="<?= asset_version('/admin/css/admin.css') ?>">
+    <?php foreach (($pageStyles ?? []) as $pageStyle): ?>
+        <link rel="stylesheet" href="<?= asset_version((string) $pageStyle) ?>">
+    <?php endforeach; ?>
 </head>
 <body class="admin-page">
 <div class="admin-wrapper">

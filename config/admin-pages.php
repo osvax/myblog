@@ -193,17 +193,24 @@ return array (
       0 => 'js/landing-pages.js',
     ),
   ),
-  'templates' => 
+  'templates' =>
   array (
     'title' => 'Редактор шаблонов сайта',
-    'scripts' => 
+    'styles' =>
+    array (
+      0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
+      1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css',
+    ),
+    'scripts' =>
     array (
       0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js',
       1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js',
       2 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js',
       3 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js',
-      4 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js',
-      5 => 'js/templates.js',
+      4 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/clike/clike.min.js',
+      5 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js',
+      6 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js',
+      7 => 'js/templates.js',
     ),
   ),
   'user-edit' => 
