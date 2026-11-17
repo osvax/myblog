@@ -8,7 +8,6 @@ use App\Controllers\Admin\LandingPageAdminController;
 use App\Controllers\Admin\LandingPageController;
 use App\Controllers\Admin\MediaController;
 use App\Controllers\Admin\SiteSettingsController;
-use App\Controllers\Admin\StaticPageController;
 use App\Controllers\Admin\SystemController;
 use App\Controllers\Admin\TemplateController;
 use App\Controllers\Admin\UsersController;
@@ -28,7 +27,6 @@ return function (Router $router) {
     $users = new UsersController();
     $profile = new AdminProfileController();
     $siteSettings = new SiteSettingsController();
-    $staticPage = new StaticPageController();
     $landingPage = new LandingPageController();
     $landingPageAdmin = new LandingPageAdminController();
 
@@ -112,11 +110,4 @@ return function (Router $router) {
     $router->post('/api/admin/pages/{slug}/generate', [$landingPageAdmin, 'generate']);
     $router->delete('/api/admin/pages/{id}', [$landingPageAdmin, 'delete']);
     $router->post('/api/admin/pages/{id}/toggle', [$landingPageAdmin, 'toggleActive']);
-
-    // ---------- Статические страницы ----------
-    $router->get('/api/admin/static-pages', [$staticPage, 'index']);
-    $router->get('/api/admin/static-pages/{slug}', [$staticPage, 'show']);
-    $router->post('/api/admin/static-pages', [$staticPage, 'create']);
-    $router->delete('/api/admin/static-pages/{id}', [$staticPage, 'delete']);
-    $router->post('/api/admin/static-pages/{id}/toggle', [$staticPage, 'toggleActive']);
 };
