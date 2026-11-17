@@ -97,7 +97,15 @@ class Router
     {
         try {
             $response = call_user_func($handler, $request, $parameters);
-            return $response instanceof Response ? $response : new Response('', 204);
+            if ($response instanceof Response) {
+                return $response;
+            }
+            // Контроллер вернул готовый HTML строкой — отдаём его как страницу,
+            // а не превращаем в пустой ответ 204 (например, сгенерированный лендинг в HomeController).
+            if (is_string($response) && $response !== '') {
+                return new Response($response, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+            }
+            return new Response('', 204);
         } catch (\Throwable $error) {
             error_log('MVC request failed: ' . $error->getMessage() . ' in ' . $error->getFile() . ':' . $error->getLine() . "\n" . $error->getTraceAsString());
             return Response::json(['success' => false, 'error' => 'Внутренняя ошибка сервера.'], 500);
