@@ -38,6 +38,7 @@ return function (Router $router) {
     $router->post('/api/auth/logout', [$auth, 'logout']);
     $router->post('/api/consultant', [$consultant, 'handle']);
 
+    $router->post('/api/admin/messages/{id}/reply', [$content, 'replyToMessage']);
     $router->get('/api/admin/articles', [$content, 'articles']);
     $router->post('/api/admin/articles', [$content, 'articles']);
     $router->get('/api/admin/articles/{id}', [$content, 'articles']);

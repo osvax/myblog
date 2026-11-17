@@ -248,6 +248,43 @@ class ContentController extends Controller
             : $this->json(['success' => false, 'error' => 'Обращение не найдено'], 404);
     }
 
+    /**
+     * Ответ автора сайта на комментарий (публикуется сразу, помечается как ответ персонала).
+     */
+    public function replyToMessage($request, array $params = [])
+    {
+        if (!$this->authorized()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'POST') {
+            return $this->methodNotAllowed(['POST']);
+        }
+        \admin_require_csrf();
+
+        $id = $params['id'] ?? '';
+        if (!ctype_digit((string) $id) || (int) $id < 1) {
+            return $this->json(['success' => false, 'error' => 'Некорректный идентификатор комментария'], 400);
+        }
+
+        $data = $request->json();
+        $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
+        $body = isset($data['body']) && is_string($data['body']) ? trim($data['body']) : '';
+
+        if (mb_strlen($name) < 2 || mb_strlen($name) > 160) {
+            return $this->json(['success' => false, 'error' => 'Укажите имя автора (от 2 до 160 символов)'], 400);
+        }
+        if ($body === '' || mb_strlen($body) > 10000) {
+            return $this->json(['success' => false, 'error' => 'Введите текст ответа (до 10000 символов)'], 400);
+        }
+
+        $result = $this->content->staffReply((int) $id, $name, $body);
+        if (!$result['success']) {
+            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить ответ'], 400);
+        }
+
+        return $this->json(['success' => true, 'id' => $result['id']]);
+    }
+
     private function articleInput(array $data, $id)
     {
         foreach (['slug', 'title', 'description', 'category', 'content', 'author', 'date'] as $field) {

@@ -283,8 +283,8 @@ class ContentRepository
     public function createMessage(array $message)
     {
         $statement = $this->db->prepare(
-            'INSERT INTO messages (message_type, name, email, phone, subject, body, article_slug)
-             VALUES (:message_type, :name, :email, :phone, :subject, :body, :article_slug)'
+            'INSERT INTO messages (message_type, name, email, phone, subject, body, article_slug, parent_id, is_staff)
+             VALUES (:message_type, :name, :email, :phone, :subject, :body, :article_slug, :parent_id, :is_staff)'
         );
         $statement->execute([
             'message_type' => $message['type'],
@@ -294,6 +294,8 @@ class ContentRepository
             'subject' => $message['subject'],
             'body' => $message['body'],
             'article_slug' => $message['articleSlug'],
+            'parent_id' => $message['parentId'] ?? null,
+            'is_staff' => !empty($message['isStaff']) ? 1 : 0,
         ]);
         return $this->db->lastInsertId();
     }
@@ -301,6 +303,47 @@ class ContentRepository
     public function messages()
     {
         return $this->db->query('SELECT * FROM messages ORDER BY created_at DESC, id DESC')->fetchAll();
+    }
+
+    /**
+     * Найти обращение по id.
+     */
+    public function messageById(int $id): ?array
+    {
+        $statement = $this->db->prepare('SELECT * FROM messages WHERE id = :id LIMIT 1');
+        $statement->execute(['id' => $id]);
+        $row = $statement->fetch();
+        return $row ?: null;
+    }
+
+    /**
+     * Ответ администратора на корневой комментарий статьи.
+     * Ответ публикуется сразу (одобрен) и помечается как ответ автора сайта.
+     *
+     * @return array{success: bool, id?: int, error?: string}
+     */
+    public function staffReply(int $rootId, string $name, string $body): array
+    {
+        $root = $this->messageById($rootId);
+        if (!$root || $root['message_type'] !== 'comment' || $root['parent_id'] !== null) {
+            return ['success' => false, 'error' => 'Комментарий не найден или уже является ответом'];
+        }
+
+        $statement = $this->db->prepare(
+            'INSERT INTO messages (message_type, name, email, phone, subject, body, article_slug, parent_id, is_staff, is_approved, is_read)
+             VALUES (:message_type, :name, :email, :phone, :subject, :body, :article_slug, :parent_id, 1, 1, 1)'
+        );
+        $statement->execute([
+            'message_type' => 'comment',
+            'name' => $name,
+            'email' => '',
+            'phone' => '',
+            'subject' => 'Ответ на комментарий #' . $rootId,
+            'body' => $body,
+            'article_slug' => $root['article_slug'],
+            'parent_id' => $rootId,
+        ]);
+        return ['success' => true, 'id' => (int) $this->db->lastInsertId()];
     }
 
     /**
@@ -312,7 +355,7 @@ class ContentRepository
     public function commentsByArticle(string $slug): array
     {
         $statement = $this->db->prepare(
-            "SELECT id, name, body, created_at FROM messages
+            "SELECT id, parent_id, is_staff, name, body, created_at FROM messages
              WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1
              ORDER BY created_at ASC, id ASC"
         );

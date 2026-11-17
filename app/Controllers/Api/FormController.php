@@ -94,10 +94,26 @@ class FormController extends Controller
             return $this->json(['success' => false, 'error' => 'Заполните обязательные поля и укажите корректный email'], 400);
         }
         $articleSlug = '';
+        $parentId = 0;
         if ($type === 'comment') {
             $articleSlug = $data['article'];
             if (!preg_match('/^[a-z0-9-]{1,180}$/', $articleSlug)) {
                 return $this->json(['success' => false, 'error' => 'Не удалось определить статью для комментария'], 400);
+            }
+            // Ответ конкретному пользователю: родитель — существующий корневой
+            // одобренный комментарий той же статьи (вложенность один уровень)
+            $parentRaw = isset($_POST['parent']) && is_string($_POST['parent']) ? trim($_POST['parent']) : '';
+            if ($parentRaw !== '') {
+                if (!ctype_digit($parentRaw) || (int) $parentRaw < 1) {
+                    return $this->json(['success' => false, 'error' => 'Некорректный комментарий для ответа'], 400);
+                }
+                $parent = $this->content->messageById((int) $parentRaw);
+                if (!$parent || $parent['message_type'] !== 'comment' ||
+                    $parent['article_slug'] !== $articleSlug || $parent['parent_id'] !== null ||
+                    (int) $parent['is_approved'] !== 1) {
+                    return $this->json(['success' => false, 'error' => 'Комментарий для ответа недоступен'], 400);
+                }
+                $parentId = (int) $parentRaw;
             }
         }
         $subject = $type === 'comment' ? 'Комментарий к статье ' . $articleSlug : $data['subject'];
@@ -109,6 +125,7 @@ class FormController extends Controller
             'subject' => $subject,
             'body' => $data['message'],
             'articleSlug' => $articleSlug,
+            'parentId' => $parentId ?: null,
         ]);
         $this->sendMail(
             $type === 'comment' ? 'Новый комментарий — ' . $articleSlug : 'Сообщение с сайта',
