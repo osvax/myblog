@@ -6,8 +6,9 @@ Thumbs.db
 .DS_Store
 desktop.ini
 
-# Временные и runtime-файлы (резервные копии шаблонов, логи)
-/var/
+# Временные и runtime-файлы (резервные копии шаблонов, логи); .htaccess оставляем
+/var/*
+!/var/.htaccess
 *.log
 
 # Пользовательские загрузки — контент не версионируем, .htaccess сохраняем
@@ -17,5 +18,5 @@ desktop.ini
 /public/uploads/profile/*
 !/public/uploads/profile/.htaccess
 
-# Примечание: config/database.php содержит пароль БД. Файл уже попадал
-# в историю репозитория — при необходимости очистки истории обратитесь к документации git.
+# Конфигурация с паролем БД — в репозиторий не попадает
+/config/database.php
