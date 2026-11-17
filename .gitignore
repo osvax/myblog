@@ -14,6 +14,8 @@ desktop.ini
 /public/uploads/*
 !/public/uploads/.htaccess
 !/public/uploads/profile/
+/public/uploads/profile/*
+!/public/uploads/profile/.htaccess
 
 # Примечание: config/database.php содержит пароль БД. Файл уже попадал
 # в историю репозитория — при необходимости очистки истории обратитесь к документации git.
