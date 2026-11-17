@@ -9,7 +9,10 @@
         var daysDisplay = document.getElementById('calcDays');
         var budgetInput = document.getElementById('orderBudget');
         var detailsInput = document.getElementById('calculatorDetails');
-        var config = window.CalculatorConfig.load();
+        // Конфигурация приходит с сервера (window.CalculatorData из базы);
+        // CalculatorConfig (localStorage) — только запасной источник
+        var config = (window.CalculatorData && Array.isArray(window.CalculatorData.types) &&
+            window.CalculatorData.types.length) ? window.CalculatorData : window.CalculatorConfig.load();
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>"']/g, function (char) {
@@ -44,7 +47,8 @@
         }
 
         function render() {
-            config = window.CalculatorConfig.load();
+            config = (window.CalculatorData && Array.isArray(window.CalculatorData.types) &&
+                window.CalculatorData.types.length) ? window.CalculatorData : window.CalculatorConfig.load();
             typeSelect.innerHTML = '';
             config.types.forEach(function (type) {
                 var calcOption = document.createElement('option');

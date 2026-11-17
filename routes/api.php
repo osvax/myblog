@@ -2,6 +2,7 @@
 
 use App\Controllers\Admin\AdminProfileController;
 use App\Controllers\Admin\AuthController;
+use App\Controllers\Admin\CalculatorController;
 use App\Controllers\Admin\ContentController;
 use App\Controllers\Admin\CustomFieldController;
 use App\Controllers\Admin\FileManagerController;
@@ -29,6 +30,7 @@ return function (Router $router) {
     $profile = new AdminProfileController();
     $siteSettings = new SiteSettingsController();
     $customFields = new CustomFieldController();
+    $calculator = new CalculatorController();
     $landingPage = new LandingPageController();
     $landingPageAdmin = new LandingPageAdminController();
 
@@ -76,6 +78,10 @@ return function (Router $router) {
     $router->head('/uploads/{scope}/{id}/{filename}', [$media, 'serve']);
     $router->get('/api/admin/templates', [$templates, 'handle']);
     $router->post('/api/admin/templates', [$templates, 'handle']);
+
+    // ---------- Калькулятор заказа ----------
+    $router->get('/api/admin/calculator', [$calculator, 'get']);
+    $router->post('/api/admin/calculator', [$calculator, 'save']);
 
     $router->post('/api/forms/order', [$forms, 'order']);
     $router->post('/api/forms/feedback', [$forms, 'feedback']);

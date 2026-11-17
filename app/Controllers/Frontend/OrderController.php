@@ -16,6 +16,8 @@ class OrderController extends Controller
             'activePage' => 'order',
             'includeFormsScript' => true,
             'pageScripts' => ['/js/calculator-config.js', '/js/order-calculator.js'],
+            // Конфигурация калькулятора из базы (редактируется в админке)
+            'calculatorConfig' => \calculator_config(),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

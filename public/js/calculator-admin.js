@@ -11,7 +11,7 @@
         var featureList = document.getElementById('calculatorFeatureList');
         var addTypeForm = document.getElementById('addTypeForm');
         var addFeatureButton = document.getElementById('addCalculatorFeature');
-        var config = window.CalculatorConfig.load();
+        var config = window.CalculatorConfig.load(); // стартовые значения до загрузки из базы
         var editingTypeId = null;
         // Название типа редактируется инлайн прямо в списке (без модалок)
         var editingNameId = null;
@@ -22,17 +22,58 @@
             });
         }
 
+        // Конфигурация хранится в базе; localStorage больше не источник
+        function loadFromServer() {
+            return fetch('../api/admin/calculator', { credentials: 'same-origin' })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        if (response.status === 401) {
+                            window.location.href = 'login.html';
+                            throw new Error('Войдите в админ-панель заново');
+                        }
+                        if (!response.ok || !data.success) {
+                            throw new Error(data.error || 'Не удалось загрузить настройки калькулятора');
+                        }
+                        return data;
+                    });
+                })
+                .then(function (data) {
+                    config = data.config;
+                    render();
+                })
+                .catch(function (error) {
+                    render();
+                    window.AdminNotifications.show('error', error.message || 'Не удалось загрузить настройки калькулятора');
+                });
+        }
+
         function persist(message) {
-            try {
-                config.currency = currencyInput.value.trim();
-                window.CalculatorConfig.save(config);
+            config.currency = currencyInput.value.trim();
+            return fetch('../api/admin/calculator', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(config)
+            }).then(function (response) {
+                return response.json().then(function (data) {
+                    if (response.status === 401) {
+                        window.location.href = 'login.html';
+                        throw new Error('Войдите в админ-панель заново');
+                    }
+                    if (!response.ok || !data.success) {
+                        throw new Error(data.error || 'Не удалось сохранить настройки');
+                    }
+                    return data;
+                });
+            }).then(function (data) {
+                config = data.config; // нормализованный конфиг с сервера
                 render();
                 if (message) window.AdminNotifications.show(true, message);
                 return true;
-            } catch (error) {
+            }).catch(function (error) {
                 window.AdminNotifications.show(false, error.message);
                 return false;
-            }
+            });
         }
 
         function render() {
@@ -213,10 +254,13 @@
             captureEditor();
             var id = 'type-' + Date.now().toString(36);
             config.types.push({ id: id, name: name, price: 0, days: 0, features: [] });
-            if (!persist('Тип сайта добавлен')) return;
-            typeSelect.value = id;
-            renderEditor();
-            addTypeForm.reset();
+            persist('Тип сайта добавлен').then(function (saved) {
+                if (saved) {
+                    typeSelect.value = id;
+                    renderEditor();
+                }
+                addTypeForm.reset();
+            });
         });
         addFeatureButton.addEventListener('click', function () {
             var nameInput = document.getElementById('newFeatureName');
@@ -242,12 +286,13 @@
         });
         document.getElementById('resetCalculator').addEventListener('click', function () {
             if (!window.confirm('Вернуть стандартные настройки калькулятора?')) return;
+            // Стандартные значения берём из calculator-config.js и сохраняем в базу
             window.CalculatorConfig.reset();
             config = window.CalculatorConfig.load();
-            render();
-            window.AdminNotifications.show('warning', 'Стандартные настройки восстановлены в этом браузере');
+            persist('Стандартные настройки восстановлены и сохранены в базу');
         });
 
         render();
+        loadFromServer();
     });
 }());
