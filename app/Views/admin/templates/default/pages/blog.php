@@ -1,6 +1,10 @@
 <div class="d-flex justify-content-end flex-wrap gap-2 mb-3"><a class="btn btn-orange fw-bold" href="article-edit.html">
                     <i class="bi bi-plus-lg"></i> Добавить статью
                 </a></div><div class="card admin-card">
+                <div class="card-header bg-white">
+                    <input type="search" class="form-control form-control-sm" id="articlesFilter"
+                           placeholder="Фильтр: название, рубрика, тег…" aria-label="Фильтр статей">
+                </div>
                 <div class="table-responsive">
                     <table class="table admin-table mb-0">
                         <thead><tr><th>Статья</th><th>Рубрика</th><th>Дата</th><th>Комментарии</th><th class="text-end">Действия</th></tr></thead>

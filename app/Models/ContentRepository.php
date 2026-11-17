@@ -48,6 +48,25 @@ class ContentRepository
     }
 
     /**
+     * Количество одобренных комментариев по slug статей.
+     *
+     * @return array<string, int>
+     */
+    public function commentCounts(): array
+    {
+        $rows = $this->db->query(
+            "SELECT article_slug, COUNT(*) AS n FROM messages
+             WHERE message_type = 'comment' AND is_approved = 1 AND article_slug <> ''
+             GROUP BY article_slug"
+        )->fetchAll();
+        $map = [];
+        foreach ($rows as $row) {
+            $map[$row['article_slug']] = (int) $row['n'];
+        }
+        return $map;
+    }
+
+    /**
      * Рубрика по slug.
      */
     public function categoryBySlug(string $slug): ?array

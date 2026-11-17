@@ -29,4 +29,25 @@ class SystemController extends Controller
             'memoryLimit' => ini_get('memory_limit'),
         ]);
     }
+
+    /**
+     * Последняя активность авторизованных пользователей (для дашборда).
+     */
+    public function activity($request)
+    {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'GET') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $db = \App\Core\Database::connection();
+        $rows = $db->query(
+            'SELECT ua.page_url, ua.page_title, ua.visited_at, COALESCE(u.name, ' . "'Пользователь'" . ') AS name
+             FROM user_activities ua LEFT JOIN users u ON u.id = ua.user_id
+             ORDER BY ua.visited_at DESC, ua.id DESC LIMIT 8'
+        )->fetchAll();
+        return $this->json(['success' => true, 'activities' => $rows]);
+    }
 }

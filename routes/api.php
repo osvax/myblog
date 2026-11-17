@@ -43,6 +43,9 @@ return function (Router $router) {
     $router->post('/api/consultant', [$consultant, 'handle']);
 
     $router->post('/api/admin/messages/{id}/reply', [$content, 'replyToMessage']);
+    $router->post('/api/admin/articles/{id}/duplicate', [$content, 'duplicateArticle']);
+    $router->post('/api/admin/projects/{id}/duplicate', [$content, 'duplicateProject']);
+    $router->get('/api/admin/activity', [$system, 'activity']);
     $router->get('/api/admin/articles', [$content, 'articles']);
     $router->post('/api/admin/articles', [$content, 'articles']);
     $router->get('/api/admin/articles/{id}', [$content, 'articles']);

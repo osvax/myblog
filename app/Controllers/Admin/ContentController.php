@@ -27,7 +27,14 @@ class ContentController extends Controller
                     ? $this->json(['success' => true, 'article' => $article])
                     : $this->json(['success' => false, 'error' => 'Статья не найдена'], 404);
             }
-            return $this->json(['success' => true, 'articles' => $this->content->articles()]);
+            // Число одобренных комментариев — для колонки в списке статей
+            $counts = $this->content->commentCounts();
+            $articles = $this->content->articles();
+            foreach ($articles as &$article) {
+                $article['comments'] = $counts[$article['slug']] ?? 0;
+            }
+            unset($article);
+            return $this->json(['success' => true, 'articles' => $articles]);
         }
         if ($request->method() === 'DELETE') {
             \admin_require_csrf();
@@ -373,6 +380,92 @@ class ContentController extends Controller
             'screenshots' => array_values($screenshots),
             'active' => !isset($data['active']) || $data['active'] !== false,
         ];
+    }
+
+    /**
+     * Дублировать статью: копия со slug «-copy», снятая с публикации.
+     */
+    public function duplicateArticle($request, array $params = [])
+    {
+        if (!$this->authorized()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'POST') {
+            return $this->methodNotAllowed(['POST']);
+        }
+        \admin_require_csrf();
+
+        $article = $this->content->articleById($params['id'] ?? '');
+        if (!$article) {
+            return $this->json(['success' => false, 'error' => 'Статья не найдена'], 404);
+        }
+        $saved = $this->content->saveArticle([
+            'id' => bin2hex(random_bytes(16)),
+            'slug' => $this->uniqueArticleSlug((string) $article['slug']),
+            'title' => $article['title'] . ' (копия)',
+            'description' => $article['description'] ?? '',
+            'category' => $article['category'] ?? '',
+            'content' => $article['content'] ?? '',
+            'author' => $article['author'] ?? '',
+            'date' => date('Y-m-d'),
+            'active' => false,
+            'tags' => $article['tags'] ?? [],
+            'cover' => $article['cover'] ?? '',
+            'icon' => $article['icon'] ?? '',
+        ]);
+        return $this->json(['success' => true, 'article' => $saved]);
+    }
+
+    /**
+     * Дублировать проект портфолио: копия со slug «-copy», снятая с публикации.
+     */
+    public function duplicateProject($request, array $params = [])
+    {
+        if (!$this->authorized()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'POST') {
+            return $this->methodNotAllowed(['POST']);
+        }
+        \admin_require_csrf();
+
+        $project = $this->content->projectById($params['id'] ?? '');
+        if (!$project) {
+            return $this->json(['success' => false, 'error' => 'Проект не найден'], 404);
+        }
+        $slug = $project['slug'] . '-copy';
+        $n = 2;
+        while ($this->content->projectBySlug($slug) !== null) {
+            $slug = $project['slug'] . '-copy-' . $n++;
+        }
+        $saved = $this->content->saveProject([
+            'id' => bin2hex(random_bytes(16)),
+            'slug' => $slug,
+            'title' => $project['title'] . ' (копия)',
+            'technologies' => $project['technologies'] ?? '',
+            'icon' => $project['icon'] ?? 'bi-briefcase',
+            'description' => $project['description'] ?? '',
+            'task' => $project['task'] ?? [],
+            'solution' => $project['solution'] ?? '',
+            'client' => $project['client'] ?? '',
+            'year' => $project['year'] ?? null,
+            'duration' => $project['duration'] ?? '',
+            'stack' => $project['stack'] ?? '',
+            'results' => $project['results'] ?? [],
+            'screenshots' => $project['screenshots'] ?? [],
+            'active' => false,
+        ]);
+        return $this->json(['success' => true, 'project' => $saved]);
+    }
+
+    private function uniqueArticleSlug(string $base): string
+    {
+        $candidate = $base . '-copy';
+        $n = 2;
+        while ($this->content->articleBySlug($candidate, false) !== null) {
+            $candidate = $base . '-copy-' . $n++;
+        }
+        return $candidate;
     }
 
     private function authorized()
