@@ -88,6 +88,9 @@ class BlogController extends Controller
             'comments' => $comments,
             'commentsCount' => $commentsCount,
             'commentsVisible' => $commentsVisible,
+            // Форма комментария отправляется через AJAX forms.js с тостом,
+            // иначе браузер уходит на JSON-ответ обработчика
+            'includeFormsScript' => true,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
