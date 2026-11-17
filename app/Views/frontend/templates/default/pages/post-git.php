@@ -75,52 +75,7 @@
                         </div>
                     </article>
 
-                    <!-- ================= КОММЕНТАРИИ ================= -->
-                    <div class="mt-5">
-                        <h3 class="fw-bold mb-4">Комментарии <span class="text-orange">(1)</span></h3>
-
-                        <div class="comment-item p-3 mb-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-person-circle fs-4 text-orange me-2"></i>
-                                <strong class="fw-bold me-2">Сергей</strong>
-                                <small class="fw-bold text-muted">9 октября 2026, 22:31</small>
-                            </div>
-                            <p class="fw-bold mb-0">Совет «коммитить каждый вечер» — то, что нужно новичку. Приучился за две недели.</p>
-                            <div class="comment-reply">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-person-badge fs-6 text-orange me-2"></i>
-                                    <strong class="fw-bold me-2">Автор</strong>
-                                    <span class="badge bg-orange fw-bold">Админ</span>
-                                    <small class="fw-bold text-muted ms-2">9 октября 2026, 22:50</small>
-                                </div>
-                                <p class="fw-bold mb-0">Сергей, отличный прогресс! Следующий шаг — правила хороших сообщений к коммитам: короткое описание в повелительном наклонении, например «Добавить форму заказа».</p>
-                            </div>
-                        </div>
-
-                        <!-- Форма комментария -->
-                        <h5 class="fw-bold mt-4 mb-3">Оставить комментарий</h5>
-                        <form action="/api/forms/comment" method="POST" class="card border-0 shadow-sm p-4 order-form">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="commentName" class="form-label fw-bold">Ваше имя</label>
-                                    <input type="text" class="form-control" id="commentName" name="name" placeholder="Имя" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="commentEmail" class="form-label fw-bold">Email (не публикуется)</label>
-                                    <input type="email" class="form-control" id="commentEmail" name="email" placeholder="you@example.ru" required>
-                                </div>
-                                <div class="col-12">
-                                    <label for="commentText" class="form-label fw-bold">Комментарий</label>
-                                    <textarea class="form-control" id="commentText" name="message" rows="3" placeholder="Ваш комментарий..." required></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-orange fw-bold">
-                                        Отправить комментарий <i class="bi bi-chat-square-text"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                    <?php require APP_ROOT . '/app/Views/frontend/templates/default/components/comments-section.php'; ?>
                 </div>
 
                 <!-- ================= САЙДБАР ================= -->

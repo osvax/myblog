@@ -303,6 +303,39 @@ class ContentRepository
         return $this->db->query('SELECT * FROM messages ORDER BY created_at DESC, id DESC')->fetchAll();
     }
 
+    /**
+     * Одобренные комментарии к статье (для публичного вывода).
+     *
+     * @param string $slug
+     * @return array
+     */
+    public function commentsByArticle(string $slug): array
+    {
+        $statement = $this->db->prepare(
+            "SELECT id, name, body, created_at FROM messages
+             WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1
+             ORDER BY created_at ASC, id ASC"
+        );
+        $statement->execute(['slug' => $slug]);
+        return $statement->fetchAll();
+    }
+
+    /**
+     * Количество одобренных комментариев к статье.
+     *
+     * @param string $slug
+     * @return int
+     */
+    public function commentsCount(string $slug): int
+    {
+        $statement = $this->db->prepare(
+            "SELECT COUNT(*) FROM messages
+             WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1"
+        );
+        $statement->execute(['slug' => $slug]);
+        return (int) $statement->fetchColumn();
+    }
+
     public function updateMessage($id, array $data)
     {
         $statement = $this->db->prepare('UPDATE messages SET is_read = :is_read, is_approved = :is_approved WHERE id = :id');

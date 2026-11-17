@@ -60,6 +60,16 @@ class BlogController extends Controller
         $prev = $currentIndex > 0 ? $allArticles[$slugs[$currentIndex - 1]] : null;
         $next = $currentIndex !== false && $currentIndex < count($slugs) - 1 ? $allArticles[$slugs[$currentIndex + 1]] : null;
 
+        // Видимость комментариев настраивается в админке (Настройки → Блог → commentsAccess)
+        $commentsAccess = (string) ((new \App\Models\SiteSettings())->get('commentsAccess', 'users') ?: 'users');
+        $commentsVisible = match ($commentsAccess) {
+            'guests' => true,
+            'staff' => $user && in_array($user['role'], ['admin', 'editor', 'manager'], true),
+            default => $user !== null,
+        };
+        $commentsCount = $content->commentsCount($slug);
+        $comments = $commentsVisible ? $content->commentsByArticle($slug) : [];
+
         return $this->page('frontend', $slug, [
             'title' => $article['title'] . ' — МойБлог',
             'description' => $article['description'],
@@ -67,6 +77,9 @@ class BlogController extends Controller
             'article' => $article,
             'prevArticle' => $prev,
             'nextArticle' => $next,
+            'comments' => $comments,
+            'commentsCount' => $commentsCount,
+            'commentsVisible' => $commentsVisible,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

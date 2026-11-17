@@ -90,70 +90,7 @@
                         </div>
                     </article>
 
-                    <!-- ================= КОММЕНТАРИИ ================= -->
-                    <div class="mt-5">
-                        <h3 class="fw-bold mb-4">Комментарии <span class="text-orange">(2)</span></h3>
-
-                        <div class="comment-item p-3 mb-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-person-circle fs-4 text-orange me-2"></i>
-                                <strong class="fw-bold me-2">Мария</strong>
-                                <small class="fw-bold text-muted">10 ноября 2026, 14:30</small>
-                            </div>
-                            <p class="fw-bold mb-0">Отличная статья! Наконец понял, как работает сетка Bootstrap. Жду продолжение про Sass!</p>
-                            <div class="comment-reply">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-person-badge fs-6 text-orange me-2"></i>
-                                    <strong class="fw-bold me-2">Автор</strong>
-                                    <span class="badge bg-orange fw-bold">Админ</span>
-                                    <small class="fw-bold text-muted ms-2">10 ноября 2026, 15:10</small>
-                                </div>
-                                <p class="fw-bold mb-0">Мария, спасибо! Статья про Sass и переопределение темы Bootstrap уже в работе — выйдет на следующей неделе.</p>
-                            </div>
-                        </div>
-
-                        <div class="comment-item p-3 mb-3">
-                            <div class="d-flex align-items-center mb-2">
-                                <i class="bi bi-person-circle fs-4 text-orange me-2"></i>
-                                <strong class="fw-bold me-2">Дмитрий</strong>
-                                <small class="fw-bold text-muted">10 ноября 2026, 18:05</small>
-                            </div>
-                            <p class="fw-bold mb-0">Спасибо! Утилиты правда экономят кучу времени. Подскажите, как правильно переопределить цвета темы?</p>
-                            <div class="comment-reply">
-                                <div class="d-flex align-items-center mb-2">
-                                    <i class="bi bi-person-badge fs-6 text-orange me-2"></i>
-                                    <strong class="fw-bold me-2">Автор</strong>
-                                    <span class="badge bg-orange fw-bold">Админ</span>
-                                    <small class="fw-bold text-muted ms-2">10 ноября 2026, 18:40</small>
-                                </div>
-                                <p class="fw-bold mb-0">Дмитрий, проще всего через переменные Sass: скопируйте файл настроек из документации и переопределите $primary. Альтернатива без Sass — CSS-переменные и класс-обёртка. Подробно разберу в следующей статье!</p>
-                            </div>
-                        </div>
-
-                        <!-- Форма комментария -->
-                        <h5 class="fw-bold mt-4 mb-3">Оставить комментарий</h5>
-                        <form action="/api/forms/comment" method="POST" class="card border-0 shadow-sm p-4 order-form">
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="commentName" class="form-label fw-bold">Ваше имя</label>
-                                    <input type="text" class="form-control" id="commentName" name="name" placeholder="Имя" required>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="commentEmail" class="form-label fw-bold">Email (не публикуется)</label>
-                                    <input type="email" class="form-control" id="commentEmail" name="email" placeholder="you@example.ru" required>
-                                </div>
-                                <div class="col-12">
-                                    <label for="commentText" class="form-label fw-bold">Комментарий</label>
-                                    <textarea class="form-control" id="commentText" name="message" rows="3" placeholder="Ваш комментарий..." required></textarea>
-                                </div>
-                                <div class="col-12">
-                                    <button type="submit" class="btn btn-orange fw-bold">
-                                        Отправить комментарий <i class="bi bi-chat-square-text"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
+                    <?php require APP_ROOT . '/app/Views/frontend/templates/default/components/comments-section.php'; ?>
                 </div>
 
                 <!-- ================= САЙДБАР ================= -->
