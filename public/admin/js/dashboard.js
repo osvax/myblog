@@ -23,25 +23,46 @@
             date.dateTime = now.toISOString();
         }
 
-        function renderSalesChart() {
+        // График продаж строится из реальных заказов базы данных
+        function renderSalesChart(orders) {
             var monthNames = [];
+            var monthKeys = [];
             var currentMonth = new Date();
             for (var monthOffset = 5; monthOffset >= 0; monthOffset--) {
                 var monthDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - monthOffset, 1);
                 monthNames.push(monthDate.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', ''));
+                monthKeys.push(monthDate.getFullYear() + '-' + String(monthDate.getMonth() + 1).padStart(2, '0'));
             }
-            var points = [
-                { label: monthNames[0], value: 85000 },
-                { label: monthNames[1], value: 122000 },
-                { label: monthNames[2], value: 97000 },
-                { label: monthNames[3], value: 164000 },
-                { label: monthNames[4], value: 138000 },
-                { label: monthNames[5], value: 205000 }
-            ];
+
+            // Суммируем бюджеты заказов по месяцам
+            var totals = {};
+            monthKeys.forEach(function (key) { totals[key] = 0; });
+            (orders || []).forEach(function (order) {
+                var key = String(order.orderDate || order.order_date || '').substring(0, 7);
+                if (Object.prototype.hasOwnProperty.call(totals, key)) {
+                    totals[key] += Number(order.budget) || 0;
+                }
+            });
+            var points = monthKeys.map(function (key, index) {
+                return { label: monthNames[index], value: Math.round(totals[key]) };
+            });
+
+            var totalRevenue = points.reduce(function (sum, point) { return sum + point.value; }, 0);
+            var emptyBox = document.getElementById('salesChartEmpty');
+            if (emptyBox) emptyBox.hidden = totalRevenue > 0;
+            if (totalRevenue === 0) {
+                chart.innerHTML = '<div class="text-center text-muted py-4"><i class="bi bi-bar-chart-line fs-1"></i></div>';
+                return;
+            }
+
+            // Подбираем красивый шаг шкалы под максимум
+            var maxValue = Math.max.apply(null, points.map(function (point) { return point.value; }));
+            var steps = [1000, 2000, 5000, 10000, 20000, 50000, 100000, 200000, 500000, 1000000];
+            var step = steps.find(function (candidate) { return maxValue / candidate <= 5; }) || 1000000;
+            var max = Math.ceil(maxValue / step) * step;
             var width = 560;
             var height = 220;
             var padding = { top: 16, right: 12, bottom: 34, left: 58 };
-            var max = Math.ceil(Math.max.apply(null, points.map(function (point) { return point.value; })) / 50000) * 50000;
             var plotWidth = width - padding.left - padding.right;
             var plotHeight = height - padding.top - padding.bottom;
             var coordinates = points.map(function (point, index) {
@@ -52,7 +73,7 @@
                 };
             });
             var grid = [];
-            for (var tick = 0; tick <= max; tick += 50000) {
+            for (var tick = 0; tick <= max; tick += step) {
                 var y = padding.top + plotHeight - tick / max * plotHeight;
                 grid.push('<line x1="' + padding.left + '" y1="' + y + '" x2="' + (width - padding.right) +
                     '" y2="' + y + '" stroke="#e9ecef" />');
@@ -74,7 +95,7 @@
             }).join('');
 
             chart.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height +
-                '" role="img" aria-label="Демонстрационные продажи за шесть месяцев">' +
+                '" role="img" aria-label="Выручка по заказам за последние шесть месяцев">' +
                 grid.join('') + '<path d="' + area + '" fill="#ff8c1a" fill-opacity=".12"></path>' +
                 '<path d="' + line + '" fill="none" stroke="#ff8c1a" stroke-width="3" ' +
                 'stroke-linecap="round" stroke-linejoin="round"></path>' + markers + '</svg>';
@@ -103,16 +124,31 @@
             document.querySelector('.dashboard-new-orders-icon').classList.toggle('has-new-orders', newCount > 0);
         }
 
+        // Счётчики статей и работ портфолио — из базы
+        function updateContentCounts() {
+            window.AdminApi.get('/api/admin/articles').then(function (data) {
+                var published = (data.articles || []).filter(function (article) {
+                    return article.active !== false;
+                }).length;
+                document.getElementById('dashboardArticlesCount').textContent = String(published);
+            }).catch(function () {
+                document.getElementById('dashboardArticlesCount').textContent = '—';
+            });
+            window.AdminApi.get('/api/admin/projects').then(function (data) {
+                document.getElementById('dashboardProjectsCount').textContent = String((data.projects || []).length);
+            }).catch(function () {
+                document.getElementById('dashboardProjectsCount').textContent = '—';
+            });
+        }
+
+        // Пользователи — из базы (раньше брались из localStorage)
         function updateUserCount() {
-            try {
-                var stored = localStorage.getItem('myblog.admin.users.v1');
-                var users = stored ? JSON.parse(stored) : null;
-                document.getElementById('dashboardUsersCount').textContent =
-                    String(Array.isArray(users) ? users.length : 4);
-            } catch (error) {
+            window.AdminApi.get('/api/admin/users').then(function (data) {
+                document.getElementById('dashboardUsersCount').textContent = String((data.users || []).length);
+            }).catch(function (error) {
                 console.error('Не удалось получить количество пользователей.', error);
                 document.getElementById('dashboardUsersCount').textContent = '—';
-            }
+            });
         }
 
         function updateCommentCount() {
@@ -137,16 +173,26 @@
             });
         }
 
+        function loadOrderCounts() {
+            window.AdminApi.get('/api/admin/orders').then(function (data) {
+                updateOrderCounts(data.orders);
+                renderSalesChart(data.orders);
+            }).catch(function (error) {
+                console.error('Не удалось обновить счётчики заказов.', error);
+                document.getElementById('dashboardNewOrdersValue').textContent = '—';
+                document.getElementById('dashboardCurrentOrdersCount').textContent = '—';
+            });
+        }
+
         updateClock();
         window.setInterval(updateClock, 1000);
-        renderSalesChart();
         updateUserCount();
+        updateContentCounts();
         updateCommentCount();
         loadOrderCounts();
         window.addEventListener('admin-orders-state-changed', loadOrderCounts);
         window.addEventListener('storage', function (event) {
             if (event.key === 'myblog.admin.orders.state.v1') loadOrderCounts();
-            if (event.key === 'myblog.admin.users.v1') updateUserCount();
         });
         window.AdminApi.get('/api/admin/system')
             .then(setSystemInfo)

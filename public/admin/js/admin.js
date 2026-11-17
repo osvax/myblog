@@ -6,6 +6,52 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
+    // ---------- Фильтр по пунктам меню сайдбара ----------
+    const navFilter = document.getElementById('navFilter');
+    const adminNav = document.getElementById('adminNav');
+    if (navFilter && adminNav) {
+        navFilter.addEventListener('input', function () {
+            const query = navFilter.value.trim().toLowerCase();
+            adminNav.querySelectorAll('.admin-link').forEach(function (link) {
+                const text = (link.textContent || '').toLowerCase();
+                const wrap = link.closest('.collapse') || link;
+                link.classList.toggle('d-none', query !== '' && !text.includes(query));
+                if (wrap.classList.contains('collapse') && query !== '') {
+                    wrap.classList.add('show');
+                    wrap.previousElementSibling.setAttribute('aria-expanded', 'true');
+                }
+            });
+            adminNav.querySelectorAll('.admin-nav-group-btn').forEach(function (button) {
+                const panel = adminNav.querySelector(button.dataset.bsTarget);
+                const hasVisible = panel && panel.querySelectorAll('.admin-link:not(.d-none)').length > 0;
+                button.classList.toggle('d-none', query !== '' && !hasVisible);
+            });
+        });
+    }
+
+    // ---------- Кнопка «Наверх» ----------
+    const backToTop = document.createElement('button');
+    backToTop.type = 'button';
+    backToTop.className = 'btn btn-orange btn-action admin-back-to-top';
+    backToTop.setAttribute('aria-label', 'Наверх');
+    backToTop.title = 'Наверх';
+    backToTop.innerHTML = '<i class="bi bi-arrow-up fs-5"></i>';
+    backToTop.hidden = true;
+    document.body.appendChild(backToTop);
+    backToTop.addEventListener('click', function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+    window.addEventListener('scroll', function () {
+        backToTop.hidden = window.scrollY < 400;
+    }, { passive: true });
+
+    // ---------- Тултипы на кнопках с подсказками ----------
+    document.querySelectorAll('.admin-topbar [title], .admin-nav [title]').forEach(function (element) {
+        if (bootstrap.Tooltip) {
+            new bootstrap.Tooltip(element);
+        }
+    });
+
     document.querySelectorAll('form[action="/api/auth/logout"]').forEach(function (form) {
         form.addEventListener('submit', function (event) {
             event.preventDefault();

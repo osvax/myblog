@@ -34,7 +34,9 @@
             ?>
             <span class="badge <?= $roleBadgeClass ?> fw-bold"><?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></span>
         </div>
-        <nav class="nav flex-column p-2 admin-nav" aria-label="Административное меню">
+        <nav class="nav flex-column p-2 admin-nav" id="adminNav" aria-label="Административное меню">
+            <input type="search" class="form-control form-control-sm nav-filter mb-2" id="navFilter"
+                   placeholder="Поиск по меню…" aria-label="Поиск по пунктам меню">
             <?php foreach (($navigation ?? []) as $entry): ?>
                 <?php if (($entry['type'] ?? 'link') === 'group'): ?>
                     <?php
