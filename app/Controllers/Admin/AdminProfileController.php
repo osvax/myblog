@@ -14,6 +14,9 @@ class AdminProfileController extends Controller
      */
     public function show($request, $parameters)
     {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
         if ($request->method() !== 'GET') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
@@ -191,6 +194,9 @@ class AdminProfileController extends Controller
      */
     public function getActivityHistory($request, $parameters)
     {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
         if ($request->method() !== 'GET') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }

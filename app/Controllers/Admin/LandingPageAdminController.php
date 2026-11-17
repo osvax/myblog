@@ -13,6 +13,9 @@ class LandingPageAdminController extends Controller
      */
     public function index($request)
     {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
         if ($request->method() !== 'GET') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
@@ -153,6 +156,9 @@ class LandingPageAdminController extends Controller
      */
     public function show($request, $parameters)
     {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
         if ($request->method() !== 'GET') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }

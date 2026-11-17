@@ -12,6 +12,9 @@ class UsersController extends Controller
      */
     public function users($request)
     {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
         if ($request->method() !== 'GET') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
@@ -40,6 +43,9 @@ class UsersController extends Controller
      */
     public function getUser($request, $parameters)
     {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
         if ($request->method() !== 'GET') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
