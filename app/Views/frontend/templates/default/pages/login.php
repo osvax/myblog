@@ -23,5 +23,6 @@
     <div class="auth-links">
         <p>Нет аккаунта? <a href="/register.html">Зарегистрироваться</a></p>
         <p><a href="/forgot-password.html">Забыли пароль?</a></p>
+		
     </div>
 </div>
