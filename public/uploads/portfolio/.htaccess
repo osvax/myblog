@@ -1,0 +1,12 @@
+# Запрет исполнения PHP в директории изображений портфолио
+<FilesMatch "\.(php|php2|php3|php4|php5|php6|php7|php8|phtml|phar)$">
+    Require all denied
+</FilesMatch>
+
+# Запрет просмотра директории
+Options -Indexes
+
+# Разрешаем чтение изображений
+<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">
+    Require all granted
+</FilesMatch>
