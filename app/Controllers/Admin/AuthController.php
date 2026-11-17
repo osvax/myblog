@@ -14,12 +14,9 @@ class AuthController extends Controller
         }
 
         $input = $request->json();
-        error_log('AuthController::login input: ' . json_encode($input));
         $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
         $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
-        error_log('AuthController::login email=' . $email . ' password_len=' . strlen($password));
         $result = (new AdminUser())->verifyCredentials($email, $password);
-        error_log('AuthController::login result: ' . json_encode($result));
         if (!$result['configured']) {
             return $this->json(['success' => false, 'error' => 'Проверьте настройки авторизации в config/admin-auth.php'], 503);
         }
