@@ -9,7 +9,7 @@
                             <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-pane" type="button" role="tab" aria-controls="home-pane" aria-selected="false" title="Главная страница"><i class="bi bi-house-door"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance-pane" type="button" role="tab" aria-controls="appearance-pane" aria-selected="false" title="Внешний вид"><i class="bi bi-palette"></i></button>
+                            <button class="nav-link" id="mail-tab" data-bs-toggle="tab" data-bs-target="#mail-pane" type="button" role="tab" aria-controls="mail-pane" aria-selected="false" title="Email письма"><i class="bi bi-envelope-paper"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="seo-tab" data-bs-toggle="tab" data-bs-target="#seo-pane" type="button" role="tab" aria-controls="seo-pane" aria-selected="false" title="SEO"><i class="bi bi-search"></i></button>
@@ -129,35 +129,52 @@
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
 
-                        <section class="tab-pane fade" id="appearance-pane" role="tabpanel" aria-labelledby="appearance-tab" tabindex="0">
-                            <h3 class="h5 fw-bold mb-4">Настройки внешнего вида</h3>
-                            <div class="row g-3">
-                                <div class="col-md-6">
-                                    <label for="primaryColor" class="form-label fw-bold">Основной цвет</label>
-                                    <input type="color" id="primaryColor" class="form-control form-control-color" value="#ff8c1a">
+                        <section class="tab-pane fade" id="mail-pane" role="tabpanel" aria-labelledby="mail-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-2">Макеты email-писем по формам</h3>
+                            <p class="small text-muted mb-4">
+                                Доступные подстановки: <code>{name}</code> — имя, <code>{email}</code>, <code>{phone}</code>,
+                                <code>{subject}</code> — тема обращения, <code>{message}</code> — текст,
+                                <code>{article}</code> — slug статьи (для комментариев), <code>{type}</code> — тип проекта и
+                                <code>{budget}</code> — бюджет (для заявки).
+                            </p>
+
+                            <h4 class="h6 fw-bold mb-3"><i class="bi bi-send text-orange"></i> Форма заказа</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <label for="mailOrderSubject" class="form-label fw-bold">Тема письма</label>
+                                    <input type="text" id="mailOrderSubject" class="form-control" maxlength="200">
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="headingFont" class="form-label fw-bold">Шрифт заголовков</label>
-                                    <select id="headingFont" class="form-select">
-                                        <option selected>Montserrat</option>
-                                        <option>Roboto</option>
-                                        <option>Open Sans</option>
-                                    </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="darkMode">
-                                        <label class="form-check-label fw-bold" for="darkMode">Тёмная тема админки</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="sidebarCollapse">
-                                        <label class="form-check-label fw-bold" for="sidebarCollapse">Свёрнутый сайдбар по умолчанию</label>
-                                    </div>
+                                <div class="col-12">
+                                    <label for="mailOrderBody" class="form-label fw-bold">Текст письма</label>
+                                    <textarea id="mailOrderBody" class="form-control" rows="6" maxlength="5000"></textarea>
                                 </div>
                             </div>
-                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+
+                            <h4 class="h6 fw-bold mb-3"><i class="bi bi-chat-left-dots text-orange"></i> Форма обратной связи</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <label for="mailFeedbackSubject" class="form-label fw-bold">Тема письма</label>
+                                    <input type="text" id="mailFeedbackSubject" class="form-control" maxlength="200">
+                                </div>
+                                <div class="col-12">
+                                    <label for="mailFeedbackBody" class="form-label fw-bold">Текст письма</label>
+                                    <textarea id="mailFeedbackBody" class="form-control" rows="6" maxlength="5000"></textarea>
+                                </div>
+                            </div>
+
+                            <h4 class="h6 fw-bold mb-3"><i class="bi bi-chat-square-text text-orange"></i> Комментарии к статьям</h4>
+                            <div class="row g-3 mb-4">
+                                <div class="col-12">
+                                    <label for="mailCommentSubject" class="form-label fw-bold">Тема письма</label>
+                                    <input type="text" id="mailCommentSubject" class="form-control" maxlength="200">
+                                </div>
+                                <div class="col-12">
+                                    <label for="mailCommentBody" class="form-label fw-bold">Текст письма</label>
+                                    <textarea id="mailCommentBody" class="form-control" rows="6" maxlength="5000"></textarea>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-orange fw-bold"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
 
                         <section class="tab-pane fade" id="seo-pane" role="tabpanel" aria-labelledby="seo-tab" tabindex="0">

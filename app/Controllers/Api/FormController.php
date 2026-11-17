@@ -66,10 +66,16 @@ class FormController extends Controller
             'message' => $data['message'],
             'calculatorDetails' => $data['calculator_details'],
         ]);
-        $this->sendMail(
-            'Новая заявка с сайта',
-            "Имя: {$data['name']}\nEmail: {$data['email']}\nТелефон: {$data['phone']}\nТип проекта: {$data['type']}\nБюджет: {$data['budget']}\nОписание:\n{$data['message']}"
-        , $data['email'], $data['name']);
+        $this->sendFormMail('order', [
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'subject' => $data['type'],
+            'message' => $data['message'],
+            'article' => '',
+            'type' => $data['type'],
+            'budget' => $data['budget'],
+        ], $data['email'], $data['name']);
         return $this->json(['success' => true, 'orderId' => $order['id'] ?? null]);
     }
 
@@ -138,12 +144,16 @@ class FormController extends Controller
             'articleSlug' => $articleSlug,
             'parentId' => $parentId ?: null,
         ]);
-        $this->sendMail(
-            $type === 'comment' ? 'Новый комментарий — ' . $articleSlug : 'Сообщение с сайта',
-            "Имя: {$data['name']}\nEmail: {$data['email']}\nТелефон: {$data['phone']}\nТема: {$subject}\n\n{$data['message']}",
-            $data['email'],
-            $data['name']
-        );
+        $this->sendFormMail($type === 'comment' ? 'comment' : 'feedback', [
+            'name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'subject' => $subject,
+            'message' => $data['message'],
+            'article' => $articleSlug,
+            'type' => '',
+            'budget' => '',
+        ], $data['email'], $data['name']);
         return $this->json(['success' => true]);
     }
 
@@ -163,6 +173,48 @@ class FormController extends Controller
         $errors = \DateTimeImmutable::getLastErrors();
         return $date !== false && ($errors === false || (!$errors['warning_count'] && !$errors['error_count'])) &&
             $date->format('Y-m-d') === $value;
+    }
+
+    /**
+     * Отправить письмо по редактируемому макету формы
+     * (Настройки сайта → Email письма): тема и тело с подстановками {…}.
+     * При пустом макете используется стандартный текст.
+     */
+    private function sendFormMail(string $formType, array $placeholders, string $email, string $name)
+    {
+        $title = ucfirst($formType); // Order, Feedback, Comment
+        $defaults = [
+            'order' => [
+                'subject' => 'Новая заявка с сайта',
+                'body' => "Имя: {name}\nEmail: {email}\nТелефон: {phone}\nТип проекта: {type}\nБюджет: {budget}\nОписание:\n{message}",
+            ],
+            'feedback' => [
+                'subject' => 'Сообщение с сайта',
+                'body' => "Имя: {name}\nEmail: {email}\nТелефон: {phone}\nТема: {subject}\n\n{message}",
+            ],
+            'comment' => [
+                'subject' => 'Новый комментарий — {article}',
+                'body' => "Имя: {name}\nEmail: {email}\nТелефон: {phone}\nТема: {subject}\n\n{message}",
+            ],
+        ];
+        $settings = new \App\Models\SiteSettings();
+        $subject = trim((string) $settings->get('mail' . $title . 'Subject', ''));
+        $body = (string) $settings->get('mail' . $title . 'Body', '');
+        if ($subject === '') {
+            $subject = $defaults[$formType]['subject'];
+        }
+        if (trim($body) === '') {
+            $body = $defaults[$formType]['body'];
+        }
+
+        // Подставляем значения, неизвестные метки вырезаем
+        $rendered = strtr($subject . "\n" . $body, $placeholders);
+        $rendered = preg_replace('/\{[a-z_]+\}/i', '', $rendered) ?? '';
+        [$subject, $body] = explode("\n", $rendered, 2);
+        $subject = trim($subject);
+        $body = ltrim($body, "\r\n");
+
+        $this->sendMail($subject, $body, $email, $name);
     }
 
     private function sendMail($subject, $body, $email, $name)
