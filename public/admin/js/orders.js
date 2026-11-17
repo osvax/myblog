@@ -27,85 +27,9 @@
         var state = { status: {}, deleted: [], clients: {} };
         var searchFilter = '';
 
-        function applySearchFilter() {
-            var q = (searchFilter || '').toLowerCase().trim();
-            if (!q) return orders;
-            return orders.filter(function (o) {
-                var text = ((o.client || '') + ' ' + (o.email || '') + ' ' + (o.phone || '')).toLowerCase();
-                return text.indexOf(q) !== -1;
-            });
-        }
-
-        function bindOrdersSearch() {
-
         function escapeHtml(value) {
-            return String(value).replace(/[&<>"']/g, function (char) {
+            return String(value).replace(/[&<>\"']/g, function (char) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
-            });
-        }
-
-        function bindOrdersSearch() {
-            var searchInput = document.getElementById('ordersSearchInput');
-            var clearBtn = document.querySelector('#ordersFilterBar .filter-bar-clear');
-            var countEl = document.getElementById('ordersFilterCount');
-            if (!searchInput) return;
-
-            function updateClear() {
-                if (clearBtn) clearBtn.hidden = !searchFilter;
-            }
-            function updateCount() {
-                if (countEl) countEl.textContent = '';
-            }
-
-            var timer = null;
-            searchInput.addEventListener('input', function () {
-                clearTimeout(timer);
-                timer = setTimeout(function () {
-                    searchFilter = searchInput.value;
-                    page = 1;
-                    render();
-                    updateClear();
-                    updateCount();
-                }, 200);
-            });
-
-            if (clearBtn) {
-                clearBtn.addEventListener('click', function () {
-                    searchInput.value = '';
-                    searchFilter = '';
-                    page = 1;
-                    render();
-                    updateClear();
-                    updateCount();
-                    searchInput.focus();
-                });
-            }
-        }
-
-        function activeOrders() {
-            return orders;
-        }
-
-        function selectedOrders() {
-            var from = dateFromInput.value;
-            var to = dateToInput.value;
-            return activeOrders().filter(function (order) {
-                return order.createdAt >= from && order.createdAt <= to;
-            });
-        }
-
-        function visibleOrders() {
-            return applySearchFilter();
-        }
-
-        function orderDetails(order) {
-            return order;
-        }
-
-        function archivedOrders() {
-            return selectedOrders().filter(function (order) {
-                var status = order.status;
-                return status !== 'Новый' && status !== 'В работе';
             });
         }
 
@@ -123,20 +47,72 @@
                 '-' + String(date.getDate()).padStart(2, '0');
         }
 
+        // Поиск по клиенту/email/телефону
+        function getFilteredOrders() {
+            var q = (searchFilter || '').toLowerCase().trim();
+            if (!q) return orders;
+            return orders.filter(function (o) {
+                var text = ((o.client || '') + ' ' + (o.email || '') + ' ' + (o.phone || '')).toLowerCase();
+                return text.indexOf(q) !== -1;
+            });
+        }
+
+        // Заказы за выбранный период (для графиков)
+        function getOrdersByDateRange() {
+            var from = dateFromInput.value;
+            var to = dateToInput.value;
+            return orders.filter(function (order) {
+                return order.createdAt >= from && order.createdAt <= to;
+            });
+        }
+
+        function bindOrdersSearch() {
+            var searchInput = document.getElementById('ordersSearchInput');
+            var clearBtn = document.querySelector('#ordersFilterBar .filter-bar-clear');
+            var countEl = document.getElementById('ordersFilterCount');
+            if (!searchInput) return;
+
+            function updateClear() {
+                if (clearBtn) clearBtn.hidden = !searchFilter;
+            }
+
+            var timer = null;
+            searchInput.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    searchFilter = searchInput.value;
+                    page = 1;
+                    renderTable();
+                    updateClear();
+                }, 200);
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    searchInput.value = '';
+                    searchFilter = '';
+                    page = 1;
+                    renderTable();
+                    updateClear();
+                    searchInput.focus();
+                });
+            }
+        }
+
         function renderTable() {
-            var visible = visibleOrders();
+            var visible = getFilteredOrders();
             var pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
             page = Math.min(page, pageCount);
             var start = (page - 1) * pageSize;
             var pageOrders = visible.slice(start, start + pageSize);
+
             tableBody.innerHTML = pageOrders.map(function (order) {
-                var details = orderDetails(order);
-                var client = details.clientName || order.client;
-                var email = details.email || order.email;
-                var phone = details.phone || order.phone;
-                var type = details.projectType || order.type;
-                var budget = details.budget !== undefined ? details.budget : order.budget;
-                var deadline = details.deadline || order.deadline;
+                var client = order.clientName || order.client;
+                var email = order.email;
+                var phone = order.phone;
+                var type = order.projectType || order.type;
+                var budget = order.budget !== undefined ? order.budget : 0;
+                var deadline = order.deadline || '';
                 var status = order.status;
                 return '<tr data-order-row="' + order.id + '">' +
                     '<td>' + escapeHtml(client) + '</td>' +
@@ -151,16 +127,16 @@
                     }).join('') + '</select></td>' +
                     '<td class="text-end text-nowrap">' +
                     '<a class="btn btn-outline-secondary btn-action me-1" href="order-edit.html?id=' + order.id +
-                    '" aria-label="Редактировать клиента ' + escapeHtml(client) + '"><i class="bi bi-pencil"></i></a>' +
+                    '" aria-label="Редактировать клиента ' + escapeHtml(client || '') + '"><i class="bi bi-pencil"></i></a>' +
                     '<button type="button" class="btn btn-danger btn-action" data-order-delete="' +
-                    order.id + '" aria-label="Удалить заказ ' + escapeHtml(client) + '">' +
+                    order.id + '" aria-label="Удалить заказ ' + escapeHtml(client || '') + '">' +
                     '<i class="bi bi-trash"></i></button></td></tr>';
             }).join('');
 
             pageInfo.textContent = visible.length
                 ? 'Показано ' + (start + 1) + '–' + Math.min(start + pageSize, visible.length) +
                     ' из ' + visible.length + ' заказов'
-                : 'Нет заказов со статусом «Завершён» или «Отменён»';
+                : 'Нет заказов';
             renderPagination(pageCount);
         }
 
@@ -234,11 +210,12 @@
             var grouped = makeBuckets(from, to);
             var revenue = 0;
             periodOrders.forEach(function (order) {
+                if (!order.createdAt) return;
                 var created = new Date(order.createdAt + 'T12:00:00');
                 var bucket = grouped.buckets[grouped.indexFor(created)];
                 if (bucket) {
-                    bucket.total += Number(order.budget);
-                    revenue += Number(order.budget);
+                    bucket.total += Number(order.budget) || 0;
+                    revenue += Number(order.budget) || 0;
                 }
             });
 
@@ -298,7 +275,7 @@
             statuses.forEach(function (status) { counts[status] = 0; });
             periodOrders.forEach(function (order) {
                 var status = order.status;
-                counts[status]++;
+                counts[status] = (counts[status] || 0) + 1;
             });
             var total = periodOrders.length;
             var cursor = 0;
@@ -315,12 +292,12 @@
             document.getElementById('ordersStatusLegend').innerHTML = statuses.map(function (status) {
                 return '<div class="d-flex align-items-center gap-2 mb-1"><span class="orders-legend-dot" style="background:' +
                     statusColors[status] + '"></span><span>' + status + '</span><strong class="ms-auto">' +
-                    counts[status] + '</strong></div>';
+                    (counts[status] || 0) + '</strong></div>';
             }).join('');
         }
 
         function renderAnalytics() {
-            var periodOrders = selectedOrders();
+            var periodOrders = getOrdersByDateRange();
             var revenue = renderLineChart(periodOrders, dateFromInput.value, dateToInput.value);
             renderStatusChart(periodOrders);
             document.getElementById('ordersAnalyticsSummary').textContent =
@@ -398,10 +375,10 @@
             window.AdminApi.save('/api/admin/orders/' + encodeURIComponent(order.id), 'PATCH', { status: select.value })
                 .then(function (result) {
                     Object.assign(order, result.order);
-                window.dispatchEvent(new Event('admin-orders-state-changed'));
-                page = 1;
-                renderTable();
-                renderAnalytics();
+                    window.dispatchEvent(new Event('admin-orders-state-changed'));
+                    page = 1;
+                    renderTable();
+                    renderAnalytics();
                     window.AdminNotifications.show('success', 'Статус заказа сохранён');
                 }).catch(function (error) {
                     select.value = order.status;
@@ -417,63 +394,64 @@
                     orders = orders.filter(function (item) {
                         return String(item.id) !== button.dataset.orderDelete;
                     });
-                window.dispatchEvent(new Event('admin-orders-state-changed'));
-                page = Math.min(page, Math.max(1, Math.ceil(activeOrders().length / pageSize)));
-                render();
+                    window.dispatchEvent(new Event('admin-orders-state-changed'));
+                    page = Math.min(page, Math.max(1, Math.ceil(orders.length / pageSize)));
+                    render();
                     window.AdminNotifications.show('success', 'Заказ удалён');
                 }).catch(function (error) {
                     window.AdminNotifications.show('error', error.message || 'Не удалось удалить заказ');
                 });
         });
 
-            exportButton.addEventListener('click', function () {
-                if (!dateFromInput.value || !dateToInput.value || dateFromInput.value > dateToInput.value) {
-                    applyDateFilter();
-                    window.AdminNotifications.show('error', 'Выберите корректный диапазон дат для экспорта');
-                    return;
-                }
-                exportButton.disabled = true;
-                window.AdminApi.request('/api/admin/orders/export', {
-                    method: 'POST',
-                    body: { from: dateFromInput.value, to: dateToInput.value }
-                }).then(function (response) {
-                    var disposition = response.headers.get('Content-Disposition') || '';
-                    var match = disposition.match(/filename="([^"]+)"/);
-                    return response.blob().then(function (blob) {
-                        return { blob: blob, filename: match ? match[1] : 'orders.xls' };
-                    });
-                }).then(function (file) {
-                    var url = URL.createObjectURL(file.blob);
-                    var link = document.createElement('a');
-                    link.href = url;
-                    link.download = file.filename;
-                    document.body.appendChild(link);
-                    link.click();
-                    link.remove();
-                    URL.revokeObjectURL(url);
-                    window.AdminNotifications.show('success', 'Excel-файл заказов скачан');
-                }).catch(function (error) {
-                    window.AdminNotifications.show('error', error.message || 'Не удалось скачать Excel-файл');
-                }).finally(function () {
-                    exportButton.disabled = false;
+        exportButton.addEventListener('click', function () {
+            if (!dateFromInput.value || !dateToInput.value || dateFromInput.value > dateToInput.value) {
+                applyDateFilter();
+                window.AdminNotifications.show('error', 'Выберите корректный диапазон дат для экспорта');
+                return;
+            }
+            exportButton.disabled = true;
+            window.AdminApi.request('/api/admin/orders/export', {
+                method: 'POST',
+                body: { from: dateFromInput.value, to: dateToInput.value }
+            }).then(function (response) {
+                var disposition = response.headers.get('Content-Disposition') || '';
+                var match = disposition.match(/filename="([^"]+)"/);
+                return response.blob().then(function (blob) {
+                    return { blob: blob, filename: match ? match[1] : 'orders.xls' };
                 });
-            });
-            window.AdminApi.get('/api/admin/orders').then(function (data) {
-                orders = data.orders;
-                var today = new Date();
-                var yearAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-                yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-                var todayValue = toDateInputValue(today);
-                dateFromInput.max = todayValue;
-                dateToInput.max = todayValue;
-                dateFromInput.value = toDateInputValue(yearAgo);
-                dateToInput.value = todayValue;
-                bindOrdersSearch();
-                render();
+            }).then(function (file) {
+                var url = URL.createObjectURL(file.blob);
+                var link = document.createElement('a');
+                link.href = url;
+                link.download = file.filename;
+                document.body.appendChild(link);
+                link.click();
+                link.remove();
+                URL.revokeObjectURL(url);
+                window.AdminNotifications.show('success', 'Excel-файл заказов скачан');
             }).catch(function (error) {
-                errorBox.textContent = error.message || 'Не удалось загрузить заказы';
-                errorBox.hidden = false;
-                window.AdminNotifications.show('error', errorBox.textContent);
+                window.AdminNotifications.show('error', error.message || 'Не удалось скачать Excel-файл');
+            }).finally(function () {
+                exportButton.disabled = false;
             });
+        });
+
+        window.AdminApi.get('/api/admin/orders').then(function (data) {
+            orders = data.orders;
+            var today = new Date();
+            var yearAgo = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+            yearAgo.setFullYear(yearAgo.getFullYear() - 1);
+            var todayValue = toDateInputValue(today);
+            dateFromInput.max = todayValue;
+            dateToInput.max = todayValue;
+            dateFromInput.value = toDateInputValue(yearAgo);
+            dateToInput.value = todayValue;
+            bindOrdersSearch();
+            render();
+        }).catch(function (error) {
+            errorBox.textContent = error.message || 'Не удалось загрузить заказы';
+            errorBox.hidden = false;
+            window.AdminNotifications.show('error', errorBox.textContent);
+        });
     });
 }());

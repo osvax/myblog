@@ -1,6 +1,19 @@
 <div class="d-flex justify-content-end flex-wrap gap-2 mb-3"><a class="btn btn-orange fw-bold" href="article-edit.html">
                     <i class="bi bi-plus-lg"></i> Добавить статью
                 </a></div><div class="card admin-card">
+                <?php
+                $blogStatuses = [
+                    'true' => 'Опубликован',
+                    'false' => 'Черновик',
+                ];
+                $blogFilterVars = [
+                    'filterPlaceholder' => 'Поиск: название, рубрика, тег…',
+                    'filterAriaLabel' => 'Фильтр статей',
+                    'filterStatusLabel' => 'Все статусы',
+                    'filterStatuses' => $blogStatuses,
+                ];
+                extract($blogFilterVars);
+                ?>
                 <?php include __DIR__ . '/../partials/filter-bar.php'; ?>
                 <div class="table-responsive">
                     <table class="table admin-table mb-0">
