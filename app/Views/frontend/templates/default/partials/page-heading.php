@@ -3,9 +3,10 @@
         <?php if (!empty($headingIcon)): ?>
             <i class="bi <?= htmlspecialchars($headingIcon, ENT_QUOTES, 'UTF-8') ?> display-3 mb-3"></i>
         <?php endif; ?>
-        <h1 class="fw-bold mb-2"><?= htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') ?></h1>
+        <!-- Заголовок — стилизованный div вместо h1 (по решению владельца сайта) -->
+        <div class="fw-bold mb-2" style="font-size: 2.5rem; line-height: 1.2;"><?= htmlspecialchars($heading, ENT_QUOTES, 'UTF-8') ?></div>
         <?php if (!empty($headingLead)): ?>
-            <p class="lead fw-bold mb-0"><?= htmlspecialchars($headingLead, ENT_QUOTES, 'UTF-8') ?></p>
+            <div class="lead fw-bold mb-0"><?= htmlspecialchars($headingLead, ENT_QUOTES, 'UTF-8') ?></div>
         <?php endif; ?>
     </div>
 </header>

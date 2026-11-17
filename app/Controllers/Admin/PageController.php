@@ -37,23 +37,32 @@ class PageController extends Controller
             ]);
         }
 
+        // Разделы сайдбара: выпадающие группы; активный пункт раскрывает свою группу
         $navigation = [
-            ['slug' => 'index', 'url' => '/admin/index.html', 'icon' => 'bi-speedometer2', 'label' => 'Дашборд'],
-            ['slug' => 'categories', 'url' => '/admin/categories.html', 'icon' => 'bi-tags', 'label' => 'Рубрики', 'divider' => true],
-            ['slug' => 'blog', 'url' => '/admin/blog.html', 'icon' => 'bi-journal-text', 'label' => 'Блог'],
-            ['slug' => 'portfolio', 'url' => '/admin/portfolio.html', 'icon' => 'bi-briefcase', 'label' => 'Портфолио'],
-            ['slug' => 'messages', 'url' => '/admin/messages.html', 'icon' => 'bi-chat-left-text', 'label' => 'Комментарии'],
-            ['slug' => 'consultant', 'url' => '/admin/consultant.html', 'icon' => 'bi-headset', 'label' => 'Консультант', 'divider' => true],
-            ['slug' => 'orders', 'url' => '/admin/orders.html', 'icon' => 'bi-cart-check', 'label' => 'Заказы'],
-            ['slug' => 'current-orders', 'url' => '/admin/current-orders.html', 'icon' => 'bi-hourglass-split', 'label' => 'Текущие'],
-            ['slug' => 'new-orders', 'url' => '/admin/new-orders.html', 'icon' => 'bi-bell', 'label' => 'Новые', 'divider' => true],
-            ['slug' => 'calculator', 'url' => '/admin/calculator.html', 'icon' => 'bi-calculator', 'label' => 'Калькулятор'],
-            ['slug' => 'files', 'url' => '/admin/files.html', 'icon' => 'bi-folder2-open', 'label' => 'Файлы'],
-            ['slug' => 'templates', 'url' => '/admin/templates.html', 'icon' => 'bi-code-slash', 'label' => 'Шаблоны'],
-            ['slug' => 'settings', 'url' => '/admin/settings.html', 'icon' => 'bi-gear', 'label' => 'Настройки сайта', 'divider' => true],
-            ['slug' => 'custom-fields', 'url' => '/admin/custom-fields.html', 'icon' => 'bi-input-cursor-text', 'label' => 'Пользовательские поля'],
-            ['slug' => 'landing-pages', 'url' => '/admin/landing-pages.html', 'icon' => 'bi-window-desktop', 'label' => 'Страницы'],
-            ['slug' => 'users', 'url' => '/admin/users.html', 'icon' => 'bi-people', 'label' => 'Пользователи'],
+            ['type' => 'link', 'slug' => 'index', 'url' => '/admin/index.html', 'icon' => 'bi-speedometer2', 'label' => 'Дашборд'],
+            ['type' => 'group', 'id' => 'group-content', 'icon' => 'bi-collection', 'label' => 'Контент', 'items' => [
+                ['slug' => 'blog', 'url' => '/admin/blog.html', 'icon' => 'bi-journal-text', 'label' => 'Блог'],
+                ['slug' => 'categories', 'url' => '/admin/categories.html', 'icon' => 'bi-tags', 'label' => 'Рубрики'],
+                ['slug' => 'portfolio', 'url' => '/admin/portfolio.html', 'icon' => 'bi-briefcase', 'label' => 'Портфолио'],
+                ['slug' => 'landing-pages', 'url' => '/admin/landing-pages.html', 'icon' => 'bi-window-desktop', 'label' => 'Страницы'],
+                ['slug' => 'templates', 'url' => '/admin/templates.html', 'icon' => 'bi-code-slash', 'label' => 'Шаблоны'],
+            ]],
+            ['type' => 'group', 'id' => 'group-orders', 'icon' => 'bi-cart3', 'label' => 'Заказы', 'items' => [
+                ['slug' => 'new-orders', 'url' => '/admin/new-orders.html', 'icon' => 'bi-bell', 'label' => 'Новые'],
+                ['slug' => 'current-orders', 'url' => '/admin/current-orders.html', 'icon' => 'bi-hourglass-split', 'label' => 'Текущие'],
+                ['slug' => 'orders', 'url' => '/admin/orders.html', 'icon' => 'bi-list-ul', 'label' => 'Все заказы'],
+                ['slug' => 'calculator', 'url' => '/admin/calculator.html', 'icon' => 'bi-calculator', 'label' => 'Калькулятор'],
+            ]],
+            ['type' => 'group', 'id' => 'group-people', 'icon' => 'bi-chat-dots', 'label' => 'Общение и клиенты', 'items' => [
+                ['slug' => 'messages', 'url' => '/admin/messages.html', 'icon' => 'bi-chat-left-text', 'label' => 'Сообщения'],
+                ['slug' => 'consultant', 'url' => '/admin/consultant.html', 'icon' => 'bi-headset', 'label' => 'Консультант'],
+                ['slug' => 'users', 'url' => '/admin/users.html', 'icon' => 'bi-people', 'label' => 'Пользователи'],
+            ]],
+            ['type' => 'group', 'id' => 'group-system', 'icon' => 'bi-sliders2', 'label' => 'Система', 'items' => [
+                ['slug' => 'settings', 'url' => '/admin/settings.html', 'icon' => 'bi-gear', 'label' => 'Настройки сайта'],
+                ['slug' => 'custom-fields', 'url' => '/admin/custom-fields.html', 'icon' => 'bi-input-cursor-text', 'label' => 'Пользовательские поля'],
+                ['slug' => 'files', 'url' => '/admin/files.html', 'icon' => 'bi-folder2-open', 'label' => 'Файлы'],
+            ]],
         ];
         $activeSection = [
             'article-edit' => 'blog',
@@ -61,13 +70,26 @@ class PageController extends Controller
             'order-edit' => 'orders',
             'user-edit' => 'users',
         ][$slug] ?? $slug;
-        foreach ($navigation as &$item) {
-            $item['active'] = $item['slug'] === $activeSection;
-            // Фильтруем навигацию по ролям
-            $item['allowed'] = \admin_can_access($item['slug']);
-            unset($item['slug']);
+        foreach ($navigation as &$entry) {
+            if ($entry['type'] === 'group') {
+                $groupOpen = false;
+                foreach ($entry['items'] as &$item) {
+                    $item['active'] = $item['slug'] === $activeSection;
+                    $item['allowed'] = \admin_can_access($item['slug']);
+                    if ($item['active'] && $item['allowed']) {
+                        $groupOpen = true;
+                    }
+                    unset($item['slug']);
+                }
+                unset($item);
+                $entry['open'] = $groupOpen;
+            } else {
+                $entry['active'] = $entry['slug'] === $activeSection;
+                $entry['allowed'] = \admin_can_access($entry['slug']);
+                unset($entry['slug']);
+            }
         }
-        unset($item);
+        unset($entry);
 
         $scripts = [];
         foreach ($pages[$slug]['scripts'] ?? [] as $script) {

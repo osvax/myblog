@@ -34,15 +34,35 @@
             ?>
             <span class="badge <?= $roleBadgeClass ?> fw-bold"><?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></span>
         </div>
-        <nav class="nav flex-column p-2" aria-label="Административное меню">
-            <?php foreach (($navigation ?? []) as $item): ?>
-                <?php if (!empty($item['allowed'])): ?>
-                    <a class="admin-link<?= !empty($item['active']) ? ' active' : '' ?>" href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>">
-                        <i class="bi <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i> <?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?>
+        <nav class="nav flex-column p-2 admin-nav" aria-label="Административное меню">
+            <?php foreach (($navigation ?? []) as $entry): ?>
+                <?php if (($entry['type'] ?? 'link') === 'group'): ?>
+                    <?php
+                    // Группа разделов: выпадающий список, открыт у активного пункта
+                    $visibleItems = array_values(array_filter($entry['items'], static fn ($i) => !empty($i['allowed'])));
+                    if (!$visibleItems) continue;
+                    ?>
+                    <button class="admin-nav-group-btn" type="button"
+                            data-bs-toggle="collapse" data-bs-target="#<?= htmlspecialchars($entry['id'], ENT_QUOTES, 'UTF-8') ?>"
+                            aria-expanded="<?= !empty($entry['open']) ? 'true' : 'false' ?>"
+                            aria-controls="<?= htmlspecialchars($entry['id'], ENT_QUOTES, 'UTF-8') ?>">
+                        <span class="admin-nav-group-label"><i class="bi <?= htmlspecialchars($entry['icon'], ENT_QUOTES, 'UTF-8') ?>"></i> <?= htmlspecialchars($entry['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                        <i class="bi bi-chevron-down group-chevron" aria-hidden="true"></i>
+                    </button>
+                    <div class="collapse<?= !empty($entry['open']) ? ' show' : '' ?>" id="<?= htmlspecialchars($entry['id'], ENT_QUOTES, 'UTF-8') ?>">
+                        <?php foreach ($visibleItems as $item): ?>
+                            <a class="admin-link admin-link-sub<?= !empty($item['active']) ? ' active' : '' ?>" href="<?= htmlspecialchars($item['url'], ENT_QUOTES, 'UTF-8') ?>">
+                                <i class="bi <?= htmlspecialchars($item['icon'], ENT_QUOTES, 'UTF-8') ?>"></i> <span class="admin-link-text"><?= htmlspecialchars($item['label'], ENT_QUOTES, 'UTF-8') ?></span>
+                            </a>
+                        <?php endforeach; ?>
+                    </div>
+                <?php elseif (!empty($entry['allowed'])): ?>
+                    <a class="admin-link<?= !empty($entry['active']) ? ' active' : '' ?>" href="<?= htmlspecialchars($entry['url'], ENT_QUOTES, 'UTF-8') ?>">
+                        <i class="bi <?= htmlspecialchars($entry['icon'], ENT_QUOTES, 'UTF-8') ?>"></i> <?= htmlspecialchars($entry['label'], ENT_QUOTES, 'UTF-8') ?>
                     </a>
-                    <?php if (!empty($item['divider'])): ?><hr class="admin-divider"><?php endif; ?>
                 <?php endif; ?>
             <?php endforeach; ?>
+            <hr class="admin-divider">
             <a class="admin-link" href="/"><i class="bi bi-box-arrow-left"></i> Вернуться на сайт</a>
         </nav>
     </aside>

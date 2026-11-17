@@ -50,10 +50,12 @@ return function (Router $router) {
     // Заглушка режима обслуживания (в общем дизайне сайта)
     $router->get('/maintenance.html', function ($request) {
         $user = current_user();
+        $message = trim((string) (new \App\Models\SiteSettings())->get('maintenanceMessage', ''));
         return \App\Core\View::renderPage('frontend', 'maintenance', [
             'title' => 'Сайт на обслуживании — МойБлог',
             'description' => 'Ведутся технические работы.',
             'activePage' => '',
+            'maintenanceMessage' => $message !== '' ? $message : 'Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

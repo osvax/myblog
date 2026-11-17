@@ -12,8 +12,7 @@
             <i class="bi bi-tools display-1 text-orange"></i>
             <h2 class="fw-bold display-6 mt-4">Ведутся технические работы</h2>
             <p class="fw-bold text-muted lead mb-4">
-                Мы ненадолго закрыли сайт, чтобы сделать его ещё лучше.<br>
-                Загляните чуть позже — здесь снова будет всё работать.
+                <?= htmlspecialchars($maintenanceMessage ?? 'Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!', ENT_QUOTES, 'UTF-8') ?>
             </p>
             <?php if (!empty($user)): ?>
                 <p class="fw-bold text-muted">Вы вошли как <?= htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') ?> — доступ к сайту будет открыт снова после окончания работ.</p>

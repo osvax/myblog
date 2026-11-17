@@ -208,6 +208,80 @@
     opacity: 1;
 }
 
+/* ---------- Выпадающие группы меню сайдбара ---------- */
+.admin-nav-group-btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: .5rem;
+    width: 100%;
+    padding: .5rem .9rem;
+    margin-top: .4rem;
+    background: none;
+    border: 0;
+    border-radius: .5rem;
+    color: rgba(255, 255, 255, .5);
+    font-size: .74rem;
+    font-weight: 800;
+    letter-spacing: .07em;
+    text-transform: uppercase;
+    text-align: left;
+    transition: background-color .2s ease, color .2s ease;
+}
+
+.admin-nav-group-btn:hover {
+    background-color: rgba(255, 140, 26, .15);
+    color: #ffffff;
+}
+
+.admin-nav-group-btn[aria-expanded="true"] {
+    color: var(--orange);
+}
+
+.admin-nav-group-btn i {
+    font-size: 1.05rem;
+    width: 1.4rem;
+    text-align: center;
+}
+
+.admin-nav-group-btn .group-chevron {
+    width: auto;
+    font-size: .8rem;
+    transition: transform .25s ease;
+}
+
+.admin-nav-group-btn[aria-expanded="true"] .group-chevron {
+    transform: rotate(180deg);
+}
+
+/* Пункты внутри группы — с отступом */
+.admin-nav .collapse .admin-link {
+    padding-left: 1.5rem;
+    font-size: .85rem;
+}
+
+@media (min-width: 992px) {
+    /* Свёрнутый сайдбар: группа превращается в иконку, панели скрыты */
+    .admin-wrapper.sidebar-collapsed .admin-nav-group-btn {
+        justify-content: center;
+        padding-left: .5rem;
+        padding-right: .5rem;
+        font-size: 0;
+    }
+
+    .admin-wrapper.sidebar-collapsed .admin-nav-group-btn i {
+        font-size: 1.1rem;
+    }
+
+    .admin-wrapper.sidebar-collapsed .admin-nav-group-btn .group-chevron {
+        display: none;
+    }
+
+    .admin-wrapper.sidebar-collapsed .admin-nav .collapse {
+        display: none !important;
+    }
+}
+
 /* ---------- Верхняя панель ---------- */
 .admin-topbar {
     background-color: #353535;

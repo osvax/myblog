@@ -12,7 +12,7 @@
                             <button class="nav-link" id="mail-tab" data-bs-toggle="tab" data-bs-target="#mail-pane" type="button" role="tab" aria-controls="mail-pane" aria-selected="false" title="Email письма"><i class="bi bi-envelope-paper"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="headings-tab" data-bs-toggle="tab" data-bs-target="#headings-pane" type="button" role="tab" aria-controls="headings-pane" aria-selected="false" title="Заголовки"><i class="bi bi-heading"></i></button>
+                            <button class="nav-link" id="headings-tab" data-bs-toggle="tab" data-bs-target="#headings-pane" type="button" role="tab" aria-controls="headings-pane" aria-selected="false" title="Заголовки"><i class="bi bi-type-h1"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="seo-tab" data-bs-toggle="tab" data-bs-target="#seo-pane" type="button" role="tab" aria-controls="seo-pane" aria-selected="false" title="SEO"><i class="bi bi-search"></i></button>
@@ -68,18 +68,6 @@
                                         <option selected>Русский</option>
                                         <option>English</option>
                                     </select>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="siteStatus" class="form-label fw-bold">Режим сайта</label>
-                                    <select id="siteStatus" class="form-select">
-                                        <option value="online" selected>Работает</option>
-                                        <option value="maintenance">Обслуживание (заглушка для посетителей)</option>
-                                    </select>
-                                </div>
-                                <div class="col-12">
-                                    <label for="maintenanceAllowedIps" class="form-label fw-bold">IP-адреса с доступом при обслуживании</label>
-                                    <textarea id="maintenanceAllowedIps" class="form-control" rows="2" placeholder="127.0.0.1&#10;::1"></textarea>
-                                    <div class="small text-muted mt-1">По одному IP на строку (или через запятую). Админка и вход доступны всегда.</div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
@@ -374,11 +362,12 @@
                             <h3 class="h5 fw-bold mb-4">Настройки безопасности</h3>
                             <div class="row g-3">
                                 <div class="col-md-6">
-                                    <label for="siteStatus" class="form-label fw-bold">Доступность сайта</label>
+                                    <label for="siteStatus" class="form-label fw-bold">Режим сайта</label>
                                     <select id="siteStatus" class="form-select">
-                                        <option value="open" selected>Сайт открыт</option>
+                                        <option value="online" selected>Работает</option>
                                         <option value="maintenance">Закрыт на техническое обслуживание</option>
                                     </select>
+                                    <div class="small text-muted mt-1">Посетители вне IP-списка видят заглушку; админка и вход доступны всегда.</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="twoFactorMethod" class="form-label fw-bold">Двухфакторная аутентификация</label>
@@ -391,6 +380,11 @@
                                 <div class="col-12">
                                     <label for="maintenanceMessage" class="form-label fw-bold">Сообщение на время обслуживания</label>
                                     <textarea id="maintenanceMessage" class="form-control" rows="2" maxlength="300">Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!</textarea>
+                                </div>
+                                <div class="col-12">
+                                    <label for="maintenanceAllowedIps" class="form-label fw-bold">IP-адреса с доступом при обслуживании</label>
+                                    <textarea id="maintenanceAllowedIps" class="form-control font-monospace" rows="2" placeholder="127.0.0.1&#10;::1"></textarea>
+                                    <div class="small text-muted mt-1">По одному IP на строку (или через запятую). Эти посетители видят обычный сайт в режиме обслуживания.</div>
                                 </div>
                                 <div class="col-12">
                                     <label for="adminIpAllowlist" class="form-label fw-bold">Разрешённые IP для входа в админку</label>
