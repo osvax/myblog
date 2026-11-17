@@ -90,3 +90,35 @@
                     </div>
                 </form>
             </div>
+
+<!-- Модальное окно вставки блока кода (без него article-edit.js падает при инициализации) -->
+<div class="modal fade" id="articleCodeModal" tabindex="-1" aria-labelledby="articleCodeModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <form class="modal-content" id="articleCodeForm">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="articleCodeModalLabel">Вставить код</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <label class="form-label fw-bold" for="articleCodeLanguage">Язык</label>
+                <select class="form-select mb-3" id="articleCodeLanguage">
+                    <option value="html">HTML</option>
+                    <option value="css">CSS</option>
+                    <option value="javascript" selected>JavaScript</option>
+                    <option value="php">PHP</option>
+                    <option value="sql">SQL</option>
+                    <option value="bash">Bash</option>
+                </select>
+                <label class="form-label fw-bold" for="articleCodeText">Код</label>
+                <textarea class="form-control font-monospace" id="articleCodeText" rows="8" spellcheck="false"></textarea>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                <button type="submit" class="btn btn-orange fw-bold">Вставить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Контейнер всплывающих уведомлений редактора -->
+<div class="toast-container position-fixed top-0 end-0 p-3" id="articleToastContainer"></div>

@@ -53,8 +53,29 @@
                 <p class="fw-bold text-muted lead">Попробуйте изменить поисковый запрос</p>
             </div>
 
-            <!-- Пагинация -->
-            
+            <!-- Пагинация (скрывается при активном поиске в blog-search.js) -->
+            <?php $blogPagination = is_array($pagination ?? null) ? $pagination : null; ?>
+            <?php if ($blogPagination !== null && (int) $blogPagination['pages'] > 1): ?>
+                <?php
+                $blogBaseUrl = !empty($categorySlug) ? '/category/' . rawurlencode($categorySlug) . '.html' : '/blog.html';
+                ?>
+                <nav class="mt-5" aria-label="Постраничная навигация">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item <?= (int) $blogPagination['current'] <= 1 ? 'disabled' : '' ?>">
+                            <a class="page-link fw-bold" href="<?= $blogBaseUrl ?>?page=<?= max(1, (int) $blogPagination['current'] - 1) ?>" aria-label="Предыдущая страница">Назад</a>
+                        </li>
+                        <?php for ($blogPage = 1; $blogPage <= (int) $blogPagination['pages']; $blogPage++): ?>
+                            <li class="page-item <?= $blogPage === (int) $blogPagination['current'] ? 'active' : '' ?>">
+                                <a class="page-link fw-bold" href="<?= $blogBaseUrl ?>?page=<?= $blogPage ?>"><?= $blogPage ?></a>
+                            </li>
+                        <?php endfor; ?>
+                        <li class="page-item <?= (int) $blogPagination['current'] >= (int) $blogPagination['pages'] ? 'disabled' : '' ?>">
+                            <a class="page-link fw-bold" href="<?= $blogBaseUrl ?>?page=<?= min((int) $blogPagination['pages'], (int) $blogPagination['current'] + 1) ?>" aria-label="Следующая страница">Вперёд</a>
+                        </li>
+                    </ul>
+                </nav>
+            <?php endif; ?>
+
         </div>
     </section>
 

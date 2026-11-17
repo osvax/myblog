@@ -82,6 +82,10 @@
                                     <textarea id="heroSubtitle" class="form-control" rows="2" maxlength="500">Здесь я делюсь опытом, статьями и проектами. Всё самое интересное — в одном месте.</textarea>
                                 </div>
                                 <div class="col-md-6">
+                                    <label for="homeFeaturedCount" class="form-label fw-bold">Статей в разделе «Свежие статьи»</label>
+                                    <input type="number" id="homeFeaturedCount" class="form-control" min="1" max="12" value="3">
+                                </div>
+                                <div class="col-md-6">
                                     <label for="heroPrimaryText" class="form-label fw-bold">Текст главной кнопки</label>
                                     <input type="text" id="heroPrimaryText" class="form-control" value="Читать блог" maxlength="80">
                                 </div>

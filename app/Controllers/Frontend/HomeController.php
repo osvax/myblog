@@ -26,11 +26,16 @@ class HomeController extends Controller
         foreach ($content->projects(true) as $project) {
             $projects[$project['slug']] = $project;
         }
+        $user = current_user();
+
+        // Тексты главной страницы редактируются в админке (Настройки → Главная)
+        $home = (new \App\Models\SiteSettings())->all();
+
+        // Количество свежих статей на главной настраивается в админке (homeFeaturedCount)
+        $featuredCount = max(1, min(12, (int) ($home['homeFeaturedCount'] ?? 3)));
         $featuredArticles = [];
-        foreach (['post-bootstrap', 'post-ui', 'post-js'] as $slug) {
-            if (isset($articles[$slug])) {
-                $featuredArticles[$slug] = $articles[$slug];
-            }
+        foreach (array_slice(array_values($articles), 0, $featuredCount) as $article) {
+            $featuredArticles[$article['slug']] = $article;
         }
         $featuredProjects = [];
         foreach (['project-shop', 'project-blog', 'project-landing', 'project-dashboard'] as $slug) {
@@ -38,11 +43,6 @@ class HomeController extends Controller
                 $featuredProjects[$slug] = $projects[$slug];
             }
         }
-
-        $user = current_user();
-
-        // Тексты главной страницы редактируются в админке (Настройки → Главная)
-        $home = (new \App\Models\SiteSettings())->all();
 
         return $this->page('frontend', 'home', [
             'title' => 'Главная — МойБлог',

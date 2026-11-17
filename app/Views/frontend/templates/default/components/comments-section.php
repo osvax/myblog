@@ -15,6 +15,11 @@ $commentsSectionSlug = isset($article['slug']) ? $article['slug'] : '';
 $commentsSectionVisible = !empty($commentsVisible);
 $commentsSectionUser = (isset($user) && is_array($user)) ? $user : null;
 
+// Комментарии отключены глобально (Настройки → Блог → «Разрешить комментарии») — секция не выводится
+if (isset($commentsEnabled) && !$commentsEnabled) {
+    return;
+}
+
 // Группируем комментарии: корневые и сгруппированные по родителю ответы
 $commentsRoot = [];
 $commentsByParent = [];

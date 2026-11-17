@@ -12,11 +12,18 @@ class BlogController extends Controller
     {
         $user = current_user();
         $content = new ContentRepository();
-        $articles = [];
+        $settings = (new \App\Models\SiteSettings())->all();
+        $perPage = max(1, min(100, (int) ($settings['articlePerPage'] ?? 12)));
+
+        $all = [];
         foreach ($content->articles(true) as $article) {
             $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
-            $articles[$article['slug']] = $article;
+            $all[$article['slug']] = $article;
         }
+        $total = count($all);
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
+        $articles = array_slice($all, ($page - 1) * $perPage, $perPage, true);
         $categories = $content->categories();
         $categoriesMap = [];
         foreach ($categories as $cat) {
@@ -29,6 +36,8 @@ class BlogController extends Controller
             'activePage' => 'blog',
             'articles' => $articles,
             'categories' => $categoriesMap,
+            'pagination' => ['total' => $total, 'pages' => $pages, 'current' => $page],
+            'pageScripts' => ['/js/blog-search.js'],
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -47,11 +56,19 @@ class BlogController extends Controller
             return new Response('Рубрика не найдена', 404);
         }
 
-        $articles = [];
+        $settings = (new \App\Models\SiteSettings())->all();
+        $perPage = max(1, min(100, (int) ($settings['articlePerPage'] ?? 12)));
+
+        $all = [];
         foreach ($content->articlesByCategory($slug) as $article) {
             $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
-            $articles[$article['slug']] = $article;
+            $all[$article['slug']] = $article;
         }
+        $total = count($all);
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
+        $articles = array_slice($all, ($page - 1) * $perPage, $perPage, true);
+
         $categories = $content->categories();
         $categoriesMap = [];
         foreach ($categories as $cat) {
@@ -67,6 +84,8 @@ class BlogController extends Controller
             'categoryName' => $category['name'],
             'categorySlug' => $category['slug'],
             'categoryDescription' => $category['description'] ?? '',
+            'pagination' => ['total' => $total, 'pages' => $pages, 'current' => $page],
+            'pageScripts' => ['/js/blog-search.js'],
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -110,12 +129,15 @@ class BlogController extends Controller
         $sidebarCategories = $content->categories();
 
         // Видимость комментариев настраивается в админке (Настройки → Блог → commentsAccess)
-        $commentsAccess = (string) ((new \App\Models\SiteSettings())->get('commentsAccess', 'users') ?: 'users');
+        $commentsSettings = (new \App\Models\SiteSettings());
+        $commentsAccess = (string) ($commentsSettings->get('commentsAccess', 'users') ?: 'users');
         $commentsVisible = match ($commentsAccess) {
             'guests' => true,
             'staff' => $user && in_array($user['role'], ['admin', 'editor', 'manager'], true),
             default => $user !== null,
         };
+        // Глобальный тумблер «Разрешить комментарии»: выключен — секция не выводится
+        $commentsEnabled = (bool) $commentsSettings->get('articleCommentsEnabled', true);
         $commentsCount = $content->commentsCount($slug);
         $comments = $commentsVisible ? $content->commentsByArticle($slug) : [];
 
@@ -129,6 +151,7 @@ class BlogController extends Controller
             'comments' => $comments,
             'commentsCount' => $commentsCount,
             'commentsVisible' => $commentsVisible,
+            'commentsEnabled' => $commentsEnabled,
             'sidebarCategories' => $sidebarCategories,
             // Форма комментария отправляется через AJAX forms.js с тостом,
             // иначе браузер уходит на JSON-ответ обработчика
