@@ -1,0 +1,319 @@
+<?php
+
+namespace App\Controllers\Frontend;
+
+use App\Controllers\Controller;
+use App\Models\User;
+
+class AuthController extends Controller
+{
+    /**
+     * Показать форму входа.
+     */
+    public function login($request)
+    {
+        $user = current_user();
+
+        return $this->page('frontend', 'login', [
+            'title' => 'Вход — МойБлог',
+            'pageTitle' => 'Вход в аккаунт',
+            'user' => $user,
+            'isAdmin' => $user && $user['role'] === 'admin',
+            'includeAuthScript' => true,
+        ]);
+    }
+
+    /**
+     * Показать форму регистрации.
+     */
+    public function register($request)
+    {
+        $user = current_user();
+
+        return $this->page('frontend', 'register', [
+            'title' => 'Регистрация — МойБлог',
+            'pageTitle' => 'Создать аккаунт',
+            'user' => $user,
+            'isAdmin' => $user && $user['role'] === 'admin',
+            'includeAuthScript' => true,
+        ]);
+    }
+
+    /**
+     * Показать форму восстановления пароля.
+     */
+    public function forgotPassword($request)
+    {
+        $user = current_user();
+
+        return $this->page('frontend', 'forgot-password', [
+            'title' => 'Восстановление пароля — МойБлог',
+            'pageTitle' => 'Восстановить пароль',
+            'user' => $user,
+            'isAdmin' => $user && $user['role'] === 'admin',
+            'includeAuthScript' => true,
+        ]);
+    }
+
+    /**
+     * Показать форму сброса пароля по токену.
+     */
+    public function resetPassword($request, $parameters)
+    {
+        $token = $parameters['token'] ?? '';
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+            return new \App\Core\Response('Неверный токен сброса пароля', 400);
+        }
+
+        $user = current_user();
+
+        return $this->page('frontend', 'reset-password', [
+            'title' => 'Сброс пароля — МойБлог',
+            'pageTitle' => 'Новый пароль',
+            'token' => $token,
+            'user' => $user,
+            'isAdmin' => $user && $user['role'] === 'admin',
+            'includeAuthScript' => true,
+        ]);
+    }
+
+    /**
+     * Обработать вход.
+     */
+    public function handleLogin($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $input = $request->json();
+        $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
+        $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['success' => false, 'error' => 'Введите корректный email'], 400);
+        }
+        if (strlen($password) < 8) {
+            return $this->json(['success' => false, 'error' => 'Пароль должен содержать минимум 8 символов'], 400);
+        }
+
+        $result = (new User())->verifyCredentials($email, $password);
+        if (!$result['valid']) {
+            return $this->json(['success' => false, 'error' => $result['error']], 401);
+        }
+
+        // Начинаем сессию
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+        if (!session_regenerate_id(true)) {
+            return $this->json(['success' => false, 'error' => 'Не удалось создать сессию'], 500);
+        }
+
+        $_SESSION['user_authenticated'] = true;
+        $_SESSION['user_id'] = $result['user']['id'];
+        $_SESSION['user_email'] = $result['user']['email'];
+        $_SESSION['user_name'] = $result['user']['name'];
+        $_SESSION['user_role'] = $result['user']['role'];
+        $_SESSION['user_authenticated_at'] = time();
+
+        return $this->json(['success' => true]);
+    }
+
+    /**
+     * Обработать регистрацию.
+     */
+    public function handleRegister($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $input = $request->json();
+        $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
+        $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
+        $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
+        $passwordConfirm = isset($input['password_confirm']) && is_string($input['password_confirm']) ? $input['password_confirm'] : '';
+
+        if (strlen($name) < 2 || strlen($name) > 160) {
+            return $this->json(['success' => false, 'error' => 'Имя должно содержать от 2 до 160 символов'], 400);
+        }
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['success' => false, 'error' => 'Введите корректный email'], 400);
+        }
+        if (strlen($password) < 8) {
+            return $this->json(['success' => false, 'error' => 'Пароль должен содержать минимум 8 символов'], 400);
+        }
+        if ($password !== $passwordConfirm) {
+            return $this->json(['success' => false, 'error' => 'Пароли не совпадают'], 400);
+        }
+
+        // Хешируем пароль
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        $result = (new User())->create($email, $passwordHash, $name);
+        if (!$result['success']) {
+            return $this->json(['success' => false, 'error' => $result['error']], 400);
+        }
+
+        return $this->json(['success' => true]);
+    }
+
+    /**
+     * Обработать запрос на восстановление пароля.
+     */
+    public function handleForgotPassword($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $input = $request->json();
+        $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
+
+        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            return $this->json(['success' => false, 'error' => 'Введите корректный email'], 400);
+        }
+
+        $user = (new User())->findByEmail($email);
+        if (!$user) {
+            // Для защиты от enumeration возвращаем успех даже если пользователь не найден
+            return $this->json(['success' => true, 'message' => 'Если пользователь с таким email найден, мы отправили ссылку для сброса пароля']);
+        }
+
+        // Генерируем токен
+        $result = (new User())->updateResetToken((int) $user['id']);
+        if (!$result['success']) {
+            return $this->json(['success' => false, 'error' => 'Не удалось создать токен сброса'], 500);
+        }
+
+        // Формируем ссылку для сброса
+        $resetLink = sprintf(
+            '%s/reset-password/%s',
+            rtrim($_SERVER['HTTP_HOST'] ?? 'localhost', '/'),
+            $result['token']
+        );
+
+        // Отправляем письмо
+        $this->sendResetEmail($email, $result['token'], $resetLink);
+
+        return $this->json(['success' => true, 'message' => 'Ссылка для сброса пароля отправлена на ' . $email]);
+    }
+
+    /**
+     * Обработать сброс пароля.
+     */
+    public function handleResetPassword($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $input = $request->json();
+        $token = isset($input['token']) && is_string($input['token']) ? $input['token'] : '';
+        $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
+        $passwordConfirm = isset($input['password_confirm']) && is_string($input['password_confirm']) ? $input['password_confirm'] : '';
+
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+            return $this->json(['success' => false, 'error' => 'Неверный токен'], 400);
+        }
+        if (strlen($password) < 8) {
+            return $this->json(['success' => false, 'error' => 'Пароль должен содержать минимум 8 символов'], 400);
+        }
+        if ($password !== $passwordConfirm) {
+            return $this->json(['success' => false, 'error' => 'Пароли не совпадают'], 400);
+        }
+
+        // Находим пользователя по токену
+        $user = (new User())->findByResetToken($token);
+        if (!$user) {
+            return $this->json(['success' => false, 'error' => 'Токен недействителен или истёк'], 400);
+        }
+
+        // Хешируем новый пароль
+        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
+
+        // Обновляем пароль
+        $result = (new User())->updatePassword((int) $user['id'], $passwordHash);
+        if (!$result['success']) {
+            return $this->json(['success' => false, 'error' => 'Не удалось обновить пароль'], 500);
+        }
+
+        return $this->json(['success' => true]);
+    }
+
+    /**
+     * Обработать выход.
+     */
+    public function handleLogout($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', [
+                'expires' => time() - 42000,
+                'path' => $params['path'],
+                'domain' => $params['domain'],
+                'secure' => $params['secure'],
+                'httponly' => $params['httponly'],
+                'samesite' => 'Lax',
+            ]);
+        }
+
+        session_destroy();
+        return $this->json(['success' => true]);
+    }
+
+    /**
+     * Проверить авторизацию пользователя.
+     */
+    public function checkAuth()
+    {
+        if (session_status() === PHP_SESSION_NONE) {
+            session_start();
+        }
+
+        if (!empty($_SESSION['user_authenticated'])) {
+            return $this->json([
+                'authenticated' => true,
+                'user' => [
+                    'id' => (int) ($_SESSION['user_id'] ?? 0),
+                    'email' => $_SESSION['user_email'] ?? '',
+                    'name' => $_SESSION['user_name'] ?? '',
+                    'role' => $_SESSION['user_role'] ?? 'user',
+                ],
+            ]);
+        }
+
+        return $this->json(['authenticated' => false]);
+    }
+
+    /**
+     * Отправить письмо для сброса пароля.
+     *
+     * @param string $to
+     * @param string $token
+     * @param string $resetLink
+     */
+    private function sendResetEmail(string $to, string $token, string $resetLink)
+    {
+        $subject = 'Восстановление пароля — МойБлог';
+        $body = "Для сброса пароля перейдите по ссылке:\n\n";
+        $body .= $resetLink . "\n\n";
+        $body .= "Ссылка действует 1 час.\n";
+
+        $headers = "From: МойБлог <no-reply@moyblog.ru>\r\n";
+        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+
+        @mail($to, $subject, $body, $headers);
+    }
+}

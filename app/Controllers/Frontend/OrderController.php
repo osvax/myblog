@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Controllers\Frontend;
+
+use App\Controllers\Controller;
+
+class OrderController extends Controller
+{
+    public function index($request)
+    {
+        $user = current_user();
+
+        return $this->page('frontend', 'order', [
+            'title' => 'Заказать — Мой Блог',
+            'description' => 'Оставьте заявку на разработку сайта.',
+            'activePage' => 'order',
+            'includeFormsScript' => true,
+            'pageScripts' => ['/js/calculator-config.js', '/js/order-calculator.js'],
+            'user' => $user,
+            'isAdmin' => $user && $user['role'] === 'admin',
+        ]);
+    }
+}

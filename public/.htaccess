@@ -1,0 +1,16 @@
+Options -Indexes
+RewriteEngine On
+
+# Разрешаем прямой доступ к статическим файлам.
+RewriteRule ^(?:css|js|img)/ - [L]
+
+RewriteRule ^$ index.php [END,QSA]
+RewriteRule ^(?:index\.html|blog\.html|portfolio\.html|contacts\.html|order\.html|messages\.html|orders\.html|settings\.html|post-(?:adaptive|bootstrap|git|js|speed|ui)\.html|project-(?:blog|community|dashboard|landing|photo|shop)\.html|login\.html|register\.html|forgot-password\.html|profile\.html)$ index.php [END,QSA]
+RewriteRule ^reset-password/[a-f0-9]{64}$ index.php [END,QSA]
+RewriteRule ^api(?:/.*)?$ index.php [END,QSA]
+RewriteRule ^health/?$ index.php [END,QSA]
+RewriteRule ^mvc(?:/.*)?$ index.php [END,QSA]
+
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteRule ^ index.php [END,QSA]

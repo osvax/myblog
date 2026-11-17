@@ -1,0 +1,9 @@
+Options -Indexes
+RewriteEngine On
+
+# Файлы стилей и скриптов доступны напрямую.
+RewriteRule ^(?:css/.*\.css|js/.*\.js)$ - [END]
+
+# Страницы админки маршрутизируются через MVC-фронт-контроллер.
+RewriteRule ^(?:$|(?:403|404|500|article-edit|blog|calculator|categories|consultant|current-orders|files|forgot-password|index|login|messages|new-orders|order-edit|orders|portfolio-edit|portfolio|profile|register|settings|templates|user-edit|users)\.html)$ /index.php [END,QSA]
+RewriteRule ^ /index.php [END,QSA]

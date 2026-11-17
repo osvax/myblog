@@ -1,0 +1,92 @@
+<div class="card admin-card p-4">
+                <form id="articleForm" novalidate>
+                    <div class="row g-3">
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold" for="articleTitle">Название статьи *</label>
+                            <input id="articleTitle" name="title" type="text" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold" for="articleSlug">Идентификатор (slug) *</label>
+                            <input id="articleSlug" name="slug" type="text" class="form-control" required pattern="[a-z0-9-]+">
+                            <div class="form-text fw-bold">Только латинские буквы в нижнем регистре, цифры и дефис</div>
+                        </div>
+                        <div class="col-md-8">
+                            <label class="form-label fw-bold" for="articleDescription">Краткое описание *</label>
+                            <input id="articleDescription" name="description" type="text" class="form-control" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold" for="articleCategory">Рубрика *</label>
+                            <select id="articleCategory" name="category" class="form-select" required>
+                                <option value="">Выберите...</option>
+                                <option>Вёрстка</option><option>Дизайн</option><option>JavaScript</option>
+                                <option>Инструменты</option><option>Оптимизация</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold" for="articleCover">Обложка статьи</label>
+                            <input id="articleCover" name="cover" type="file" class="form-control" accept="image/jpeg,image/png,image/webp">
+                            <div class="article-cover-preview mt-2" aria-label="Предпросмотр обложки">
+                                <img id="articleCoverPreview" alt="Миниатюра обложки статьи" hidden>
+                                <div id="articleCoverPlaceholder" class="article-cover-placeholder">
+                                    <i class="bi bi-image" aria-hidden="true"></i>
+                                    <span>Обложка не загружена</span>
+                                </div>
+                            </div>
+                            <div class="form-text" id="currentCover">JPEG, PNG или WebP, до 10 МБ.</div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold" for="articleContent">Редактирование статьи *</label>
+                            <div class="article-editor border rounded">
+                                <div class="article-editor-toolbar d-flex flex-wrap gap-1 p-2 border-bottom" role="toolbar" aria-label="Форматирование текста">
+                                    <select class="form-select form-select-sm article-editor-block" id="articleBlockFormat" aria-label="Формат абзаца">
+                                        <option value="P">Обычный текст</option>
+                                        <option value="H2">Заголовок 2</option>
+                                        <option value="H3">Заголовок 3</option>
+                                        <option value="H4">Заголовок 4</option>
+                                        <option value="BLOCKQUOTE">Цитата</option>
+                                    </select>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="bold" aria-label="Полужирный" title="Полужирный"><i class="bi bi-type-bold"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="italic" aria-label="Курсив" title="Курсив"><i class="bi bi-type-italic"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="underline" aria-label="Подчёркнутый" title="Подчёркнутый"><i class="bi bi-type-underline"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="insertUnorderedList" aria-label="Маркированный список" title="Маркированный список"><i class="bi bi-list-ul"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="insertOrderedList" aria-label="Нумерованный список" title="Нумерованный список"><i class="bi bi-list-ol"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="createLink" aria-label="Вставить ссылку" title="Вставить ссылку"><i class="bi bi-link-45deg"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="unlink" aria-label="Удалить ссылку" title="Удалить ссылку"><i class="bi bi-link"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" data-editor-command="removeFormat" aria-label="Очистить форматирование" title="Очистить форматирование"><i class="bi bi-eraser"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="articleImageInsert" data-editor-insert aria-label="Вставить изображение" title="Вставить изображение"><i class="bi bi-image"></i></button>
+                                    <input type="file" id="articleInlineImage" accept="image/jpeg,image/png,image/webp" hidden>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="articleVideoInsert" data-editor-insert aria-label="Вставить видео" title="Вставить видео по ссылке"><i class="bi bi-camera-video"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="articleAudioInsert" data-editor-insert aria-label="Вставить аудио" title="Вставить аудио по ссылке"><i class="bi bi-music-note-beamed"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-secondary" id="articleCodeInsert" data-editor-insert aria-label="Вставить код" title="Вставить блок кода"><i class="bi bi-filetype-js"></i></button>
+                                    <button type="button" class="btn btn-sm btn-outline-dark ms-auto" id="articleSourceToggle" aria-pressed="false"><i class="bi bi-code-slash"></i> HTML</button>
+                                </div>
+                                <div id="articleContentEditor" class="article-editor-canvas" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст статьи"></div>
+                                <textarea id="articleContent" name="content" class="form-control article-editor-source" rows="12" aria-label="HTML-код статьи" hidden></textarea>
+                            </div>
+                            <div class="form-text">Используйте панель форматирования или включите режим HTML для редактирования кода.</div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" for="articleAuthor">Автор *</label>
+                            <input id="articleAuthor" name="author" type="text" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label fw-bold" for="articleDate" id="articleDateLabel">Дата публикации *</label>
+                            <input id="articleDate" name="date" type="date" class="form-control" required>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-check form-switch mt-4">
+                                <input class="form-check-input" type="checkbox" id="articleActive" name="active" checked>
+                                <label class="form-check-label fw-bold" for="articleActive">Статья активна</label>
+                            </div>
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label fw-bold" for="articleTags">Метки</label>
+                            <input id="articleTags" name="tags" type="text" class="form-control" placeholder="#bootstrap #css #вёрстка">
+                        </div>
+                    </div>
+                    <div class="d-flex flex-wrap gap-2 mt-4">
+                        <a class="btn btn-outline-dark fw-bold" href="blog.html">Отмена</a>
+                        <button class="btn btn-orange fw-bold" type="submit"><i class="bi bi-save"></i> Сохранить статью</button>
+                    </div>
+                </form>
+            </div>

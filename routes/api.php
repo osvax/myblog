@@ -1,0 +1,122 @@
+<?php
+
+use App\Controllers\Admin\AdminProfileController;
+use App\Controllers\Admin\AuthController;
+use App\Controllers\Admin\ContentController;
+use App\Controllers\Admin\FileManagerController;
+use App\Controllers\Admin\LandingPageAdminController;
+use App\Controllers\Admin\LandingPageController;
+use App\Controllers\Admin\MediaController;
+use App\Controllers\Admin\SiteSettingsController;
+use App\Controllers\Admin\StaticPageController;
+use App\Controllers\Admin\SystemController;
+use App\Controllers\Admin\TemplateController;
+use App\Controllers\Admin\UsersController;
+use App\Controllers\Api\ConsultantController;
+use App\Controllers\Api\FormController;
+use App\Core\Router;
+
+return function (Router $router) {
+    $auth = new AuthController();
+    $consultant = new ConsultantController();
+    $content = new ContentController();
+    $system = new SystemController();
+    $files = new FileManagerController();
+    $media = new MediaController();
+    $templates = new TemplateController();
+    $forms = new FormController();
+    $users = new UsersController();
+    $profile = new AdminProfileController();
+    $siteSettings = new SiteSettingsController();
+    $staticPage = new StaticPageController();
+    $landingPage = new LandingPageController();
+    $landingPageAdmin = new LandingPageAdminController();
+
+    $router->post('/api/auth/login', [$auth, 'login']);
+    $router->get('/api/auth/csrf', [$auth, 'csrf']);
+    $router->get('/api/auth/check', [$auth, 'check']);
+    $router->post('/api/auth/logout', [$auth, 'logout']);
+    $router->post('/api/consultant', [$consultant, 'handle']);
+
+    $router->get('/api/admin/articles', [$content, 'articles']);
+    $router->post('/api/admin/articles', [$content, 'articles']);
+    $router->get('/api/admin/articles/{id}', [$content, 'articles']);
+    $router->put('/api/admin/articles/{id}', [$content, 'articles']);
+    $router->delete('/api/admin/articles/{id}', [$content, 'articles']);
+
+    $router->get('/api/admin/projects', [$content, 'projects']);
+    $router->post('/api/admin/projects', [$content, 'projects']);
+    $router->get('/api/admin/projects/{id}', [$content, 'projects']);
+    $router->put('/api/admin/projects/{id}', [$content, 'projects']);
+    $router->delete('/api/admin/projects/{id}', [$content, 'projects']);
+
+    $router->get('/api/admin/categories', [$content, 'categories']);
+    $router->post('/api/admin/categories', [$content, 'categories']);
+    $router->put('/api/admin/categories/{id}', [$content, 'categories']);
+    $router->delete('/api/admin/categories/{id}', [$content, 'categories']);
+
+    $router->get('/api/admin/orders', [$content, 'orders']);
+    $router->post('/api/admin/orders/export', [$content, 'exportOrders']);
+    $router->put('/api/admin/orders/{id}', [$content, 'orders']);
+    $router->patch('/api/admin/orders/{id}', [$content, 'orders']);
+    $router->delete('/api/admin/orders/{id}', [$content, 'orders']);
+
+    $router->get('/api/admin/messages', [$content, 'messages']);
+    $router->patch('/api/admin/messages/{id}', [$content, 'messages']);
+    $router->delete('/api/admin/messages/{id}', [$content, 'messages']);
+    $router->get('/api/admin/system', [$system, 'info']);
+    $router->get('/api/admin/files', [$files, 'handle']);
+    $router->post('/api/admin/files', [$files, 'handle']);
+    $router->post('/api/admin/media', [$media, 'upload']);
+    $router->post('/api/admin/avatar', [$media, 'avatar']);
+    $router->get('/api/admin/avatar/{filename}', [$media, 'avatar']);
+    $router->head('/api/admin/avatar/{filename}', [$media, 'avatar']);
+    $router->get('/uploads/{scope}/{id}/{filename}', [$media, 'serve']);
+    $router->head('/uploads/{scope}/{id}/{filename}', [$media, 'serve']);
+    $router->get('/api/admin/templates', [$templates, 'handle']);
+    $router->post('/api/admin/templates', [$templates, 'handle']);
+
+    $router->post('/api/forms/order', [$forms, 'order']);
+    $router->post('/api/forms/feedback', [$forms, 'feedback']);
+    $router->post('/api/forms/comment', [$forms, 'comment']);
+
+    // ---------- Пользователи ----------
+    $router->get('/api/admin/users', [$users, 'users']);
+    $router->get('/api/admin/users/{id}', [$users, 'getUser']);
+    $router->post('/api/admin/users', [$users, 'createUser']);
+    $router->put('/api/admin/users/{id}', [$users, 'updateUser']);
+    $router->delete('/api/admin/users/{id}', [$users, 'deleteUser']);
+
+    // ---------- Профиль пользователя ----------
+    $router->get('/api/admin/profile/{id}', [$profile, 'show']);
+    $router->put('/api/admin/profile/{id}', [$profile, 'update']);
+    $router->post('/api/admin/profile/{id}/avatar', [$profile, 'uploadAvatar']);
+    $router->get('/api/admin/profile/{id}/activity', [$profile, 'getActivityHistory']);
+
+    // ---------- Настройки сайта ----------
+    $router->get('/api/admin/settings', [$siteSettings, 'index']);
+    $router->put('/api/admin/settings', [$siteSettings, 'save']);
+    $router->post('/api/admin/settings/fields', [$siteSettings, 'addField']);
+    $router->delete('/api/admin/settings/fields/{key}', [$siteSettings, 'deleteField']);
+
+    // ---------- Дополнительные настройки лендинга ----------
+    $router->get('/api/admin/landing-page', [$landingPage, 'index']);
+    $router->post('/api/admin/landing-page', [$landingPage, 'create']);
+    $router->delete('/api/admin/landing-page/{id}', [$landingPage, 'delete']);
+    $router->post('/api/admin/landing-page/{id}/toggle', [$landingPage, 'toggleActive']);
+
+    // ---------- Управление страницами ----------
+    $router->get('/api/admin/pages', [$landingPageAdmin, 'index']);
+    $router->get('/api/admin/pages/{slug}', [$landingPageAdmin, 'show']);
+    $router->post('/api/admin/pages', [$landingPageAdmin, 'create']);
+    $router->post('/api/admin/pages/{slug}/generate', [$landingPageAdmin, 'generate']);
+    $router->delete('/api/admin/pages/{id}', [$landingPageAdmin, 'delete']);
+    $router->post('/api/admin/pages/{id}/toggle', [$landingPageAdmin, 'toggleActive']);
+
+    // ---------- Статические страницы ----------
+    $router->get('/api/admin/static-pages', [$staticPage, 'index']);
+    $router->get('/api/admin/static-pages/{slug}', [$staticPage, 'show']);
+    $router->post('/api/admin/static-pages', [$staticPage, 'create']);
+    $router->delete('/api/admin/static-pages/{id}', [$staticPage, 'delete']);
+    $router->post('/api/admin/static-pages/{id}/toggle', [$staticPage, 'toggleActive']);
+};

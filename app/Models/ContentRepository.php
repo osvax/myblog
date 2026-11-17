@@ -1,0 +1,370 @@
+<?php
+
+namespace App\Models;
+
+use App\Core\Database;
+class ContentRepository
+{
+    private $db;
+
+    public function __construct()
+    {
+        $this->db = Database::connection();
+    }
+
+    public function articles($publishedOnly = false)
+    {
+        $where = $publishedOnly ? 'WHERE a.is_published = 1' : '';
+        $statement = $this->db->query(
+            'SELECT a.*, c.name AS category, c.slug AS category_slug
+             FROM articles a LEFT JOIN categories c ON c.id = a.category_id ' . $where . '
+             ORDER BY a.published_at DESC, a.created_at DESC'
+        );
+        return array_map([$this, 'articleRow'], $statement->fetchAll());
+    }
+
+    public function articleById($id)
+    {
+        $statement = $this->db->prepare(
+            'SELECT a.*, c.name AS category, c.slug AS category_slug
+             FROM articles a LEFT JOIN categories c ON c.id = a.category_id WHERE a.id = :id'
+        );
+        $statement->execute(['id' => $id]);
+        $row = $statement->fetch();
+        return $row ? $this->articleRow($row) : null;
+    }
+
+    public function articleBySlug($slug, $publishedOnly = true)
+    {
+        $sql = 'SELECT a.*, c.name AS category, c.slug AS category_slug
+                FROM articles a LEFT JOIN categories c ON c.id = a.category_id WHERE a.slug = :slug';
+        if ($publishedOnly) {
+            $sql .= ' AND a.is_published = 1';
+        }
+        $statement = $this->db->prepare($sql);
+        $statement->execute(['slug' => $slug]);
+        $row = $statement->fetch();
+        return $row ? $this->articleRow($row) : null;
+    }
+
+    public function saveArticle(array $article)
+    {
+        $category = $this->db->prepare('SELECT id FROM categories WHERE name = :name');
+        $category->execute(['name' => $article['category']]);
+        $categoryId = $category->fetchColumn();
+        if (!$categoryId) {
+            $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $article['category'])), '-'));
+            $insertCategory = $this->db->prepare('INSERT INTO categories (name, slug) VALUES (:name, :slug)');
+            $insertCategory->execute([
+                'name' => $article['category'],
+                'slug' => $slug !== '' ? $slug : substr(hash('sha256', $article['category']), 0, 32),
+            ]);
+            $categoryId = $this->db->lastInsertId();
+        }
+
+        $statement = $this->db->prepare(
+            'INSERT INTO articles
+                (id, slug, title, description, body_html, category_id, author, published_at, icon, cover_path, tags_json, is_published)
+             VALUES
+                (:id, :slug, :title, :description, :body_html, :category_id, :author, :published_at, :icon, :cover_path, :tags_json, :is_published)
+             ON DUPLICATE KEY UPDATE
+                slug = VALUES(slug), title = VALUES(title), description = VALUES(description),
+                body_html = VALUES(body_html), category_id = VALUES(category_id), author = VALUES(author),
+                published_at = VALUES(published_at), icon = VALUES(icon), cover_path = VALUES(cover_path),
+                tags_json = VALUES(tags_json), is_published = VALUES(is_published)'
+        );
+        $statement->execute([
+            'id' => $article['id'],
+            'slug' => $article['slug'],
+            'title' => $article['title'],
+            'description' => $article['description'],
+            'body_html' => $article['content'],
+            'category_id' => $categoryId,
+            'author' => $article['author'],
+            'published_at' => $article['date'] !== '' ? $article['date'] : null,
+            'icon' => $article['icon'],
+            'cover_path' => $article['cover'],
+            'tags_json' => json_encode($article['tags'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'is_published' => $article['active'] ? 1 : 0,
+        ]);
+        return $this->articleById($article['id']);
+    }
+
+    public function deleteArticle($id)
+    {
+        $statement = $this->db->prepare('DELETE FROM articles WHERE id = :id');
+        $statement->execute(['id' => $id]);
+        return $statement->rowCount() > 0;
+    }
+
+    public function projects($publishedOnly = false)
+    {
+        $where = $publishedOnly ? 'WHERE is_published = 1' : '';
+        $statement = $this->db->query('SELECT * FROM portfolio_projects ' . $where . ' ORDER BY created_at DESC');
+        return array_map([$this, 'projectRow'], $statement->fetchAll());
+    }
+
+    public function projectById($id)
+    {
+        $statement = $this->db->prepare('SELECT * FROM portfolio_projects WHERE id = :id');
+        $statement->execute(['id' => $id]);
+        $row = $statement->fetch();
+        return $row ? $this->projectRow($row) : null;
+    }
+
+    public function projectBySlug($slug, $publishedOnly = true)
+    {
+        $sql = 'SELECT * FROM portfolio_projects WHERE slug = :slug' . ($publishedOnly ? ' AND is_published = 1' : '');
+        $statement = $this->db->prepare($sql);
+        $statement->execute(['slug' => $slug]);
+        $row = $statement->fetch();
+        return $row ? $this->projectRow($row) : null;
+    }
+
+    public function saveProject(array $project)
+    {
+        $statement = $this->db->prepare(
+            'INSERT INTO portfolio_projects
+                (id, slug, title, technologies, icon, description, task_json, solution, client, project_year, duration, stack, results_json, screenshots_json, is_published)
+             VALUES
+                (:id, :slug, :title, :technologies, :icon, :description, :task_json, :solution, :client, :project_year, :duration, :stack, :results_json, :screenshots_json, :is_published)
+             ON DUPLICATE KEY UPDATE
+                slug = VALUES(slug), title = VALUES(title), technologies = VALUES(technologies),
+                icon = VALUES(icon), description = VALUES(description), task_json = VALUES(task_json),
+                solution = VALUES(solution), client = VALUES(client), project_year = VALUES(project_year),
+                duration = VALUES(duration), stack = VALUES(stack), results_json = VALUES(results_json),
+                screenshots_json = VALUES(screenshots_json), is_published = VALUES(is_published)'
+        );
+        $statement->execute([
+            'id' => $project['id'],
+            'slug' => $project['slug'],
+            'title' => $project['title'],
+            'technologies' => $project['technologies'],
+            'icon' => $project['icon'],
+            'description' => $project['description'],
+            'task_json' => json_encode($project['task'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'solution' => $project['solution'],
+            'client' => $project['client'],
+            'project_year' => $project['year'] ?: null,
+            'duration' => $project['duration'],
+            'stack' => $project['stack'],
+            'results_json' => json_encode($project['results'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'screenshots_json' => json_encode($project['screenshots'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'is_published' => $project['active'] ? 1 : 0,
+        ]);
+        return $this->projectById($project['id']);
+    }
+
+    public function deleteProject($id)
+    {
+        $statement = $this->db->prepare('DELETE FROM portfolio_projects WHERE id = :id');
+        $statement->execute(['id' => $id]);
+        return $statement->rowCount() > 0;
+    }
+
+    public function categories()
+    {
+        return $this->db->query(
+            'SELECT c.id, c.name, c.slug, c.description, COUNT(a.id) AS articles
+             FROM categories c LEFT JOIN articles a ON a.category_id = c.id
+             GROUP BY c.id ORDER BY c.name'
+        )->fetchAll();
+    }
+
+    public function saveCategory($id, $name, $slug, $description)
+    {
+        if ($id === null) {
+            $statement = $this->db->prepare('INSERT INTO categories (name, slug, description) VALUES (:name, :slug, :description)');
+            $statement->execute(['name' => $name, 'slug' => $slug, 'description' => $description]);
+            return (int) $this->db->lastInsertId();
+        }
+        $statement = $this->db->prepare('UPDATE categories SET name = :name, slug = :slug, description = :description WHERE id = :id');
+        $statement->execute(['name' => $name, 'slug' => $slug, 'description' => $description, 'id' => $id]);
+        if ($statement->rowCount() > 0) {
+            return (int) $id;
+        }
+        $exists = $this->db->prepare('SELECT 1 FROM categories WHERE id = :id');
+        $exists->execute(['id' => $id]);
+        return $exists->fetchColumn() !== false ? (int) $id : false;
+    }
+
+    public function deleteCategory($id)
+    {
+        $statement = $this->db->prepare('DELETE FROM categories WHERE id = :id');
+        $statement->execute(['id' => $id]);
+        return $statement->rowCount() > 0;
+    }
+
+    public function orderList()
+    {
+        $rows = $this->db->query('SELECT * FROM orders ORDER BY order_date DESC, id DESC')->fetchAll();
+        return array_map([$this, 'orderRow'], $rows);
+    }
+
+    public function orderById($id)
+    {
+        $statement = $this->db->prepare('SELECT * FROM orders WHERE id = :id');
+        $statement->execute(['id' => $id]);
+        $row = $statement->fetch();
+        return $row ? $this->orderRow($row) : null;
+    }
+
+    public function saveOrder($id, array $data)
+    {
+        $details = $data;
+        $statement = $this->db->prepare(
+            'UPDATE orders SET client_name = :client_name, email = :email, phone = :phone,
+                project_type = :project_type, budget = :budget, deadline = :deadline,
+                order_date = :order_date, status = :status, details_json = :details_json
+             WHERE id = :id'
+        );
+        $statement->execute([
+            'client_name' => $data['clientName'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'project_type' => $data['projectType'],
+            'budget' => $data['budget'],
+            'deadline' => $data['deadline'] !== '' ? $data['deadline'] : null,
+            'order_date' => $data['orderDate'],
+            'status' => $data['status'],
+            'details_json' => json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'id' => $id,
+        ]);
+        return $this->orderById($id);
+    }
+
+    public function deleteOrder($id)
+    {
+        $statement = $this->db->prepare('DELETE FROM orders WHERE id = :id');
+        $statement->execute(['id' => $id]);
+        return $statement->rowCount() > 0;
+    }
+
+    public function createOrder(array $data)
+    {
+        $details = [
+            'clientName' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'source' => 'Форма заказа на сайте',
+            'contactPerson' => $data['contactPerson'],
+            'projectTitle' => $data['type'],
+            'projectType' => $data['type'],
+            'orderDate' => date('Y-m-d'),
+            'deadline' => $data['deadlineTo'],
+            'status' => 'Новый',
+            'technicalBrief' => $data['message'],
+            'budget' => $data['budget'],
+            'budgetDisplay' => $data['budgetDisplay'] ?? '',
+            'deadlineFrom' => $data['deadlineFrom'] ?? '',
+            'paidAmount' => 0,
+            'paymentHistory' => '',
+            'notes' => '',
+            'calculatorDetails' => $data['calculatorDetails'],
+        ];
+        $statement = $this->db->prepare(
+            'INSERT INTO orders (client_name, email, phone, project_type, budget, deadline, order_date, status, details_json)
+             VALUES (:client_name, :email, :phone, :project_type, :budget, :deadline, :order_date, :status, :details_json)'
+        );
+        $statement->execute([
+            'client_name' => $data['name'],
+            'email' => $data['email'],
+            'phone' => $data['phone'],
+            'project_type' => $data['type'],
+            'budget' => is_numeric($data['budget']) ? (float) $data['budget'] : 0,
+            'deadline' => $data['deadlineTo'] !== '' ? $data['deadlineTo'] : null,
+            'order_date' => date('Y-m-d'),
+            'status' => 'Новый',
+            'details_json' => json_encode($details, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+        ]);
+        return $this->orderById($this->db->lastInsertId());
+    }
+
+    public function createMessage(array $message)
+    {
+        $statement = $this->db->prepare(
+            'INSERT INTO messages (message_type, name, email, phone, subject, body, article_slug)
+             VALUES (:message_type, :name, :email, :phone, :subject, :body, :article_slug)'
+        );
+        $statement->execute([
+            'message_type' => $message['type'],
+            'name' => $message['name'],
+            'email' => $message['email'],
+            'phone' => $message['phone'],
+            'subject' => $message['subject'],
+            'body' => $message['body'],
+            'article_slug' => $message['articleSlug'],
+        ]);
+        return $this->db->lastInsertId();
+    }
+
+    public function messages()
+    {
+        return $this->db->query('SELECT * FROM messages ORDER BY created_at DESC, id DESC')->fetchAll();
+    }
+
+    public function updateMessage($id, array $data)
+    {
+        $statement = $this->db->prepare('UPDATE messages SET is_read = :is_read, is_approved = :is_approved WHERE id = :id');
+        $statement->execute([
+            'is_read' => !empty($data['isRead']) ? 1 : 0,
+            'is_approved' => !empty($data['isApproved']) ? 1 : 0,
+            'id' => $id,
+        ]);
+        if ($statement->rowCount() > 0) {
+            return true;
+        }
+        $exists = $this->db->prepare('SELECT 1 FROM messages WHERE id = :id');
+        $exists->execute(['id' => $id]);
+        return $exists->fetchColumn() !== false;
+    }
+
+    public function deleteMessage($id)
+    {
+        $statement = $this->db->prepare('DELETE FROM messages WHERE id = :id');
+        $statement->execute(['id' => $id]);
+        return $statement->rowCount() > 0;
+    }
+
+    private function articleRow(array $row)
+    {
+        $row['active'] = (bool) $row['is_published'];
+        $row['date'] = $row['published_at'] ?? '';
+        $row['content'] = $row['body_html'] ?? '';
+        $row['cover'] = $row['cover_path'];
+        $row['tags'] = json_decode($row['tags_json'] ?? '[]', true) ?: [];
+        return $row;
+    }
+
+    private function projectRow(array $row)
+    {
+        $row['active'] = (bool) $row['is_published'];
+        $row['task'] = json_decode($row['task_json'] ?? '[]', true) ?: [];
+        $row['results'] = json_decode($row['results_json'] ?? '[]', true) ?: [];
+        $row['screenshots'] = json_decode($row['screenshots_json'] ?? '[]', true) ?: [];
+        $row['year'] = $row['project_year'] ?? '';
+        return $row;
+    }
+
+    private function orderRow(array $row)
+    {
+        $details = json_decode($row['details_json'] ?? '{}', true);
+        if (!is_array($details)) {
+            $details = [];
+        }
+        return array_merge($details, [
+            'id' => (int) $row['id'],
+            'client' => $row['client_name'],
+            'clientName' => $row['client_name'],
+            'email' => $row['email'],
+            'phone' => $row['phone'],
+            'type' => $row['project_type'],
+            'projectType' => $row['project_type'],
+            'budget' => (float) $row['budget'],
+            'deadline' => $row['deadline'] ?? '',
+            'orderDate' => $row['order_date'],
+            'createdAt' => $row['order_date'],
+            'status' => $row['status'],
+        ]);
+    }
+}
