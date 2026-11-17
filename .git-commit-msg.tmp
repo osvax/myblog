@@ -1,7 +1,5 @@
-fix: порядок в orders.js, убран фильтр портфолио, добавлены статусы блога
+fix: добавлены заголовки articlePageTitle и portfolioPageTitle
 
-- Исправлен порядок функций в orders.js (escapeHtml до bindOrdersSearch)
-- Таблица заказов показывает все заказы (включая завершённые)
-- Графики аналитики работают с filtered заказами
-- Убран filter-bar из портфолио (возврат к исходному виду)
-- Добавлены статусы опубликован/черновик в фильтр блога
+- article-edit.php: добавлен h1 с id="articlePageTitle"
+- portfolio-edit.js: добавлен h1 с id="portfolioPageTitle"
+- Теперь формы редактирования загружаются корректно

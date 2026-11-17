@@ -1,4 +1,7 @@
-<form id="portfolioForm" novalidate>
+<div class="d-flex justify-content-between align-items-center mb-3">
+            <h1 class="h4 fw-bold mb-0" id="portfolioPageTitle">Новый проект</h1>
+        </div>
+        <form id="portfolioForm" novalidate>
                 <input type="hidden" id="portfolioId">
                 <div class="card admin-card p-4 mb-4">
                     <h2 class="h5 fw-bold mb-3">Заголовок проекта</h2>

@@ -1,4 +1,7 @@
-<div class="card admin-card p-4">
+<div class="d-flex justify-content-between align-items-center mb-3">
+                <h1 class="h4 fw-bold mb-0" id="articlePageTitle">Новая статья</h1>
+            </div>
+            <div class="card admin-card p-4">
                 <form id="articleForm" novalidate>
                     <div class="row g-3">
                         <div class="col-md-8">
