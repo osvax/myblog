@@ -23,23 +23,19 @@
                             <div class="card-header bg-white"><h2 class="h5 fw-bold mb-0">Общие параметры и базовая стоимость</h2></div>
                             <div class="card-body">
                                 <div class="row g-3">
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-label fw-bold" for="editCurrency">Валюта</label>
                                         <input class="form-control" id="editCurrency" maxlength="8" required value="₽">
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-label fw-bold" for="editType">Тип сайта</label>
                                         <select class="form-select" id="editType"></select>
                                     </div>
-                                    <div class="col-md-4">
-                                        <label class="form-label fw-bold" for="editTypeName">Название типа</label>
-                                        <input class="form-control" id="editTypeName" maxlength="80" required>
-                                    </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-label fw-bold" for="editBasePrice">Базовая цена</label>
                                         <input class="form-control" type="number" id="editBasePrice" min="0" step="1" required>
                                     </div>
-                                    <div class="col-md-4">
+                                    <div class="col-md-6">
                                         <label class="form-label fw-bold" for="editBaseDays">Базовый срок (дней)</label>
                                         <input class="form-control" type="number" id="editBaseDays" min="0" step="1" required>
                                     </div>

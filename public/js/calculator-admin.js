@@ -5,7 +5,6 @@
         var form = document.getElementById('calculatorSettingsForm');
         var typeList = document.getElementById('calculatorTypeList');
         var typeSelect = document.getElementById('editType');
-        var typeNameInput = document.getElementById('editTypeName');
         var currencyInput = document.getElementById('editCurrency');
         var basePrice = document.getElementById('editBasePrice');
         var baseDays = document.getElementById('editBaseDays');
@@ -14,15 +13,13 @@
         var addFeatureButton = document.getElementById('addCalculatorFeature');
         var config = window.CalculatorConfig.load();
         var editingTypeId = null;
+        // Название типа редактируется инлайн прямо в списке (без модалок)
+        var editingNameId = null;
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>"']/g, function (char) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
             });
-        }
-
-        function money(value) {
-            return Number(value).toLocaleString('ru-RU') + ' ' + config.currency;
         }
 
         function persist(message) {
@@ -43,9 +40,18 @@
                 return '<option value="' + escapeHtml(type.id) + '">' + escapeHtml(type.name) + '</option>';
             }).join('');
             typeList.innerHTML = config.types.map(function (type) {
-                return '<li class="list-group-item d-flex justify-content-between align-items-center">' +
-                    '<span class="fw-bold">' + escapeHtml(type.name) + '</span>' +
-                    '<span><span class="text-muted me-2">' + escapeHtml(money(type.price)) + '</span>' +
+                var isNameEditing = editingNameId === type.id;
+                return '<li class="list-group-item d-flex justify-content-between align-items-center gap-2">' +
+                    (isNameEditing
+                        ? '<input class="form-control form-control-sm type-name-input" data-type-name-input="' +
+                            escapeHtml(type.id) + '" value="' + escapeHtml(type.name) + '" maxlength="80" aria-label="Название типа">'
+                        : '<span class="fw-bold">' + escapeHtml(type.name) + '</span>') +
+                    '<span class="d-flex gap-1">' +
+                    (isNameEditing
+                        ? '<button type="button" class="btn btn-sm btn-outline-success" data-edit-type-name="' +
+                            escapeHtml(type.id) + '" aria-label="Сохранить название" title="Сохранить (Enter)"><i class="bi bi-check-lg"></i></button>'
+                        : '<button type="button" class="btn btn-sm btn-outline-dark" data-edit-type-name="' +
+                            escapeHtml(type.id) + '" aria-label="Редактировать название типа" title="Редактировать название"><i class="bi bi-pencil"></i></button>') +
                     '<button type="button" class="btn btn-sm btn-outline-danger" data-delete-type="' +
                     escapeHtml(type.id) + '" aria-label="Удалить ' + escapeHtml(type.name) + '">' +
                     '<i class="bi bi-trash"></i></button></span></li>';
@@ -65,7 +71,6 @@
             }
             typeSelect.value = type.id;
             editingTypeId = type.id;
-            typeNameInput.value = type.name;
             basePrice.value = type.price;
             baseDays.value = type.days;
             featureList.innerHTML = type.features.map(function (feature, index) {
@@ -84,7 +89,6 @@
         function captureEditor() {
             var type = config.types.find(function (item) { return item.id === editingTypeId; });
             if (!type) return;
-            type.name = typeNameInput.value.trim();
             type.price = Number(basePrice.value);
             type.days = Number(baseDays.value);
             type.features = Array.from(featureList.querySelectorAll('[data-feature-index]')).map(function (row) {
@@ -94,18 +98,38 @@
                     days: Number(row.querySelector('[data-feature-days]').value)
                 };
             });
-            typeNameInput.value = type.name;
         }
 
         function saveConfig() {
             captureEditor();
-            if (config.types.some(function (type) {
-                return type.id !== editingTypeId && type.name.toLocaleLowerCase() === typeNameInput.value.trim().toLocaleLowerCase();
+            return persist('Настройки калькулятора сохранены в этом браузере');
+        }
+
+        // Сохранить переименованный инлайн тип (Enter, клик по галочке, уход из поля)
+        function commitInlineName() {
+            if (editingNameId === null) return;
+            var input = typeList.querySelector('[data-type-name-input="' + editingNameId + '"]');
+            var type = config.types.find(function (item) { return item.id === editingNameId; });
+            var previousId = editingNameId;
+            editingNameId = null;
+            if (!input || !type) {
+                render();
+                return;
+            }
+            var name = input.value.trim();
+            if (name === '' || name === type.name) {
+                render();
+                return;
+            }
+            if (config.types.some(function (item) {
+                return item.id !== previousId && item.name.toLocaleLowerCase() === name.toLocaleLowerCase();
             })) {
                 window.AdminNotifications.show(false, 'Тип с таким названием уже существует');
-                return false;
+                render();
+                return;
             }
-            return persist('Настройки калькулятора сохранены в этом браузере');
+            type.name = name;
+            persist('Название типа обновлено');
         }
 
         form.addEventListener('submit', function (event) {
@@ -118,6 +142,24 @@
             renderEditor();
         });
         typeList.addEventListener('click', function (event) {
+            var editButton = event.target.closest('[data-edit-type-name]');
+            if (editButton) {
+                if (editingNameId === editButton.dataset.editTypeName) {
+                    // Повторный клик по галочке — сохранить
+                    commitInlineName();
+                    return;
+                }
+                captureEditor();
+                editingNameId = editButton.dataset.editTypeName;
+                typeSelect.value = editingNameId;
+                render();
+                var input = typeList.querySelector('[data-type-name-input]');
+                if (input) {
+                    input.focus();
+                    input.select();
+                }
+                return;
+            }
             var button = event.target.closest('[data-delete-type]');
             if (!button) return;
             if (config.types.length === 1) {
@@ -126,7 +168,31 @@
             }
             captureEditor();
             config.types = config.types.filter(function (type) { return type.id !== button.dataset.deleteType; });
+            if (editingNameId === button.dataset.deleteType) editingNameId = null;
             persist('Тип сайта удалён');
+        });
+        // Enter — сохранить, Escape — отменить переименование
+        typeList.addEventListener('keydown', function (event) {
+            var input = event.target.closest('[data-type-name-input]');
+            if (!input) return;
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                commitInlineName();
+            } else if (event.key === 'Escape') {
+                editingNameId = null;
+                render();
+            }
+        });
+        // Уход из поля — тоже сохранение (кроме клика по кнопке редактирования:
+        // тогда решение примет обработчик клика, без двойного срабатывания)
+        typeList.addEventListener('focusout', function (event) {
+            var input = event.target.closest('[data-type-name-input]');
+            if (!input) return;
+            var next = event.relatedTarget;
+            if (next && next.closest && next.closest('[data-edit-type-name]')) {
+                return;
+            }
+            commitInlineName();
         });
         featureList.addEventListener('click', function (event) {
             var button = event.target.closest('[data-delete-feature]');
