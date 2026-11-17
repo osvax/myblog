@@ -46,9 +46,14 @@ return function (Router $router) {
     }
     $router->get('/{slug}.html', function ($request, $parameters) use ($blog, $portfolio) {
         $slug = $parameters['slug'] ?? '';
-        $article = (new \App\Models\ContentRepository())->articleBySlug($slug);
-        if ($article !== null) {
+        $content = new \App\Models\ContentRepository();
+        if ($content->articleBySlug($slug) !== null) {
             return $blog->article($request, $slug);
+        }
+        // Простые страницы и лендинги из раздела «Страницы» админки
+        $staticPage = (new \App\Models\LandingPage())->findActive($slug);
+        if ($staticPage !== null && trim((string) ($staticPage['html_content'] ?? '')) !== '') {
+            return $staticPage['html_content'];
         }
         return $portfolio->project($request, $slug);
     });

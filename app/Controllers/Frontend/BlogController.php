@@ -47,6 +47,14 @@ class BlogController extends Controller
         $article['body'] = $this->prepareArticleBody($article['body_html'] ?? '');
         $article['readingTime'] = max(1, (int) ceil(str_word_count(strip_tags($article['body_html'] ?? '')) / 200));
 
+        // Для статей, созданных в админке, отдельного шаблона может не быть —
+        // используем универсальный dynamic-article.php
+        $template = 'dynamic-article';
+        if (preg_match('/^[a-z0-9-]+$/', (string) $article['slug']) &&
+            is_file(APP_ROOT . '/app/Views/frontend/templates/default/pages/' . $article['slug'] . '.php')) {
+            $template = $article['slug'];
+        }
+
         $allArticles = [];
         foreach ($content->articles(true) as $a) {
             $allArticles[$a['slug']] = [
@@ -70,7 +78,7 @@ class BlogController extends Controller
         $commentsCount = $content->commentsCount($slug);
         $comments = $commentsVisible ? $content->commentsByArticle($slug) : [];
 
-        return $this->page('frontend', $slug, [
+        return $this->page('frontend', $template, [
             'title' => $article['title'] . ' — МойБлог',
             'description' => $article['description'],
             'activePage' => 'blog',

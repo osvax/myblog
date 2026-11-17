@@ -51,7 +51,15 @@ class PortfolioController extends Controller
         $prev = $currentIndex > 0 ? $allProjects[$slugs[$currentIndex - 1]] : null;
         $next = $currentIndex !== false && $currentIndex < count($slugs) - 1 ? $allProjects[$slugs[$currentIndex + 1]] : null;
 
-        return $this->page('frontend', $slug, [
+        // Для проектов, созданных в админке, отдельного шаблона может не быть —
+        // используем универсальный dynamic-project.php
+        $template = 'dynamic-project';
+        if (preg_match('/^[a-z0-9-]+$/', (string) $project['slug']) &&
+            is_file(APP_ROOT . '/app/Views/frontend/templates/default/pages/' . $project['slug'] . '.php')) {
+            $template = $project['slug'];
+        }
+
+        return $this->page('frontend', $template, [
             'title' => $project['title'] . ' — МойБлог',
             'description' => $project['description'],
             'activePage' => 'portfolio',
