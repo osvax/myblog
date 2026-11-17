@@ -87,6 +87,13 @@ class AdminProfileController extends Controller
             return $this->json(['success' => false, 'error' => 'Имя должно содержать от 2 до 160 символов'], 400);
         }
 
+        // Аватар обновляется отдельным запросом, поэтому при сохранении профиля
+        // сохраняем текущее значение, а не затираем его пустой строкой.
+        $existing = (new User())->findById($id);
+        if (!$existing) {
+            return $this->json(['success' => false, 'error' => 'Пользователь не найден'], 404);
+        }
+
         $result = (new User())->updateFullProfile(
             $id,
             $name,
@@ -94,7 +101,7 @@ class AdminProfileController extends Controller
             $about,
             $position,
             $bio,
-            '', // avatar_path обновляется отдельно
+            (string) ($existing['avatar_path'] ?? ''),
             $timezone,
             $language
         );

@@ -313,7 +313,7 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->query(
-            "SELECT id, email, name, role, is_active, created_at, updated_at,
+            "SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
                     last_visit, last_ip, phone, about, position
              FROM users ORDER BY created_at DESC"
         );
