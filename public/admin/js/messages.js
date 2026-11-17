@@ -17,18 +17,25 @@
             return Number.isNaN(date.getTime()) ? '' : date.toLocaleString('ru-RU');
         }
 
-        // Разметка ответа (вложенная карточка в стиле публичного сайта)
+        // Разметка ответа: отдельная карточка с тумблером «Одобрен» и удалением
         function renderReply(reply) {
-            return '<div class="comment-reply p-3 mb-2">' +
-                '<div class="d-flex align-items-center mb-2 flex-wrap">' +
-                '<i class="bi ' + (Number(reply.is_staff) === 1 ? 'bi-person-badge' : 'bi-person-circle') + ' fs-6 text-orange me-2"></i>' +
-                '<strong class="fw-bold me-2">' + escapeHtml(reply.name) + '</strong>' +
-                (Number(reply.is_staff) === 1 ? '<span class="badge bg-orange fw-bold">Админ</span>' : '') +
-                '<small class="fw-bold text-muted ms-2">' + escapeHtml(formatDate(reply.created_at)) + '</small>' +
+            var isStaff = Number(reply.is_staff) === 1;
+            return '<div class="card mb-2" data-reply-card="' + reply.id + '"><div class="card-body p-3">' +
+                '<div class="d-flex justify-content-between align-items-start gap-2 flex-wrap">' +
+                '<div class="d-flex align-items-center gap-2 flex-wrap">' +
+                '<i class="bi ' + (isStaff ? 'bi-person-badge' : 'bi-person-circle') + ' text-orange"></i>' +
+                '<strong class="fw-bold">' + escapeHtml(reply.name) + '</strong>' +
+                (isStaff ? '<span class="badge bg-orange fw-bold">Админ</span>' : '<span class="badge bg-secondary fw-bold">Ответ</span>') +
+                '<small class="fw-bold text-muted">' + escapeHtml(formatDate(reply.created_at)) + '</small>' +
                 '</div>' +
-                '<p class="fw-bold mb-2 text-break">' + escapeHtml(reply.body) + '</p>' +
-                '<button type="button" class="btn btn-outline-danger btn-sm" data-message-delete="' + reply.id + '" aria-label="Удалить ответ"><i class="bi bi-trash"></i></button>' +
-                '</div>';
+                '<div class="d-flex align-items-center gap-2">' +
+                '<label class="form-check form-switch mb-0"><input class="form-check-input" type="checkbox" data-message-approved="' +
+                reply.id + '"' + (reply.is_approved ? ' checked' : '') + '><span class="form-check-label small fw-bold">Одобрен</span></label>' +
+                '<button type="button" class="btn btn-outline-danger btn-sm" data-message-delete="' + reply.id +
+                '" aria-label="Удалить ответ"><i class="bi bi-trash"></i></button>' +
+                '</div></div>' +
+                '<p class="fw-bold mt-2 mb-0 text-break">' + escapeHtml(reply.body) + '</p>' +
+                '</div></div>';
         }
 
         // Разметка формы ответа автора сайта
@@ -67,7 +74,8 @@
                     ? 'Комментарий к «' + (message.article_slug || 'статье') + '»'
                     : (message.subject || 'Обратная связь');
                 var dateText = formatDate(message.created_at);
-                var replies = (repliesByParent[String(message.id)] || []).map(renderReply).join('');
+                var replyList = repliesByParent[String(message.id)] || [];
+                var replies = replyList.map(renderReply).join('');
 
                 return '<article class="card admin-card mb-3" data-message="' + message.id + '"><div class="card-body">' +
                     '<div class="d-flex justify-content-between align-items-start gap-3 flex-wrap"><div>' +
@@ -81,9 +89,11 @@
                     '<button type="button" class="btn btn-danger btn-action" data-message-delete="' + message.id +
                     '" aria-label="Удалить обращение"><i class="bi bi-trash"></i></button></div></div>' +
                     '<p class="fw-bold mt-3 mb-1 text-break">' + escapeHtml(message.body) + '</p>' +
-                    replies +
                     (isComment
                         ? '<button type="button" class="btn btn-outline-primary btn-sm" data-reply-toggle="' + message.id + '"><i class="bi bi-reply"></i> Ответить</button>' + renderReplyForm(message)
+                        : '') +
+                    (replyList.length
+                        ? '<div class="mt-3"><h3 class="h6 fw-bold mb-2"><i class="bi bi-chat-left-text text-orange"></i> Ответы (' + replyList.length + ')</h3>' + replies + '</div>'
                         : '') +
                     '</div></article>';
             }).join('');
