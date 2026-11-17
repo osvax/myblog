@@ -168,13 +168,21 @@ return array (
     ),
     'standalone' => true,
   ),
-  'settings' => 
+  'settings' =>
   array (
     'title' => 'Настройки сайта',
-    'scripts' => 
+    'scripts' =>
     array (
       0 => '../js/site-settings.js',
       1 => 'js/settings.js',
+    ),
+  ),
+  'custom-fields' =>
+  array (
+    'title' => 'Пользовательские поля',
+    'scripts' =>
+    array (
+      0 => 'js/custom-fields.js',
     ),
   ),
   'landing-pages' => 

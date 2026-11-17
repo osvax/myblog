@@ -51,6 +51,7 @@ class PageController extends Controller
             ['slug' => 'files', 'url' => '/admin/files.html', 'icon' => 'bi-folder2-open', 'label' => 'Файлы'],
             ['slug' => 'templates', 'url' => '/admin/templates.html', 'icon' => 'bi-code-slash', 'label' => 'Шаблоны'],
             ['slug' => 'settings', 'url' => '/admin/settings.html', 'icon' => 'bi-gear', 'label' => 'Настройки сайта', 'divider' => true],
+            ['slug' => 'custom-fields', 'url' => '/admin/custom-fields.html', 'icon' => 'bi-input-cursor-text', 'label' => 'Пользовательские поля'],
             ['slug' => 'landing-pages', 'url' => '/admin/landing-pages.html', 'icon' => 'bi-window-desktop', 'label' => 'Страницы'],
             ['slug' => 'users', 'url' => '/admin/users.html', 'icon' => 'bi-people', 'label' => 'Пользователи'],
         ];

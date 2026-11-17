@@ -3,6 +3,7 @@
 use App\Controllers\Admin\AdminProfileController;
 use App\Controllers\Admin\AuthController;
 use App\Controllers\Admin\ContentController;
+use App\Controllers\Admin\CustomFieldController;
 use App\Controllers\Admin\FileManagerController;
 use App\Controllers\Admin\LandingPageAdminController;
 use App\Controllers\Admin\LandingPageController;
@@ -27,6 +28,7 @@ return function (Router $router) {
     $users = new UsersController();
     $profile = new AdminProfileController();
     $siteSettings = new SiteSettingsController();
+    $customFields = new CustomFieldController();
     $landingPage = new LandingPageController();
     $landingPageAdmin = new LandingPageAdminController();
 
@@ -110,4 +112,11 @@ return function (Router $router) {
     $router->post('/api/admin/pages/{slug}/generate', [$landingPageAdmin, 'generate']);
     $router->delete('/api/admin/pages/{id}', [$landingPageAdmin, 'delete']);
     $router->post('/api/admin/pages/{id}/toggle', [$landingPageAdmin, 'toggleActive']);
+
+    // ---------- Пользовательские поля ----------
+    $router->get('/api/admin/custom-fields', [$customFields, 'index']);
+    $router->post('/api/admin/custom-fields', [$customFields, 'save']);
+    $router->post('/api/admin/custom-fields/{id}/image', [$customFields, 'uploadImage']);
+    $router->post('/api/admin/custom-fields/{id}/toggle', [$customFields, 'toggleActive']);
+    $router->delete('/api/admin/custom-fields/{id}', [$customFields, 'delete']);
 };

@@ -17,6 +17,9 @@ desktop.ini
 !/public/uploads/profile/
 /public/uploads/profile/*
 !/public/uploads/profile/.htaccess
+!/public/uploads/custom/
+/public/uploads/custom/*
+!/public/uploads/custom/.htaccess
 
 # Конфигурация с паролем БД — в репозиторий не попадает
 /config/database.php
