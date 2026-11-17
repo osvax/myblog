@@ -1,5 +1,7 @@
-fix: добавлены заголовки articlePageTitle и portfolioPageTitle
+fix: seed site_settings, default values, исправление модели
 
-- article-edit.php: добавлен h1 с id="articlePageTitle"
-- portfolio-edit.js: добавлен h1 с id="portfolioPageTitle"
-- Теперь формы редактирования загружаются корректно
+- run_seed_settings.php: скрипт заполнения site_settings 90+ настройками
+- settings.php: добавлены default values для всех пустых полей (контакты, mail, smtp)
+- SiteSettings.php: исправлено использование $this->db вместо Database::connection()
+- Настройки теперь корректно сохраняются и читаются frontend контроллерами
+- Для запуска: php database/migrations/run_seed_settings.php

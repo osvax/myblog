@@ -1,0 +1,158 @@
+<?php
+/**
+ * Заполняет таблицу site_settings дефолтными настройками.
+ * Запуск: php database/migrations/run_seed_settings.php
+ */
+
+require_once __DIR__ . '/../../vendor/autoload.php';
+
+use App\Core\Database;
+
+$db = Database::connection();
+
+// Считаем сколько уже записей
+$count = $db->query('SELECT COUNT(*) AS n FROM site_settings')->fetch()['n'];
+if ((int) $count > 0) {
+    echo "В таблице site_settings уже {$count} записей. Пропускаем.\n";
+    exit(0);
+}
+
+$defaults = [
+    // === general ===
+    ['siteName', 'МойБлог', 'text', 'general', 1, 'Название сайта'],
+    ['siteTitle', 'МойБлог — Портфолио и блог', 'text', 'general', 2, 'Заголовок вкладки (SEO)'],
+    ['siteDescription', 'Портфолио веб-разработчика. Блог о верстке, Bootstrap 5 и современных технологиях.', 'text', 'general', 3, 'SEO description'],
+    ['adminEmail', 'admin@moyblog.ru', 'email', 'general', 4, 'Email администратора'],
+    ['siteLanguage', 'Русский', 'text', 'general', 5, 'Язык сайта'],
+
+    // === home ===
+    ['homePageMode', 'main', 'select', 'home', 1, 'Режим главной'],
+    ['heroTitle', 'Личный блог о веб-разработке и дизайне', 'text', 'home', 2, 'Заголовок героя'],
+    ['heroSubtitle', 'Здесь я делюсь опытом, статьями и проектами. Всё самое интересное — в одном месте.', 'text', 'home', 3, 'Подзаголовок героя'],
+    ['homeFeaturedCount', '3', 'number', 'home', 4, 'Статей в разделе «Свежие статьи»'],
+    ['heroPrimaryText', 'Читать блог', 'text', 'home', 5, 'Текст главной кнопки'],
+    ['heroPrimaryUrl', '/blog.html', 'text', 'home', 6, 'Ссылка главной кнопки'],
+    ['heroSecondaryText', 'Заказать проект', 'text', 'home', 7, 'Текст второй кнопки'],
+    ['heroSecondaryUrl', '/order.html', 'text', 'home', 8, 'Ссылка второй кнопки'],
+    ['step1Title', 'Оставляете заявку', 'text', 'home', 9, 'Шаг 1 — заголовок'],
+    ['step1Text', 'Заполняете форму на странице заказа — 2 минуты', 'text', 'home', 10, 'Шаг 1 — описание'],
+    ['step2Title', 'Обсуждаем детали', 'text', 'home', 11, 'Шаг 2 — заголовок'],
+    ['step2Text', 'Связываюсь с вами в течение дня и уточняем задачу', 'text', 'home', 12, 'Шаг 2 — описание'],
+    ['step3Title', 'Получаете результат', 'text', 'home', 13, 'Шаг 3 — заголовок'],
+    ['step3Text', 'Готовый сайт точно в срок и с гарантией', 'text', 'home', 14, 'Шаг 3 — описание'],
+
+    // === headings ===
+    ['blogTitle', 'Блог', 'text', 'headings', 1, 'Блог — заголовок'],
+    ['blogLead', 'Последние записи и полезные материалы', 'text', 'headings', 2, 'Блог — подзаголовок'],
+    ['portfolioTitle', 'Портфолио', 'text', 'headings', 3, 'Портфолио — заголовок'],
+    ['portfolioLead', 'Мои лучшие работы и проекты', 'text', 'headings', 4, 'Портфолио — подзаголовок'],
+    ['contactsTitle', 'Контакты', 'text', 'headings', 5, 'Контакты — заголовок'],
+    ['contactsLead', 'Буду рад связи и сотрудничеству', 'text', 'headings', 6, 'Контакты — подзаголовок'],
+
+    // === mail ===
+    ['mailOrderSubject', 'Новая заявка с сайта', 'text', 'mail', 1, 'Тема письма заявки'],
+    ['mailOrderBody', 'Имя: {name}\nEmail: {email}\nТелефон: {phone}\nТип: {type}\nБюджет: {budget}\nСообщение: {message}', 'text', 'mail', 2, 'Текст письма заявки'],
+    ['mailFeedbackSubject', 'Обратная связь с сайта', 'text', 'mail', 3, 'Тема письма обратной связи'],
+    ['mailFeedbackBody', 'Имя: {name}\nEmail: {email}\nТема: {subject}\nСообщение: {message}', 'text', 'mail', 4, 'Текст письма обратной связи'],
+    ['mailCommentSubject', 'Новый комментарий к статье', 'text', 'mail', 5, 'Тема письма комментария'],
+    ['mailCommentBody', 'Имя: {name}\nEmail: {email}\nСтатья: {article}\nКомментарий: {message}', 'text', 'mail', 6, 'Текст письма комментария'],
+
+    // === seo ===
+    ['keywords', 'блог, портфолио, верстка, bootstrap, html, css, javascript', 'text', 'seo', 1, 'Ключевые слова'],
+    ['sitemap', '1', 'checkbox', 'seo', 2, 'Генерировать sitemap.xml'],
+    ['robots', '1', 'checkbox', 'seo', 3, 'Разрешить индексацию'],
+
+    // === notifications ===
+    ['notifyOrders', '1', 'checkbox', 'notifications', 1, 'Новые заказы'],
+    ['notifyMessages', '1', 'checkbox', 'notifications', 2, 'Новые сообщения'],
+    ['notifyComments', '0', 'checkbox', 'notifications', 3, 'Новые комментарии'],
+    ['notifyUsers', '0', 'checkbox', 'notifications', 4, 'Регистрация пользователей'],
+
+    // === consultant ===
+    ['consultantEnabled', '1', 'checkbox', 'consultant', 1, 'Включить консультанта'],
+    ['consultantWorkingHours', '09:00-20:00', 'text', 'consultant', 2, 'Время работы'],
+    ['consultantButtonColor', '#ff8c1a', 'color', 'consultant', 3, 'Цвет кнопки'],
+    ['consultantButtonTextColor', '#ffffff', 'color', 'consultant', 4, 'Цвет текста кнопки'],
+    ['consultantButtonPosition', 'right', 'select', 'consultant', 5, 'Расположение кнопки'],
+    ['consultantWelcomeMessage', 'Здравствуйте! Чем могу помочь?', 'text', 'consultant', 6, 'Приветствие'],
+    ['consultantNotificationEmail', '', 'email', 'consultant', 7, 'Email для уведомлений'],
+    ['consultantCensoredWords', 'дурак, идиот, тупица', 'text', 'consultant', 8, 'Слова для цензуры'],
+
+    // === contacts ===
+    ['contactAddress', 'г. Самара, ул. Примерная, 1', 'text', 'contacts', 1, 'Адрес'],
+    ['contactHours', 'Пн-Пт: 9:00 — 18:00', 'text', 'contacts', 2, 'Часы работы'],
+    ['contactEmail', 'hello@moyblog.ru', 'email', 'contacts', 3, 'Публичный email'],
+    ['contactPhone', '+7 (900) 123-45-67', 'tel', 'contacts', 4, 'Телефон'],
+    ['socialTelegram', 'https://t.me/moyblog', 'url', 'contacts', 5, 'Telegram'],
+    ['socialVk', 'https://vk.com/moyblog', 'url', 'contacts', 6, 'VK'],
+    ['socialGithub', 'https://github.com/moyblog', 'url', 'contacts', 7, 'GitHub'],
+    ['socialYoutube', 'https://youtube.com/@moyblog', 'url', 'contacts', 8, 'YouTube'],
+
+    // === security ===
+    ['siteStatus', 'online', 'select', 'security', 1, 'Режим сайта'],
+    ['twoFactorMethod', 'off', 'select', 'security', 2, 'Двухфакторная аутентификация'],
+    ['maintenanceMessage', 'Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!', 'text', 'security', 3, 'Сообщение на время обслуживания'],
+    ['maintenanceAllowedIps', "127.0.0.1\n::1", 'text', 'security', 4, 'IP-адреса с доступом при обслуживании'],
+    ['adminIpAllowlist', '', 'text', 'security', 5, 'Разрешённые IP для входа в админку'],
+    ['securityContactEmail', '', 'email', 'security', 6, 'Email для уведомлений о безопасности'],
+    ['twoFactorPhone', '', 'tel', 'security', 7, 'Телефон для SMS-кодов'],
+    ['maxLoginAttempts', '5', 'number', 'security', 8, 'Попытки входа до блокировки'],
+    ['lockoutMinutes', '15', 'number', 'security', 9, 'Время блокировки (минуты)'],
+    ['adminSessionHours', '8', 'number', 'security', 10, 'Срок сессии админки (часы)'],
+    ['loginCaptcha', '0', 'checkbox', 'security', 11, 'Проверка CAPTCHA при входе'],
+    ['securityLoginAlerts', '1', 'checkbox', 'security', 12, 'Уведомлять о новых входах'],
+
+    // === email ===
+    ['smtpHost', '', 'text', 'email', 1, 'SMTP-сервер'],
+    ['smtpPort', '587', 'number', 'email', 2, 'Порт'],
+    ['smtpEncryption', 'tls', 'select', 'email', 3, 'Шифрование'],
+    ['smtpUsername', '', 'text', 'email', 4, 'Имя пользователя'],
+    ['smtpFromName', 'МойБлог', 'text', 'email', 5, 'Имя отправителя'],
+    ['smtpFromEmail', 'no-reply@example.com', 'email', 'email', 6, 'Email отправителя'],
+    ['smtpRecipient', 'admin@example.com', 'email', 'email', 7, 'Email получателя заявок'],
+    ['smtpReplyTo', '', 'email', 'email', 8, 'Ответы направлять на'],
+
+    // === articles ===
+    ['articlePerPage', '12', 'number', 'articles', 1, 'Статей на странице'],
+    ['articleSortOrder', 'newest', 'select', 'articles', 2, 'Сортировка статей'],
+    ['articleExcerptLength', '300', 'number', 'articles', 3, 'Длина анонса (символов)'],
+    ['articleCommentsEnabled', '1', 'checkbox', 'articles', 4, 'Разрешить комментарии'],
+    ['commentsAccess', 'users', 'select', 'articles', 5, 'Кто видит комментарии'],
+    ['articleFeaturedEnabled', '1', 'checkbox', 'articles', 6, 'Показывать избранные статьи'],
+    ['articleTagsEnabled', '1', 'checkbox', 'articles', 7, 'Показывать теги'],
+    ['articleCategoriesEnabled', '1', 'checkbox', 'articles', 8, 'Показывать рубрики'],
+    ['articleReadTime', '1', 'checkbox', 'articles', 9, 'Показывать время чтения'],
+    ['articleRelatedEnabled', '1', 'checkbox', 'articles', 10, 'Показывать похожие статьи'],
+    ['articleShareButtons', '1', 'checkbox', 'articles', 11, 'Кнопки «Поделиться»'],
+
+    // === portfolio ===
+    ['portfolioPerPage', '12', 'number', 'portfolio', 1, 'Работ на странице'],
+    ['portfolioLayout', 'grid', 'select', 'portfolio', 2, 'Тип отображения'],
+    ['portfolioShowTags', '1', 'checkbox', 'portfolio', 3, 'Показывать теги'],
+    ['portfolioShowCategories', '1', 'checkbox', 'portfolio', 4, 'Показывать рубрики'],
+    ['portfolioShowViews', '1', 'checkbox', 'portfolio', 5, 'Показывать счётчик просмотров'],
+    ['portfolioShowDate', '1', 'checkbox', 'portfolio', 6, 'Показывать дату'],
+    ['portfolioFeaturedEnabled', '1', 'checkbox', 'portfolio', 7, 'Показывать избранные работы'],
+    ['portfolioShowClient', '1', 'checkbox', 'portfolio', 8, 'Показывать клиента'],
+    ['portfolioShowLink', '1', 'checkbox', 'portfolio', 9, 'Показывать ссылку на проект'],
+];
+
+$stmt = $db->connection()->prepare(
+    "INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
+     VALUES (:key, :value, :type, :group, :order, :placeholder)"
+);
+
+$inserted = 0;
+foreach ($defaults as $d) {
+    $stmt->execute([
+        ':key' => $d[0],
+        ':value' => $d[1],
+        ':type' => $d[2],
+        ':group' => $d[3],
+        ':order' => $d[4],
+        ':placeholder' => $d[5],
+    ]);
+    $inserted++;
+}
+
+echo "Вставлено {$inserted} записей в site_settings.\n";

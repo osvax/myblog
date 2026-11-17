@@ -186,11 +186,16 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label for="mailOrderSubject" class="form-label fw-bold">Тема письма</label>
-                                    <input type="text" id="mailOrderSubject" class="form-control" maxlength="200">
+                                    <input type="text" id="mailOrderSubject" class="form-control" maxlength="200" value="Новая заявка с сайта">
                                 </div>
                                 <div class="col-12">
                                     <label for="mailOrderBody" class="form-label fw-bold">Текст письма</label>
-                                    <textarea id="mailOrderBody" class="form-control" rows="6" maxlength="5000"></textarea>
+                                    <textarea id="mailOrderBody" class="form-control" rows="6" maxlength="5000">Имя: {name}
+Email: {email}
+Телефон: {phone}
+Тип: {type}
+Бюджет: {budget}
+Сообщение: {message}</textarea>
                                 </div>
                             </div>
 
@@ -198,11 +203,14 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label for="mailFeedbackSubject" class="form-label fw-bold">Тема письма</label>
-                                    <input type="text" id="mailFeedbackSubject" class="form-control" maxlength="200">
+                                    <input type="text" id="mailFeedbackSubject" class="form-control" maxlength="200" value="Обратная связь с сайта">
                                 </div>
                                 <div class="col-12">
                                     <label for="mailFeedbackBody" class="form-label fw-bold">Текст письма</label>
-                                    <textarea id="mailFeedbackBody" class="form-control" rows="6" maxlength="5000"></textarea>
+                                    <textarea id="mailFeedbackBody" class="form-control" rows="6" maxlength="5000">Имя: {name}
+Email: {email}
+Тема: {subject}
+Сообщение: {message}</textarea>
                                 </div>
                             </div>
 
@@ -210,11 +218,14 @@
                             <div class="row g-3 mb-4">
                                 <div class="col-12">
                                     <label for="mailCommentSubject" class="form-label fw-bold">Тема письма</label>
-                                    <input type="text" id="mailCommentSubject" class="form-control" maxlength="200">
+                                    <input type="text" id="mailCommentSubject" class="form-control" maxlength="200" value="Новый комментарий к статье">
                                 </div>
                                 <div class="col-12">
                                     <label for="mailCommentBody" class="form-label fw-bold">Текст письма</label>
-                                    <textarea id="mailCommentBody" class="form-control" rows="6" maxlength="5000"></textarea>
+                                    <textarea id="mailCommentBody" class="form-control" rows="6" maxlength="5000">Имя: {name}
+Email: {email}
+Статья: {article}
+Комментарий: {message}</textarea>
                                 </div>
                             </div>
 
@@ -324,35 +335,35 @@
                             <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="contactAddress" class="form-label fw-bold">Адрес</label>
-                                    <input type="text" id="contactAddress" class="form-control" maxlength="160">
+                                    <input type="text" id="contactAddress" class="form-control" maxlength="160" value="г. Самара, ул. Примерная, 1">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="contactHours" class="form-label fw-bold">Часы работы</label>
-                                    <input type="text" id="contactHours" class="form-control" maxlength="120">
+                                    <input type="text" id="contactHours" class="form-control" maxlength="120" value="Пн-Пт: 9:00 — 18:00">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="contactEmail" class="form-label fw-bold">Публичный email</label>
-                                    <input type="email" id="contactEmail" class="form-control" maxlength="254">
+                                    <input type="email" id="contactEmail" class="form-control" maxlength="254" value="hello@moyblog.ru">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="contactPhone" class="form-label fw-bold">Телефон</label>
-                                    <input type="tel" id="contactPhone" class="form-control" maxlength="40">
+                                    <input type="tel" id="contactPhone" class="form-control" maxlength="40" value="+7 (900) 123-45-67">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="socialTelegram" class="form-label fw-bold">Ссылка на Telegram</label>
-                                    <input type="url" id="socialTelegram" class="form-control" placeholder="https://t.me/username">
+                                    <input type="url" id="socialTelegram" class="form-control" placeholder="https://t.me/username" value="https://t.me/moyblog">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="socialVk" class="form-label fw-bold">Ссылка на VK</label>
-                                    <input type="url" id="socialVk" class="form-control" placeholder="https://vk.com/username">
+                                    <input type="url" id="socialVk" class="form-control" placeholder="https://vk.com/username" value="https://vk.com/moyblog">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="socialGithub" class="form-label fw-bold">Ссылка на GitHub</label>
-                                    <input type="url" id="socialGithub" class="form-control" placeholder="https://github.com/username">
+                                    <input type="url" id="socialGithub" class="form-control" placeholder="https://github.com/username" value="https://github.com/moyblog">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="socialYoutube" class="form-label fw-bold">Ссылка на YouTube</label>
-                                    <input type="url" id="socialYoutube" class="form-control" placeholder="https://youtube.com/@username">
+                                    <input type="url" id="socialYoutube" class="form-control" placeholder="https://youtube.com/@username" value="https://youtube.com/@moyblog">
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
@@ -439,7 +450,7 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label for="smtpPort" class="form-label fw-bold">Порт</label>
-                                    <input type="number" id="smtpPort" class="form-control" min="1" max="65535" placeholder="587">
+                                    <input type="number" id="smtpPort" class="form-control" min="1" max="65535" value="587" placeholder="587">
                                 </div>
                                 <div class="col-md-3">
                                     <label for="smtpEncryption" class="form-label fw-bold">Шифрование</label>
@@ -459,15 +470,15 @@
                                 </div>
                                 <div class="col-md-6">
                                     <label for="smtpFromName" class="form-label fw-bold">Имя отправителя</label>
-                                    <input type="text" id="smtpFromName" class="form-control" placeholder="МойБлог">
+                                    <input type="text" id="smtpFromName" class="form-control" placeholder="МойБлог" value="МойБлог">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="smtpFromEmail" class="form-label fw-bold">Email отправителя</label>
-                                    <input type="email" id="smtpFromEmail" class="form-control" placeholder="no-reply@example.com">
+                                    <input type="email" id="smtpFromEmail" class="form-control" placeholder="no-reply@example.com" value="no-reply@example.com">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="smtpRecipient" class="form-label fw-bold">Email получателя заявок</label>
-                                    <input type="email" id="smtpRecipient" class="form-control" placeholder="admin@example.com">
+                                    <input type="email" id="smtpRecipient" class="form-control" placeholder="admin@example.com" value="admin@example.com">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="smtpReplyTo" class="form-label fw-bold">Ответы направлять на</label>

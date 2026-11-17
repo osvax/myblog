@@ -187,21 +187,19 @@ class SiteSettings
         string $tabGroup = 'general',
         string $placeholder = ''
     ): array {
-        $db = Database::connection();
-
         // Проверяем уникальность
-        $stmt = $db->prepare("SELECT id FROM site_settings WHERE setting_key = :key LIMIT 1");
+        $stmt = $this->db->prepare("SELECT id FROM site_settings WHERE setting_key = :key LIMIT 1");
         $stmt->execute([':key' => $key]);
         if ($stmt->fetch()) {
             return ['success' => false, 'error' => 'Поле с таким именем уже существует'];
         }
 
         // Получаем максимальный порядок для группы
-        $stmt = $db->prepare("SELECT COALESCE(MAX(display_order), 0) + 1 AS max_order FROM site_settings WHERE tab_group = :group");
+        $stmt = $this->db->prepare("SELECT COALESCE(MAX(display_order), 0) + 1 AS max_order FROM site_settings WHERE tab_group = :group");
         $stmt->execute([':group' => $tabGroup]);
         $order = (int) $stmt->fetch()['max_order'];
 
-        $stmt = $db->prepare(
+        $stmt = $this->db->prepare(
             "INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
              VALUES (:key, :value, :type, :group, :order, :placeholder)"
         );
@@ -214,7 +212,7 @@ class SiteSettings
             ':placeholder' => $placeholder,
         ]);
 
-        return ['success' => true, 'id' => (int) $db->lastInsertId()];
+        return ['success' => true, 'id' => (int) $this->db->lastInsertId()];
     }
 
     /**
@@ -225,8 +223,7 @@ class SiteSettings
      */
     public function deleteCustomField(string $key): array
     {
-        $db = Database::connection();
-        $stmt = $db->prepare("DELETE FROM site_settings WHERE setting_key = :key");
+        $stmt = $this->db->prepare("DELETE FROM site_settings WHERE setting_key = :key");
         $stmt->execute([':key' => $key]);
 
         if ($stmt->rowCount() === 0) {
