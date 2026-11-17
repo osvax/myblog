@@ -18,3 +18,4 @@ spl_autoload_register(function ($className) {
 require_once APP_ROOT . '/app/Core/admin-functions.php';
 require_once APP_ROOT . '/app/Core/auth.php';
 require_once APP_ROOT . '/app/Core/custom-fields.php';
+require_once APP_ROOT . '/app/Core/slug.php';

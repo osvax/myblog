@@ -44,6 +44,9 @@ return function (Router $router) {
             return $portfolio->project($request, $slug);
         });
     }
+    // Страница рубрики блога (важно: до catch-all /{slug}.html)
+    $router->get('/category/{slug}.html', [$blog, 'category']);
+
     $router->get('/{slug}.html', function ($request, $parameters) use ($blog, $portfolio) {
         $slug = $parameters['slug'] ?? '';
         $content = new \App\Models\ContentRepository();

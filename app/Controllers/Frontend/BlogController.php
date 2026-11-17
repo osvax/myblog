@@ -34,6 +34,44 @@ class BlogController extends Controller
         ]);
     }
 
+    /**
+     * Страница рубрики: только статьи выбранной рубрики.
+     */
+    public function category($request, array $parameters = [])
+    {
+        $user = current_user();
+        $content = new ContentRepository();
+        $slug = isset($parameters['slug']) ? (string) $parameters['slug'] : '';
+        $category = $content->categoryBySlug($slug);
+        if (!$category) {
+            return new Response('Рубрика не найдена', 404);
+        }
+
+        $articles = [];
+        foreach ($content->articlesByCategory($slug) as $article) {
+            $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
+            $articles[$article['slug']] = $article;
+        }
+        $categories = $content->categories();
+        $categoriesMap = [];
+        foreach ($categories as $cat) {
+            $categoriesMap[$cat['id']] = $cat['name'];
+        }
+
+        return $this->page('frontend', 'blog', [
+            'title' => 'Рубрика «' . $category['name'] . '» — МойБлог',
+            'description' => 'Статьи рубрики «' . $category['name'] . '».',
+            'activePage' => 'blog',
+            'articles' => $articles,
+            'categories' => $categoriesMap,
+            'categoryName' => $category['name'],
+            'categorySlug' => $category['slug'],
+            'categoryDescription' => $category['description'] ?? '',
+            'user' => $user,
+            'isAdmin' => $user && $user['role'] === 'admin',
+        ]);
+    }
+
     public function article($request, $slug)
     {
         $user = current_user();
@@ -68,6 +106,9 @@ class BlogController extends Controller
         $prev = $currentIndex > 0 ? $allArticles[$slugs[$currentIndex - 1]] : null;
         $next = $currentIndex !== false && $currentIndex < count($slugs) - 1 ? $allArticles[$slugs[$currentIndex + 1]] : null;
 
+        // Рубрики для сайдбара страницы статьи (динамически из базы)
+        $sidebarCategories = $content->categories();
+
         // Видимость комментариев настраивается в админке (Настройки → Блог → commentsAccess)
         $commentsAccess = (string) ((new \App\Models\SiteSettings())->get('commentsAccess', 'users') ?: 'users');
         $commentsVisible = match ($commentsAccess) {
@@ -88,6 +129,7 @@ class BlogController extends Controller
             'comments' => $comments,
             'commentsCount' => $commentsCount,
             'commentsVisible' => $commentsVisible,
+            'sidebarCategories' => $sidebarCategories,
             // Форма комментария отправляется через AJAX forms.js с тостом,
             // иначе браузер уходит на JSON-ответ обработчика
             'includeFormsScript' => true,

@@ -39,8 +39,36 @@
         document.getElementById('addCategoryButton').addEventListener('click', function () {
             form.reset();
             form.elements.id.value = '';
+            slugTouched = false;
             document.getElementById('categoryModalTitle').textContent = 'Новая рубрика';
             modal.show();
+        });
+
+        // Автогенерация slug из названия: кириллица транслитерируется,
+        // пробелы и прочие символы заменяются тире; ручной ввод приоритетнее
+        var slugTouched = false;
+        var transliteration = {
+            'а': 'a', 'б': 'b', 'в': 'v', 'г': 'g', 'д': 'd', 'е': 'e', 'ё': 'yo',
+            'ж': 'zh', 'з': 'z', 'и': 'i', 'й': 'y', 'к': 'k', 'л': 'l', 'м': 'm',
+            'н': 'n', 'о': 'o', 'п': 'p', 'р': 'r', 'с': 's', 'т': 't', 'у': 'u',
+            'ф': 'f', 'х': 'h', 'ц': 'ts', 'ч': 'ch', 'ш': 'sh', 'щ': 'sch',
+            'ъ': '', 'ы': 'y', 'ь': '', 'э': 'e', 'ю': 'yu', 'я': 'ya'
+        };
+
+        function toSlug(value) {
+            return value.toLowerCase().split('').map(function (char) {
+                return Object.prototype.hasOwnProperty.call(transliteration, char) ? transliteration[char] : char;
+            }).join('').replace(/[^a-z0-9]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '');
+        }
+
+        form.elements.slug.addEventListener('input', function () {
+            slugTouched = true;
+        });
+
+        form.elements.name.addEventListener('input', function () {
+            if (!slugTouched) {
+                form.elements.slug.value = toSlug(form.elements.name.value);
+            }
         });
 
         body.addEventListener('click', function (event) {
@@ -52,6 +80,7 @@
                 form.elements.name.value = category.name;
                 form.elements.slug.value = category.slug;
                 form.elements.description.value = category.description || '';
+                slugTouched = true;
                 document.getElementById('categoryModalTitle').textContent = 'Редактировать рубрику';
                 modal.show();
                 return;

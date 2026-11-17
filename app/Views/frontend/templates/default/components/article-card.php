@@ -9,7 +9,12 @@
             <a href="/<?= htmlspecialchars($articleSlug, ENT_QUOTES, 'UTF-8') ?>.html" class="fw-bold text-orange link-orange">Читать далее →</a>
         </div>
         <div class="card-footer bg-transparent border-0 small fw-bold text-muted">
-            <i class="bi bi-calendar3"></i> <?= htmlspecialchars($article['date'], ENT_QUOTES, 'UTF-8') ?> · <i class="bi bi-tag"></i> <?= htmlspecialchars($article['category'], ENT_QUOTES, 'UTF-8') ?>
+            <i class="bi bi-calendar3"></i> <?= htmlspecialchars($article['date'], ENT_QUOTES, 'UTF-8') ?> · <i class="bi bi-tag"></i>
+            <?php if (!empty($article['category_slug'])): ?>
+                <a href="/category/<?= htmlspecialchars($article['category_slug'], ENT_QUOTES, 'UTF-8') ?>.html" class="fw-bold text-orange link-orange text-decoration-none"><?= htmlspecialchars($article['category'], ENT_QUOTES, 'UTF-8') ?></a>
+            <?php else: ?>
+                <?= htmlspecialchars($article['category'], ENT_QUOTES, 'UTF-8') ?>
+            <?php endif; ?>
         </div>
     </div>
 </div>

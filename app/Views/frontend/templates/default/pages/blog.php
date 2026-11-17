@@ -1,8 +1,14 @@
 <!-- ================= ШАПКА / МЕНЮ ================= -->
-    
+
 
     <!-- ================= ЗАГОЛОВОК СТРАНИЦЫ ================= -->
-    <?php $heading = 'Блог'; $headingLead = 'Последние записи и полезные материалы'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
+    <?php
+    // В режиме рубрики показываем её название и ссылку на все статьи
+    $blogIsCategory = !empty($categoryName);
+    $heading = 'Блог';
+    $headingLead = $blogIsCategory ? 'Рубрика «' . $categoryName . '»' : 'Последние записи и полезные материалы';
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php';
+    ?>
 
     <!-- Волна: оранжевый → светло-оранжевый -->
     <?php $waveColors = ['#ff8c1a', '#fff3e6']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
@@ -10,6 +16,15 @@
     <!-- ================= БЛОГ ================= -->
     <section class="py-5 bg-orange-light">
         <div class="container">
+            <?php if ($blogIsCategory): ?>
+                <div class="text-center mb-4">
+                    <span class="badge bg-orange fw-bold p-2 mb-2">Рубрика</span>
+                    <?php if (!empty($categoryDescription)): ?>
+                        <p class="fw-bold text-muted mb-2"><?= htmlspecialchars($categoryDescription, ENT_QUOTES, 'UTF-8') ?></p>
+                    <?php endif; ?>
+                    <a href="/blog.html" class="fw-bold text-orange link-orange text-decoration-none"><i class="bi bi-arrow-left"></i> Все статьи блога</a>
+                </div>
+            <?php endif; ?>
             <!-- ================= ФОРМА ПОИСКА ================= -->
             <div class="row justify-content-center mb-5">
                 <div class="col-lg-8">

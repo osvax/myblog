@@ -47,13 +47,41 @@ class ContentRepository
         return $row ? $this->articleRow($row) : null;
     }
 
+    /**
+     * Рубрика по slug.
+     */
+    public function categoryBySlug(string $slug): ?array
+    {
+        $statement = $this->db->prepare('SELECT id, name, slug, description FROM categories WHERE slug = :slug LIMIT 1');
+        $statement->execute(['slug' => $slug]);
+        $row = $statement->fetch();
+        return $row ?: null;
+    }
+
+    /**
+     * Опубликованные статьи конкретной рубрики (для страницы рубрики).
+     */
+    public function articlesByCategory(string $categorySlug, bool $publishedOnly = true): array
+    {
+        $sql = 'SELECT a.*, c.name AS category, c.slug AS category_slug
+                FROM articles a LEFT JOIN categories c ON c.id = a.category_id
+                WHERE c.slug = :slug';
+        if ($publishedOnly) {
+            $sql .= ' AND a.is_published = 1';
+        }
+        $statement = $this->db->prepare($sql . ' ORDER BY a.published_at DESC, a.created_at DESC');
+        $statement->execute(['slug' => $categorySlug]);
+        return array_map([$this, 'articleRow'], $statement->fetchAll());
+    }
+
     public function saveArticle(array $article)
     {
         $category = $this->db->prepare('SELECT id FROM categories WHERE name = :name');
         $category->execute(['name' => $article['category']]);
         $categoryId = $category->fetchColumn();
         if (!$categoryId) {
-            $slug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $article['category'])), '-'));
+            // Автогенерация slug рубрики из названия (кириллица транслитерируется)
+            $slug = \slugify($article['category']);
             $insertCategory = $this->db->prepare('INSERT INTO categories (name, slug) VALUES (:name, :slug)');
             $insertCategory->execute([
                 'name' => $article['category'],

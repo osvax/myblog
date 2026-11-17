@@ -22,8 +22,17 @@ $connection->beginTransaction();
 try {
     foreach ($seed['articles'] as $slug => $article) {
         $name = $article['category'];
-        $categorySlug = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $name);
-        $categorySlug = strtolower(trim(preg_replace('/[^a-zA-Z0-9]+/', '-', (string) $categorySlug), '-'));
+        // Транслитерация кириллицы вручную: iconv на Windows портит русские названия
+        $translitMap = [
+            'а' => 'a', 'б' => 'b', 'в' => 'v', 'г' => 'g', 'д' => 'd', 'е' => 'e',
+            'ё' => 'yo', 'ж' => 'zh', 'з' => 'z', 'и' => 'i', 'й' => 'y', 'к' => 'k',
+            'л' => 'l', 'м' => 'm', 'н' => 'n', 'о' => 'o', 'п' => 'p', 'р' => 'r',
+            'с' => 's', 'т' => 't', 'у' => 'u', 'ф' => 'f', 'х' => 'h', 'ц' => 'ts',
+            'ч' => 'ch', 'ш' => 'sh', 'щ' => 'sch', 'ъ' => '', 'ы' => 'y', 'ь' => '',
+            'э' => 'e', 'ю' => 'yu', 'я' => 'ya',
+        ];
+        $categorySlug = mb_strtolower(strtr(mb_strtolower(trim($name)), $translitMap));
+        $categorySlug = trim(preg_replace('/[^a-z0-9]+/', '-', $categorySlug), '-');
         $category = $connection->prepare(
             'INSERT INTO categories (name, slug) VALUES (:name, :slug)
              ON DUPLICATE KEY UPDATE name = VALUES(name)'
