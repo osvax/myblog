@@ -184,12 +184,83 @@
             });
         }
 
+        // ---------- Активность ----------
+        function renderActivity(activities) {
+            var body = document.getElementById('activityBody');
+            if (!body) return;
+            if (!activities || !activities.length) {
+                body.innerHTML = '<div class="activity-empty"><i class="bi bi-hourglass-split"></i>Пока нет записей об активности';
+                return;
+            }
+            var list = '<ul class="activity-list">';
+            activities.forEach(function (a) {
+                var iconClass = 'page-view';
+                var icon = 'bi-window';
+                var url = (a.page_url || '').toLowerCase();
+                if (url.indexOf('login') !== -1 || url.indexOf('auth') !== -1) {
+                    iconClass = 'login';
+                    icon = 'bi-box-arrow-in-right';
+                }
+                var timeAgo = timeAgoFromISO(a.visited_at);
+                list += '<li class="activity-item">' +
+                    '<span class="activity-icon ' + iconClass + '"><i class="bi ' + icon + '"></i></span>' +
+                    '<div class="activity-info">' +
+                    '<div class="activity-title" title="' + escapeHtml(a.page_title || a.page_url || '') + '">' +
+                    escapeHtml(a.page_title || a.page_url || '—') + '</div>' +
+                    '<div class="activity-meta">' + escapeHtml(a.name || 'Пользователь') + '</div>' +
+                    '</div>' +
+                    '<span class="activity-time">' + timeAgo + '</span>' +
+                    '</li>';
+            });
+            list += '</ul>';
+            body.innerHTML = list;
+        }
+
+        function timeAgoFromISO(iso) {
+            if (!iso) return '—';
+            var d = new Date(iso);
+            if (isNaN(d)) return iso;
+            var now = new Date();
+            var diff = Math.floor((now - d) / 1000);
+            if (diff < 60) return 'только что';
+            if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
+            if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
+            if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад';
+            return d.toLocaleDateString('ru-RU');
+        }
+
+        function loadActivity() {
+            window.AdminApi.get('/api/admin/activity')
+                .then(function (data) {
+                    renderActivity(data.activities);
+                })
+                .catch(function (err) {
+                    console.error('Не удалось загрузить активность.', err);
+                    var body = document.getElementById('activityBody');
+                    if (body) body.innerHTML = '<div class="activity-error">Не удалось загрузить</div>';
+                });
+        }
+
+        // Обновление активности по клику на кнопку
+        function bindActivityRefresh() {
+            var btn = document.getElementById('activityRefreshBtn');
+            if (!btn) return;
+            btn.addEventListener('click', function () {
+                var icon = btn.querySelector('i');
+                if (icon) icon.className = 'bi bi-arrow-clockwise spin';
+                loadActivity();
+                setTimeout(function () { if (icon) icon.className = 'bi bi-arrow-clockwise'; }, 1500);
+            });
+        }
+
         updateClock();
         window.setInterval(updateClock, 1000);
         updateUserCount();
         updateContentCounts();
         updateCommentCount();
         loadOrderCounts();
+        loadActivity();
+        bindActivityRefresh();
         window.addEventListener('admin-orders-state-changed', loadOrderCounts);
         window.addEventListener('storage', function (event) {
             if (event.key === 'myblog.admin.orders.state.v1') loadOrderCounts();

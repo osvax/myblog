@@ -1409,3 +1409,181 @@ body.templates-page .admin-content {
         margin-left: 0;
     }
 }
+
+/* ============================================================
+   Filter bar — универсальный фильтр-бар для списков
+   ============================================================ */
+
+.filter-bar {
+    border-bottom: 1px solid rgba(53, 53, 53, .08);
+    padding: .75rem 1rem;
+}
+
+.filter-bar .input-group-text {
+    background: #f8f9fa;
+    border-right: none;
+}
+
+.filter-bar .form-control,
+.filter-bar .form-select {
+    border-left: none;
+    font-size: .85rem;
+    font-weight: 700;
+}
+
+.filter-bar .form-control:focus,
+.filter-bar .form-select:focus {
+    border-color: var(--orange);
+    box-shadow: 0 0 0 .2rem rgba(255, 140, 26, .15);
+}
+
+.filter-bar .form-control:focus + .filter-bar-clear,
+.filter-bar .filter-bar-clear:not([hidden]) {
+    display: inline-flex;
+}
+
+.filter-bar-clear {
+    border-left: none;
+    padding-left: .5rem;
+    padding-right: .5rem;
+}
+
+.filter-bar-reset {
+    font-size: .78rem;
+}
+
+.filter-bar-count {
+    white-space: nowrap;
+}
+
+/* ============================================================
+   Activity card — карточка активности на дашборде
+   ============================================================ */
+
+.activity-card {
+    background-color: #ffffff;
+    border-radius: 1rem;
+    border: none;
+    box-shadow: 0 .5rem 1rem rgba(53, 53, 53, .08);
+    border-top: 4px solid var(--orange);
+}
+
+.activity-card .card-header {
+    background: #fff;
+    border-bottom: 1px solid rgba(53, 53, 53, .06);
+    padding: 1rem 1.25rem;
+}
+
+.activity-card .card-header .h5 {
+    color: var(--dark);
+}
+
+.activity-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.activity-item {
+    display: flex;
+    align-items: flex-start;
+    gap: .75rem;
+    padding: .75rem 1.25rem;
+    border-bottom: 1px solid rgba(53, 53, 53, .04);
+    transition: background-color .15s ease;
+}
+
+.activity-item:last-child {
+    border-bottom: none;
+}
+
+.activity-item:hover {
+    background-color: var(--orange-light);
+}
+
+.activity-icon {
+    flex: 0 0 2.5rem;
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: .65rem;
+    background: var(--orange-light);
+    color: var(--orange);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1rem;
+}
+
+.activity-icon.page-view {
+    background: #e8f4fd;
+    color: #0d6efd;
+}
+
+.activity-icon.login {
+    background: #e8f8e8;
+    color: #198754;
+}
+
+.activity-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.activity-info .activity-title {
+    font-size: .85rem;
+    font-weight: 700;
+    color: var(--dark);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.activity-info .activity-meta {
+    font-size: .75rem;
+    color: #6c757d;
+    font-weight: 600;
+}
+
+.activity-time {
+    flex: 0 0 auto;
+    font-size: .72rem;
+    color: #adb5bd;
+    font-weight: 700;
+    white-space: nowrap;
+    padding-top: .15rem;
+}
+
+.activity-empty {
+    padding: 2rem 1.25rem;
+    text-align: center;
+    color: #6c757d;
+    font-weight: 700;
+}
+
+.activity-empty i {
+    font-size: 2rem;
+    color: #dee2e6;
+    display: block;
+    margin-bottom: .5rem;
+}
+
+.activity-error {
+    padding: .75rem 1.25rem;
+    color: #dc3545;
+    font-size: .82rem;
+    font-weight: 700;
+}
+
+.activity-refresh-btn {
+    font-size: .75rem;
+    padding: .25rem .6rem;
+}
+
+@keyframes spin {
+    from { transform: rotate(0); }
+    to   { transform: rotate(360deg); }
+}
+
+.activity-refresh-btn .spin {
+    animation: spin .6s linear;
+}

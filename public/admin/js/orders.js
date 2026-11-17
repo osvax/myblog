@@ -25,11 +25,61 @@
             'Отменён': '#6c757d'
         };
         var state = { status: {}, deleted: [], clients: {} };
+        var searchFilter = '';
+
+        function applySearchFilter() {
+            var q = (searchFilter || '').toLowerCase().trim();
+            if (!q) return orders;
+            return orders.filter(function (o) {
+                var text = ((o.client || '') + ' ' + (o.email || '') + ' ' + (o.phone || '')).toLowerCase();
+                return text.indexOf(q) !== -1;
+            });
+        }
+
+        function bindOrdersSearch() {
 
         function escapeHtml(value) {
             return String(value).replace(/[&<>"']/g, function (char) {
                 return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char];
             });
+        }
+
+        function bindOrdersSearch() {
+            var searchInput = document.getElementById('ordersSearchInput');
+            var clearBtn = document.querySelector('#ordersFilterBar .filter-bar-clear');
+            var countEl = document.getElementById('ordersFilterCount');
+            if (!searchInput) return;
+
+            function updateClear() {
+                if (clearBtn) clearBtn.hidden = !searchFilter;
+            }
+            function updateCount() {
+                if (countEl) countEl.textContent = '';
+            }
+
+            var timer = null;
+            searchInput.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    searchFilter = searchInput.value;
+                    page = 1;
+                    render();
+                    updateClear();
+                    updateCount();
+                }, 200);
+            });
+
+            if (clearBtn) {
+                clearBtn.addEventListener('click', function () {
+                    searchInput.value = '';
+                    searchFilter = '';
+                    page = 1;
+                    render();
+                    updateClear();
+                    updateCount();
+                    searchInput.focus();
+                });
+            }
         }
 
         function activeOrders() {
@@ -42,6 +92,10 @@
             return activeOrders().filter(function (order) {
                 return order.createdAt >= from && order.createdAt <= to;
             });
+        }
+
+        function visibleOrders() {
+            return applySearchFilter();
         }
 
         function orderDetails(order) {
@@ -70,11 +124,11 @@
         }
 
         function renderTable() {
-            var visibleOrders = archivedOrders();
-            var pageCount = Math.max(1, Math.ceil(visibleOrders.length / pageSize));
+            var visible = visibleOrders();
+            var pageCount = Math.max(1, Math.ceil(visible.length / pageSize));
             page = Math.min(page, pageCount);
             var start = (page - 1) * pageSize;
-            var pageOrders = visibleOrders.slice(start, start + pageSize);
+            var pageOrders = visible.slice(start, start + pageSize);
             tableBody.innerHTML = pageOrders.map(function (order) {
                 var details = orderDetails(order);
                 var client = details.clientName || order.client;
@@ -103,9 +157,9 @@
                     '<i class="bi bi-trash"></i></button></td></tr>';
             }).join('');
 
-            pageInfo.textContent = visibleOrders.length
-                ? 'Показано ' + (start + 1) + '–' + Math.min(start + pageSize, visibleOrders.length) +
-                    ' из ' + visibleOrders.length + ' заказов'
+            pageInfo.textContent = visible.length
+                ? 'Показано ' + (start + 1) + '–' + Math.min(start + pageSize, visible.length) +
+                    ' из ' + visible.length + ' заказов'
                 : 'Нет заказов со статусом «Завершён» или «Отменён»';
             renderPagination(pageCount);
         }
@@ -414,6 +468,7 @@
                 dateToInput.max = todayValue;
                 dateFromInput.value = toDateInputValue(yearAgo);
                 dateToInput.value = todayValue;
+                bindOrdersSearch();
                 render();
             }).catch(function (error) {
                 errorBox.textContent = error.message || 'Не удалось загрузить заказы';

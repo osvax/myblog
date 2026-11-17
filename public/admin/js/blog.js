@@ -9,6 +9,8 @@
     var pageSize = 5;
     var page = 1;
     var articles = [];
+    var filteredArticles = [];
+    var filters = { search: '', status: '', category: '' };
 
     function showToast(message, kind) {
         var container = document.getElementById('articleToastContainer');
@@ -40,15 +42,116 @@
         return parts.length === 3 ? parts[2] + '.' + parts[1] + '.' + parts[0] : value;
     }
 
+    function applyFilters() {
+        var q = (filters.search || '').toLowerCase().trim();
+        filteredArticles = articles.filter(function (a) {
+            var match = true;
+            if (q) {
+                var haystack = ((a.title || '') + ' ' + (a.category || '') + ' ' + (a.slug || '')).toLowerCase();
+                match = match && haystack.indexOf(q) !== -1;
+            }
+            if (filters.status) {
+                match = match && (String(a.active) === filters.status);
+            }
+            if (filters.category) {
+                match = match && (a.category || '') === filters.category;
+            }
+            return match;
+        });
+        page = 1;
+        render();
+    }
+
+    function bindFilters() {
+        var searchBar = document.querySelector('.filter-bar-input');
+        var statusSelect = document.querySelector('.filter-bar-status select');
+        var categorySelect = document.querySelector('.filter-bar-category select');
+        var clearBtn = document.querySelector('.filter-bar-clear');
+        var resetBtn = document.querySelector('.filter-bar-reset');
+        var countEl = document.querySelector('.filter-bar-count');
+
+        function updateClear() {
+            if (clearBtn) clearBtn.hidden = !filters.search;
+        }
+
+        function updateReset() {
+            if (resetBtn) resetBtn.hidden = !filters.search && !filters.status && !filters.category;
+        }
+
+        function updateCount() {
+            if (countEl) countEl.textContent = filteredArticles.length ? filteredArticles.length + ' найдено' : '';
+        }
+
+        if (searchBar) {
+            var timer = null;
+            searchBar.addEventListener('input', function () {
+                clearTimeout(timer);
+                timer = setTimeout(function () {
+                    filters.search = searchBar.value;
+                    applyFilters();
+                    updateClear();
+                    updateReset();
+                    updateCount();
+                }, 200);
+            });
+        }
+
+        if (statusSelect) {
+            statusSelect.addEventListener('change', function () {
+                filters.status = statusSelect.value;
+                applyFilters();
+                updateReset();
+                updateCount();
+            });
+        }
+
+        if (categorySelect) {
+            categorySelect.addEventListener('change', function () {
+                filters.category = categorySelect.value;
+                applyFilters();
+                updateReset();
+                updateCount();
+            });
+        }
+
+        if (clearBtn) {
+            clearBtn.addEventListener('click', function () {
+                searchBar.value = '';
+                filters.search = '';
+                applyFilters();
+                updateClear();
+                updateReset();
+                updateCount();
+                searchBar.focus();
+            });
+        }
+
+        if (resetBtn) {
+            resetBtn.addEventListener('click', function () {
+                filters = { search: '', status: '', category: '' };
+                if (searchBar) searchBar.value = '';
+                if (statusSelect) statusSelect.value = '';
+                if (categorySelect) categorySelect.value = '';
+                applyFilters();
+                updateClear();
+                updateReset();
+                updateCount();
+            });
+        }
+    }
+
     function render() {
         tableBody.textContent = '';
-        var pageCount = Math.max(1, Math.ceil(articles.length / pageSize));
+        var display = filteredArticles.length ? filteredArticles : articles;
+        var pageCount = Math.max(1, Math.ceil(display.length / pageSize));
         page = Math.min(page, pageCount);
         var start = (page - 1) * pageSize;
-        if (!articles.length) {
-            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Статей пока нет</td></tr>';
+        if (!display.length) {
+            tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">' +
+                (filteredArticles.length === 0 && (filters.search || filters.status || filters.category)
+                    ? 'Ничего не найдено по заданным фильтрам' : 'Статей пока нет') + '</td></tr>';
         } else {
-            articles.slice(start, start + pageSize).forEach(function (article) {
+            display.slice(start, start + pageSize).forEach(function (article) {
                 var row = document.createElement('tr');
                 var title = document.createElement('td');
                 title.textContent = article.title || 'Без названия';
@@ -57,7 +160,7 @@
                 var date = document.createElement('td');
                 date.textContent = formatDate(article.date);
                 var comments = document.createElement('td');
-                comments.textContent = '0';
+                comments.textContent = article.comments || '0';
                 var actions = document.createElement('td');
                 actions.className = 'text-end';
                 actions.innerHTML = '<a class="btn btn-outline-dark btn-action me-1" href="article-edit.html?id=' +
@@ -70,8 +173,8 @@
                 tableBody.appendChild(row);
             });
         }
-        pageInfo.textContent = articles.length
-            ? 'Показано ' + (start + 1) + '–' + Math.min(start + pageSize, articles.length) + ' из ' + articles.length + ' статей'
+        pageInfo.textContent = display.length
+            ? 'Показано ' + (start + 1) + '–' + Math.min(start + pageSize, display.length) + ' из ' + display.length + ' статей'
             : 'Статей пока нет';
         renderPagination(pageCount);
     }
@@ -107,6 +210,8 @@
         tableBody.innerHTML = '<tr><td colspan="5" class="text-center text-muted py-4">Загрузка статей…</td></tr>';
         window.AdminApi.get('/api/admin/articles').then(function (data) {
             articles = data.articles;
+            filteredArticles = articles.slice();
+            bindFilters();
             render();
         }).catch(function (error) {
             console.error('Не удалось загрузить список статей.', error);

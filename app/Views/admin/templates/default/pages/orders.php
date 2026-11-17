@@ -1,4 +1,21 @@
 <section class="card admin-card mb-4">
+                <div id="ordersFilterBar">
+                <div class="card-header bg-white py-2">
+                    <div class="d-flex flex-wrap align-items-center gap-2">
+                        <div style="min-width: 200px; flex-grow: 1;">
+                            <div class="input-group input-group-sm">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="search" class="form-control filter-bar-input" id="ordersSearchInput"
+                                       placeholder="Поиск: клиент, email, телефон…" aria-label="Поиск по заказам">
+                                <button class="btn btn-outline-secondary filter-bar-clear" type="button" title="Очистить" hidden>
+                                    <i class="bi bi-x-lg"></i>
+                                </button>
+                            </div>
+                        </div>
+                        <span class="filter-bar-count small text-muted fw-bold" id="ordersFilterCount" aria-live="polite"></span>
+                    </div>
+                </div>
+                </div>
                 <div class="card-header bg-white d-flex flex-wrap justify-content-between align-items-center gap-3">
                     <div>
                         <h2 class="h5 fw-bold mb-1">Аналитика заказов</h2>
