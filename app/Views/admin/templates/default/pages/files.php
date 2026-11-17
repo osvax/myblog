@@ -52,3 +52,18 @@
                     </table>
                 </div>
             </section>
+
+<!-- Модальное окно предпросмотра изображения (без него files.js падает при инициализации) -->
+<div class="modal fade" id="imagePreviewModal" tabindex="-1" aria-labelledby="imagePreviewTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="imagePreviewTitle">Предпросмотр</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body text-center">
+                <img id="imagePreview" src="" alt="Предпросмотр изображения" class="img-fluid" style="max-height: 70vh;">
+            </div>
+        </div>
+    </div>
+</div>

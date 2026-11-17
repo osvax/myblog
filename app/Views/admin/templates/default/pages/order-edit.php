@@ -82,3 +82,22 @@
                     <a class="btn btn-outline-secondary fw-bold" href="orders.html">К списку заказов</a>
                 </div>
             </form>
+
+<!-- Модальное окно предпросмотра ТЗ (без него order-edit.js падает при инициализации) -->
+<div class="modal fade" id="briefModal" tabindex="-1" aria-labelledby="briefModalTitle" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="briefModalTitle">Техническое задание</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body">
+                <pre id="briefPreviewText" class="mb-0" style="white-space: pre-wrap; font-family: inherit;"></pre>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-dark fw-bold" id="printBriefFromModal"><i class="bi bi-printer"></i> Печать</button>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
