@@ -89,6 +89,17 @@ class FormController extends Controller
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
         $data = $this->fields(['name', 'email', 'phone', 'subject', 'message', 'article']);
+
+        // Авторизованному пользователю email берём из базы (сессии), а не из формы:
+        // поле Email в публичной форме для него скрыто, подменить адрес нельзя
+        $user = \current_user();
+        if ($user !== null) {
+            if ($data['name'] === '') {
+                $data['name'] = $user['name'];
+            }
+            $data['email'] = $user['email'];
+        }
+
         if ($data['name'] === '' || $data['message'] === '' ||
             !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
             return $this->json(['success' => false, 'error' => 'Заполните обязательные поля и укажите корректный email'], 400);
