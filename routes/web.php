@@ -47,6 +47,18 @@ return function (Router $router) {
     // Страница рубрики блога (важно: до catch-all /{slug}.html)
     $router->get('/category/{slug}.html', [$blog, 'category']);
 
+    // Заглушка режима обслуживания (в общем дизайне сайта)
+    $router->get('/maintenance.html', function ($request) {
+        $user = current_user();
+        return \App\Core\View::renderPage('frontend', 'maintenance', [
+            'title' => 'Сайт на обслуживании — МойБлог',
+            'description' => 'Ведутся технические работы.',
+            'activePage' => '',
+            'user' => $user,
+            'isAdmin' => $user && $user['role'] === 'admin',
+        ]);
+    });
+
     $router->get('/{slug}.html', function ($request, $parameters) use ($blog, $portfolio) {
         $slug = $parameters['slug'] ?? '';
         $content = new \App\Models\ContentRepository();

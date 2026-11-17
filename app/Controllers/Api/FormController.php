@@ -66,7 +66,42 @@ class FormController extends Controller
             'message' => $data['message'],
             'calculatorDetails' => $data['calculator_details'],
         ]);
-        $this->sendFormMail('order', [
+        // Данные калькулятора для письма заявки: тип, выбранные функции, итог
+        $calcPlaceholders = ['calc_type' => '', 'calc_features' => '', 'calc_total' => ''];
+        if ($data['calculator_details'] !== '') {
+            $details = json_decode($data['calculator_details'], true);
+            if (is_array($details)) {
+                $calcPlaceholders['calc_type'] = isset($details['type']) && is_string($details['type']) ? $details['type'] : '';
+                $currency = isset($details['currency']) && is_string($details['currency']) ? $details['currency'] : '₽';
+                $lines = [];
+                $features = isset($details['features']) && is_array($details['features']) ? $details['features'] : [];
+                foreach ($features as $feature) {
+                    if (is_array($feature) && isset($feature['name']) && is_string($feature['name'])) {
+                        // Новый формат: имя + цена + срок
+                        $price = filter_var($feature['price'] ?? null, FILTER_VALIDATE_INT);
+                        $days = filter_var($feature['days'] ?? null, FILTER_VALIDATE_INT);
+                        $line = '• ' . $feature['name'];
+                        if ($price !== false && $price > 0) {
+                            $line .= ' — ' . number_format($price, 0, ',', ' ') . ' ' . $currency;
+                            if ($days !== false && $days > 0) {
+                                $line .= ' (' . $days . ' дн.)';
+                            }
+                        }
+                        $lines[] = $line;
+                    } elseif (is_string($feature) && $feature !== '') {
+                        // Старый формат: только имена
+                        $lines[] = '• ' . $feature;
+                    }
+                }
+                $calcPlaceholders['calc_features'] = implode("\n", $lines);
+                $total = filter_var($details['price'] ?? null, FILTER_VALIDATE_INT);
+                $calcPlaceholders['calc_total'] = $total !== false && $total > 0
+                    ? number_format($total, 0, ',', ' ') . ' ' . $currency
+                    : '';
+            }
+        }
+
+        $this->sendFormMail('order', array_merge([
             'name' => $data['name'],
             'email' => $data['email'],
             'phone' => $data['phone'],
@@ -75,7 +110,7 @@ class FormController extends Controller
             'article' => '',
             'type' => $data['type'],
             'budget' => $data['budget'],
-        ], $data['email'], $data['name']);
+        ], $calcPlaceholders), $data['email'], $data['name']);
         return $this->json(['success' => true, 'orderId' => $order['id'] ?? null]);
     }
 
@@ -153,6 +188,9 @@ class FormController extends Controller
             'article' => $articleSlug,
             'type' => '',
             'budget' => '',
+            'calc_type' => '',
+            'calc_features' => '',
+            'calc_total' => '',
         ], $data['email'], $data['name']);
         return $this->json(['success' => true]);
     }
@@ -186,7 +224,7 @@ class FormController extends Controller
         $defaults = [
             'order' => [
                 'subject' => 'Новая заявка с сайта',
-                'body' => "Имя: {name}\nEmail: {email}\nТелефон: {phone}\nТип проекта: {type}\nБюджет: {budget}\nОписание:\n{message}",
+                'body' => "Имя: {name}\nEmail: {email}\nТелефон: {phone}\nТип проекта: {type}\nБюджет: {budget}\nВыбранные функции:\n{calc_features}\nИтого: {calc_total}\nОписание:\n{message}",
             ],
             'feedback' => [
                 'subject' => 'Сообщение с сайта',
@@ -226,7 +264,12 @@ class FormController extends Controller
             "Content-Type: text/plain; charset=UTF-8\r\n" .
             "MIME-Version: 1.0\r\n";
         $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
-        if (!mail('osvax@yandex.ru', $encodedSubject, $body, $headers)) {
+        // Получатель — из настройки «Email администратора» (fallback osvax@yandex.ru)
+        $recipient = trim((string) (new \App\Models\SiteSettings())->get('adminEmail', ''));
+        if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
+            $recipient = 'osvax@yandex.ru';
+        }
+        if (!mail($recipient, $encodedSubject, $body, $headers)) {
             error_log('Could not send notification email for a saved website form submission.');
         }
     }

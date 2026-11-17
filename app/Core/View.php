@@ -26,6 +26,17 @@ class View
         }
 
         $base = $area . '/templates/' . $theme;
+        // Название сайта и текст подвала — из настроек; контроллеры могут переопределить
+        if ($area === 'frontend') {
+            try {
+                $siteSettings = new \App\Models\SiteSettings();
+                $data['siteName'] = $data['siteName'] ?? ((string) $siteSettings->get('siteName', '') ?: 'МойБлог');
+                $data['footerText'] = $data['footerText'] ?? ((string) $siteSettings->get('footerText', '') ?: '© {year} МойБлог. Все права защищены.');
+            } catch (\Throwable $error) {
+                $data['siteName'] = $data['siteName'] ?? 'МойБлог';
+                $data['footerText'] = $data['footerText'] ?? '© {year} МойБлог. Все права защищены.';
+            }
+        }
         $data['content'] = self::capture($base . '/pages/' . $page, $data);
         $data['title'] = $data['title'] ?? ($area === 'admin' ? 'Администрирование' : 'МойБлог');
         return self::render($base . '/layout', $data);

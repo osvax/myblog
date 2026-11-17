@@ -12,6 +12,9 @@
                             <button class="nav-link" id="mail-tab" data-bs-toggle="tab" data-bs-target="#mail-pane" type="button" role="tab" aria-controls="mail-pane" aria-selected="false" title="Email письма"><i class="bi bi-envelope-paper"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="headings-tab" data-bs-toggle="tab" data-bs-target="#headings-pane" type="button" role="tab" aria-controls="headings-pane" aria-selected="false" title="Заголовки"><i class="bi bi-heading"></i></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="seo-tab" data-bs-toggle="tab" data-bs-target="#seo-pane" type="button" role="tab" aria-controls="seo-pane" aria-selected="false" title="SEO"><i class="bi bi-search"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -66,6 +69,18 @@
                                         <option>English</option>
                                     </select>
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="siteStatus" class="form-label fw-bold">Режим сайта</label>
+                                    <select id="siteStatus" class="form-select">
+                                        <option value="online" selected>Работает</option>
+                                        <option value="maintenance">Обслуживание (заглушка для посетителей)</option>
+                                    </select>
+                                </div>
+                                <div class="col-12">
+                                    <label for="maintenanceAllowedIps" class="form-label fw-bold">IP-адреса с доступом при обслуживании</label>
+                                    <textarea id="maintenanceAllowedIps" class="form-control" rows="2" placeholder="127.0.0.1&#10;::1"></textarea>
+                                    <div class="small text-muted mt-1">По одному IP на строку (или через запятую). Админка и вход доступны всегда.</div>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
@@ -73,6 +88,14 @@
                         <section class="tab-pane fade" id="home-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
                             <h3 class="h5 fw-bold mb-4">Главная страница — герой и шаги</h3>
                             <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="homePageMode" class="form-label fw-bold">Что открывается по умолчанию</label>
+                                    <select id="homePageMode" class="form-select">
+                                        <option value="main" selected>Шаблон главной страницы</option>
+                                        <option value="static">Статическая страница (лендинг «home» из раздела «Страницы»)</option>
+                                    </select>
+                                    <div class="small text-muted mt-1">Если выбрана статическая страница, а она не активна — посетитель увидит 404.</div>
+                                </div>
                                 <div class="col-12">
                                     <label for="heroTitle" class="form-label fw-bold">Заголовок героя</label>
                                     <input type="text" id="heroTitle" class="form-control" value="Личный блог о веб-разработке и дизайне" maxlength="240">
@@ -129,13 +152,46 @@
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
 
+                        <section class="tab-pane fade" id="headings-pane" role="tabpanel" aria-labelledby="headings-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-4">Заголовки страниц</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="blogTitle" class="form-label fw-bold">Блог — заголовок</label>
+                                    <input type="text" id="blogTitle" class="form-control" value="Блог" maxlength="120">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="blogLead" class="form-label fw-bold">Блог — подзаголовок</label>
+                                    <input type="text" id="blogLead" class="form-control" value="Последние записи и полезные материалы" maxlength="200">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="portfolioTitle" class="form-label fw-bold">Портфолио — заголовок</label>
+                                    <input type="text" id="portfolioTitle" class="form-control" value="Портфолио" maxlength="120">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="portfolioLead" class="form-label fw-bold">Портфолио — подзаголовок</label>
+                                    <input type="text" id="portfolioLead" class="form-control" value="Мои лучшие работы и проекты" maxlength="200">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactsTitle" class="form-label fw-bold">Контакты — заголовок</label>
+                                    <input type="text" id="contactsTitle" class="form-control" value="Контакты" maxlength="120">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="contactsLead" class="form-label fw-bold">Контакты — подзаголовок</label>
+                                    <input type="text" id="contactsLead" class="form-control" value="Буду рад связи и сотрудничеству" maxlength="200">
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+                        </section>
+
                         <section class="tab-pane fade" id="mail-pane" role="tabpanel" aria-labelledby="mail-tab" tabindex="0">
                             <h3 class="h5 fw-bold mb-2">Макеты email-писем по формам</h3>
                             <p class="small text-muted mb-4">
                                 Доступные подстановки: <code>{name}</code> — имя, <code>{email}</code>, <code>{phone}</code>,
                                 <code>{subject}</code> — тема обращения, <code>{message}</code> — текст,
                                 <code>{article}</code> — slug статьи (для комментариев), <code>{type}</code> — тип проекта и
-                                <code>{budget}</code> — бюджет (для заявки).
+                                <code>{budget}</code> — бюджет (для заявки). Для заявки также:
+                                <code>{calc_features}</code> — выбранные в калькуляторе функции текущего типа сайта
+                                (с ценами и сроками), <code>{calc_total}</code> — итог расчёта.
                             </p>
 
                             <h4 class="h6 fw-bold mb-3"><i class="bi bi-send text-orange"></i> Форма заказа</h4>

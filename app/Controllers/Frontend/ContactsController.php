@@ -19,6 +19,8 @@ class ContactsController extends Controller
             'activePage' => 'contacts',
             'includeFormsScript' => true,
             'contacts' => $contacts,
+            'contactsHeading' => (string) ($contacts['contactsTitle'] ?? '') ?: 'Контакты',
+            'contactsHeadingLead' => (string) ($contacts['contactsLead'] ?? '') ?: 'Буду рад связи и сотрудничеству',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

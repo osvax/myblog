@@ -12,6 +12,7 @@ class PortfolioController extends Controller
     {
         $user = current_user();
         $content = new ContentRepository();
+        $settings = (new \App\Models\SiteSettings())->all();
         $projects = [];
         foreach ($content->projects(true) as $project) {
             $projects[$project['slug']] = $project;
@@ -22,6 +23,8 @@ class PortfolioController extends Controller
             'description' => 'Мои проекты: вёрстка, дизайн, разработка.',
             'activePage' => 'portfolio',
             'projects' => $projects,
+            'portfolioHeading' => (string) ($settings['portfolioTitle'] ?? '') ?: 'Портфолио',
+            'portfolioHeadingLead' => (string) ($settings['portfolioLead'] ?? '') ?: 'Мои лучшие работы и проекты',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

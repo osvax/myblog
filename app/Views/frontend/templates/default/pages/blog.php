@@ -5,8 +5,8 @@
     <?php
     // В режиме рубрики показываем её название и ссылку на все статьи
     $blogIsCategory = !empty($categoryName);
-    $heading = 'Блог';
-    $headingLead = $blogIsCategory ? 'Рубрика «' . $categoryName . '»' : 'Последние записи и полезные материалы';
+    $heading = $blogHeading ?? 'Блог';
+    $headingLead = $blogIsCategory ? 'Рубрика «' . $categoryName . '»' : ($blogHeadingLead ?? 'Последние записи и полезные материалы');
     require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php';
     ?>
 

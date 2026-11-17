@@ -37,13 +37,14 @@
                 var feature = type.features[Number(checkbox.dataset.index)];
                 total += feature.price;
                 totalDays += feature.days;
-                selected.push(feature.name);
+                // В детали заявки передаём имя, цену и срок — для письма и админки
+                selected.push({ name: feature.name, price: feature.price, days: feature.days });
             });
 
             priceDisplay.textContent = formatMoney(total);
             daysDisplay.textContent = totalDays + ' дней';
             budgetInput.value = formatMoney(total);
-            detailsInput.value = JSON.stringify({ type: type.name, features: selected, price: total, currency: config.currency });
+            detailsInput.value = JSON.stringify({ type: type.name, features: selected, price: total, currency: config.currency, days: totalDays });
         }
 
         function render() {

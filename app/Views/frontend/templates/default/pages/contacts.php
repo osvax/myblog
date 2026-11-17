@@ -2,7 +2,7 @@
     
 
     <!-- ================= ЗАГОЛОВОК СТРАНИЦЫ ================= -->
-    <?php $heading = 'Контакты'; $headingLead = 'Буду рад связи и сотрудничеству'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
+    <?php $heading = $contactsHeading ?? 'Контакты'; $headingLead = $contactsHeadingLead ?? 'Буду рад связи и сотрудничеству'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
 
     <!-- Волна: оранжевый → светло-оранжевый -->
     <?php $waveColors = ['#ff8c1a', '#fff3e6']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>

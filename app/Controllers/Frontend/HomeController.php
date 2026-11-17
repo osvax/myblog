@@ -10,10 +10,18 @@ class HomeController extends Controller
 {
     public function index($request)
     {
-        // Проверяем, есть ли сгенерированная страница
-        $page = (new LandingPage())->findActive('home');
-        if ($page && !empty($page['html_content'])) {
-            return $page['html_content'];
+        $settings = (new \App\Models\SiteSettings())->all();
+        $home = $settings;
+
+        // Статическая страница по умолчанию: настройка «Что показывать на главной».
+        // main — шаблон главной; static — лендинг из БД, а если он не активен — 404.
+        $homePageMode = ($settings['homePageMode'] ?? 'main') === 'static' ? 'static' : 'main';
+        if ($homePageMode === 'static') {
+            $page = (new LandingPage())->findActive('home');
+            if ($page && !empty($page['html_content'])) {
+                return $page['html_content'];
+            }
+            return new \App\Core\Response('Главная страница не найдена', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
         }
 
         $content = new ContentRepository();
@@ -27,9 +35,6 @@ class HomeController extends Controller
             $projects[$project['slug']] = $project;
         }
         $user = current_user();
-
-        // Тексты главной страницы редактируются в админке (Настройки → Главная)
-        $home = (new \App\Models\SiteSettings())->all();
 
         // Количество свежих статей на главной настраивается в админке (homeFeaturedCount)
         $featuredCount = max(1, min(12, (int) ($home['homeFeaturedCount'] ?? 3)));

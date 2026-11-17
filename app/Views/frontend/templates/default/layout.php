@@ -13,7 +13,7 @@
 <body id="top">
     <nav class="navbar navbar-expand-lg navbar-dark bg-orange sticky-top shadow-sm">
         <div class="container">
-            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-lightning-charge-fill"></i> МойБлог</a>
+            <a class="navbar-brand fw-bold" href="/"><i class="bi bi-lightning-charge-fill"></i> <?= htmlspecialchars($siteName ?? 'МойБлог', ENT_QUOTES, 'UTF-8') ?></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav"
                     aria-controls="mainNav" aria-expanded="false" aria-label="Переключить навигацию">
                 <span class="navbar-toggler-icon"></span>
@@ -56,7 +56,7 @@
     <!-- ================= ПОДВАЛ ================= -->
     <footer class="bg-353535 text-white py-4">
         <div class="container text-center">
-            <p class="mb-1 fw-bold">© <?= date('Y') ?> МойБлог. Все права защищены.</p>
+            <p class="mb-1 fw-bold"><?= htmlspecialchars(str_replace('{year}', (string) date('Y'), $footerText ?? '© ' . date('Y') . ' МойБлог. Все права защищены.'), ENT_QUOTES, 'UTF-8') ?></p>
             <p class="mb-0 small fw-bold text-white-50">Сделано с <i class="bi bi-heart-fill text-orange"></i> на Bootstrap 5</p>
         </div>
     </footer>

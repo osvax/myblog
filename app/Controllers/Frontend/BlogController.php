@@ -38,6 +38,8 @@ class BlogController extends Controller
             'categories' => $categoriesMap,
             'pagination' => ['total' => $total, 'pages' => $pages, 'current' => $page],
             'pageScripts' => ['/js/blog-search.js'],
+            'blogHeading' => (string) ($settings['blogTitle'] ?? '') ?: 'Блог',
+            'blogHeadingLead' => (string) ($settings['blogLead'] ?? '') ?: 'Последние записи и полезные материалы',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
