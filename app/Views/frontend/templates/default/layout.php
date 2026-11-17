@@ -53,10 +53,11 @@
 
     <?= $content ?? '' ?>
 
-    <footer class="py-4 bg-dark text-white-50">
-        <div class="container d-flex flex-column flex-sm-row justify-content-between gap-2">
-            <span>© <?= date('Y') ?> МойБлог</span>
-            <a class="link-light" href="#top">Наверх <i class="bi bi-arrow-up"></i></a>
+    <!-- ================= ПОДВАЛ ================= -->
+    <footer class="bg-353535 text-white py-4">
+        <div class="container text-center">
+            <p class="mb-1 fw-bold">© <?= date('Y') ?> МойБлог. Все права защищены.</p>
+            <p class="mb-0 small fw-bold text-white-50">Сделано с <i class="bi bi-heart-fill text-orange"></i> на Bootstrap 5</p>
         </div>
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
