@@ -41,12 +41,16 @@ class HomeController extends Controller
 
         $user = current_user();
 
+        // Тексты главной страницы редактируются в админке (Настройки → Главная)
+        $home = (new \App\Models\SiteSettings())->all();
+
         return $this->page('frontend', 'home', [
             'title' => 'Главная — МойБлог',
             'description' => 'Личный блог о веб-разработке и дизайне, статьи, проекты и услуги.',
             'activePage' => 'home',
             'featuredArticles' => $featuredArticles,
             'featuredProjects' => $featuredProjects,
+            'home' => $home,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

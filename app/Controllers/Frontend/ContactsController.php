@@ -10,12 +10,15 @@ class ContactsController extends Controller
     {
         $user = current_user();
 
+        // Контактные данные редактируются в админке (Настройки → Контакты)
+        $contacts = (new \App\Models\SiteSettings())->all();
+
         return $this->page('frontend', 'contacts', [
             'title' => 'Контакты — Мой Блог',
             'description' => 'Контактная информация и форма обратной связи.',
             'activePage' => 'contacts',
             'includeFormsScript' => true,
-            'includeSiteSettings' => true,
+            'contacts' => $contacts,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

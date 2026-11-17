@@ -7,16 +7,31 @@
 
         // ---------- Остальная часть настроек ----------
 
-        // Загружаем настройки из localStorage
-        var settings = window.SiteSettings.load();
-        Array.from(form.elements).forEach(function (field) {
-            if (!field.id || field.id === 'smtpPassword' || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
-            if (field.type === 'checkbox') {
-                field.checked = Boolean(settings[field.id]);
-            } else {
-                field.value = settings[field.id];
-            }
-        });
+        // Загружаем актуальные настройки из базы данных;
+        // localStorage используется только как запасной источник значений
+        var applySettings = function (settings) {
+            Array.from(form.elements).forEach(function (field) {
+                if (!field.id || field.id === 'smtpPassword' || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
+                if (field.type === 'checkbox') {
+                    field.checked = Boolean(settings[field.id]);
+                } else {
+                    field.value = settings[field.id];
+                }
+            });
+        };
+
+        fetch('../api/admin/settings', { credentials: 'same-origin' })
+            .then(function (response) {
+                if (!response.ok) throw new Error('Не удалось загрузить настройки.');
+                return response.json();
+            })
+            .then(function (result) {
+                applySettings(Object.assign({}, window.SiteSettings.load(), (result && result.settings) || {}));
+            })
+            .catch(function (error) {
+                console.error(error.message || 'Не удалось загрузить настройки из базы.');
+                applySettings(window.SiteSettings.load());
+            });
 
         // Загружаем настройки консультанта
         fetch('../api/consultant', {

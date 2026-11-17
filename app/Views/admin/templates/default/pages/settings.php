@@ -6,6 +6,9 @@
                             <button class="nav-link active" id="general-tab" data-bs-toggle="tab" data-bs-target="#general-pane" type="button" role="tab" aria-controls="general-pane" aria-selected="true" title="Основные"><i class="bi bi-sliders"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="home-tab" data-bs-toggle="tab" data-bs-target="#home-pane" type="button" role="tab" aria-controls="home-pane" aria-selected="false" title="Главная страница"><i class="bi bi-house-door"></i></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance-pane" type="button" role="tab" aria-controls="appearance-pane" aria-selected="false" title="Внешний вид"><i class="bi bi-palette"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -62,6 +65,61 @@
                                         <option selected>Русский</option>
                                         <option>English</option>
                                     </select>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+                        </section>
+
+                        <section class="tab-pane fade" id="home-pane" role="tabpanel" aria-labelledby="home-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-4">Главная страница — герой и шаги</h3>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="heroTitle" class="form-label fw-bold">Заголовок героя</label>
+                                    <input type="text" id="heroTitle" class="form-control" value="Личный блог о веб-разработке и дизайне" maxlength="240">
+                                </div>
+                                <div class="col-12">
+                                    <label for="heroSubtitle" class="form-label fw-bold">Подзаголовок героя</label>
+                                    <textarea id="heroSubtitle" class="form-control" rows="2" maxlength="500">Здесь я делюсь опытом, статьями и проектами. Всё самое интересное — в одном месте.</textarea>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="heroPrimaryText" class="form-label fw-bold">Текст главной кнопки</label>
+                                    <input type="text" id="heroPrimaryText" class="form-control" value="Читать блог" maxlength="80">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="heroPrimaryUrl" class="form-label fw-bold">Ссылка главной кнопки</label>
+                                    <input type="url" id="heroPrimaryUrl" class="form-control" value="/blog.html" maxlength="240">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="heroSecondaryText" class="form-label fw-bold">Текст второй кнопки</label>
+                                    <input type="text" id="heroSecondaryText" class="form-control" value="Заказать проект" maxlength="80">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="heroSecondaryUrl" class="form-label fw-bold">Ссылка второй кнопки</label>
+                                    <input type="url" id="heroSecondaryUrl" class="form-control" value="/order.html" maxlength="240">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="step1Title" class="form-label fw-bold">Шаг 1 — заголовок</label>
+                                    <input type="text" id="step1Title" class="form-control" value="Оставляете заявку" maxlength="160">
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="step1Text" class="form-label fw-bold">Шаг 1 — описание</label>
+                                    <input type="text" id="step1Text" class="form-control" value="Заполняете форму на странице заказа — 2 минуты" maxlength="300">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="step2Title" class="form-label fw-bold">Шаг 2 — заголовок</label>
+                                    <input type="text" id="step2Title" class="form-control" value="Обсуждаем детали" maxlength="160">
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="step2Text" class="form-label fw-bold">Шаг 2 — описание</label>
+                                    <input type="text" id="step2Text" class="form-control" value="Связываюсь с вами в течение дня и уточняем задачу" maxlength="300">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="step3Title" class="form-label fw-bold">Шаг 3 — заголовок</label>
+                                    <input type="text" id="step3Title" class="form-control" value="Получаете результат" maxlength="160">
+                                </div>
+                                <div class="col-md-8">
+                                    <label for="step3Text" class="form-label fw-bold">Шаг 3 — описание</label>
+                                    <input type="text" id="step3Text" class="form-control" value="Готовый сайт точно в срок и с гарантией" maxlength="300">
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
@@ -372,6 +430,14 @@
                                         <input class="form-check-input" type="checkbox" checked id="articleCommentsEnabled">
                                         <label class="form-check-label fw-bold" for="articleCommentsEnabled">Разрешить комментарии</label>
                                     </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="commentsAccess" class="form-label fw-bold">Кто видит комментарии</label>
+                                    <select id="commentsAccess" class="form-select">
+                                        <option value="guests">Все посетители</option>
+                                        <option value="users" selected>Только авторизованные</option>
+                                        <option value="staff">Только персонал</option>
+                                    </select>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mt-3">

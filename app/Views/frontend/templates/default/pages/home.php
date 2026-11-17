@@ -2,26 +2,26 @@
     
 
     <!-- ================= ГЛАВНАЯ (ГЕРОЙ) ================= -->
-    <section class="bg-orange text-white">
-        <div class="container py-5">
-            <div class="row align-items-center">
-                <div class="col-lg-7 py-5">
-                    <h1 class="display-4 fw-bold mb-4">Личный блог о веб-разработке и дизайне</h1>
-                    <p class="lead fw-bold mb-4">
-                        Здесь я делюсь опытом, статьями и проектами.
-                        Всё самое интересное — в одном месте.
-                    </p>
-                    <a href="blog.html" class="btn btn-light btn-lg fw-bold text-orange me-2 mb-2">
-                        Читать блог <i class="bi bi-arrow-right"></i>
-                    </a>
-                    <a href="order.html" class="btn btn-outline-light btn-lg fw-bold mb-2">Заказать проект</a>
-                </div>
-                <div class="col-lg-5 text-center d-none d-lg-block">
-                    <img src="/img/hero-terminal.png" class="img-fluid hero-img" alt="Большой терминал с введённым JavaScript-кодом">
-                </div>
+<?php $homeSettings = is_array($home ?? null) ? $home : []; ?>
+<section class="bg-orange text-white">
+    <div class="container py-5">
+        <div class="row align-items-center">
+            <div class="col-lg-7 py-5">
+                <h1 class="display-4 fw-bold mb-4"><?= htmlspecialchars($homeSettings['heroTitle'] ?? 'Личный блог о веб-разработке и дизайне', ENT_QUOTES, 'UTF-8') ?></h1>
+                <p class="lead fw-bold mb-4">
+                    <?= htmlspecialchars($homeSettings['heroSubtitle'] ?? 'Здесь я делюсь опытом, статьями и проектами. Всё самое интересное — в одном месте.', ENT_QUOTES, 'UTF-8') ?>
+                </p>
+                <a href="<?= htmlspecialchars($homeSettings['heroPrimaryUrl'] ?? '/blog.html', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-light btn-lg fw-bold text-orange me-2 mb-2">
+                    <?= htmlspecialchars($homeSettings['heroPrimaryText'] ?? 'Читать блог', ENT_QUOTES, 'UTF-8') ?> <i class="bi bi-arrow-right"></i>
+                </a>
+                <a href="<?= htmlspecialchars($homeSettings['heroSecondaryUrl'] ?? '/order.html', ENT_QUOTES, 'UTF-8') ?>" class="btn btn-outline-light btn-lg fw-bold mb-2"><?= htmlspecialchars($homeSettings['heroSecondaryText'] ?? 'Заказать проект', ENT_QUOTES, 'UTF-8') ?></a>
+            </div>
+            <div class="col-lg-5 text-center d-none d-lg-block">
+                <img src="/img/hero-terminal.png" class="img-fluid hero-img" alt="Большой терминал с введённым JavaScript-кодом">
             </div>
         </div>
-    </section>
+    </div>
+</section>
 
     <!-- Волна: оранжевый → белый -->
     <?php $waveColors = ['#ff8c1a', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
@@ -85,27 +85,15 @@
                 <h2 class="fw-bold display-5">Как мы начнём работать</h2>
             </div>
             <div class="row g-4 text-center mb-5">
-                <div class="col-md-4">
-                    <div class="lp-step p-4 h-100">
-                        <div class="lp-step-num mx-auto mb-3">1</div>
-                        <h5 class="fw-bold">Оставляете заявку</h5>
-                        <p class="fw-bold mb-0">Заполняете форму на странице заказа — 2 минуты</p>
+                <?php for ($stepNumber = 1; $stepNumber <= 3; $stepNumber++): ?>
+                    <div class="col-md-4">
+                        <div class="lp-step p-4 h-100">
+                            <div class="lp-step-num mx-auto mb-3"><?= $stepNumber ?></div>
+                            <h5 class="fw-bold"><?= htmlspecialchars($homeSettings['step' . $stepNumber . 'Title'] ?? '', ENT_QUOTES, 'UTF-8') ?></h5>
+                            <p class="fw-bold mb-0"><?= htmlspecialchars($homeSettings['step' . $stepNumber . 'Text'] ?? '', ENT_QUOTES, 'UTF-8') ?></p>
+                        </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="lp-step p-4 h-100">
-                        <div class="lp-step-num mx-auto mb-3">2</div>
-                        <h5 class="fw-bold">Обсуждаем детали</h5>
-                        <p class="fw-bold mb-0">Связываюсь с вами в течение дня и уточняем задачу</p>
-                    </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="lp-step p-4 h-100">
-                        <div class="lp-step-num mx-auto mb-3">3</div>
-                        <h5 class="fw-bold">Получаете результат</h5>
-                        <p class="fw-bold mb-0">Готовый сайт точно в срок и с гарантией</p>
-                    </div>
-                </div>
+                <?php endfor; ?>
             </div>
             <div class="text-center">
                 <a href="order.html" class="btn btn-light btn-lg fw-bold text-orange px-5">
