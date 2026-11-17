@@ -8,7 +8,7 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
+    <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
 </head>
 <body id="top">
     <nav class="navbar navbar-expand-lg navbar-dark bg-orange sticky-top shadow-sm">
@@ -62,17 +62,17 @@
     </footer>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     <?php if (!empty($includeFormsScript)): ?>
-        <script src="/js/forms.js"></script>
+        <script src="<?= asset_version('/js/forms.js') ?>"></script>
     <?php endif; ?>
     <?php if (!empty($includeSiteSettings)): ?>
-        <script src="/js/site-settings.js"></script>
+        <script src="<?= asset_version('/js/site-settings.js') ?>"></script>
     <?php endif; ?>
     <?php if (!empty($includeAuthScript)): ?>
-        <script src="/js/auth.js"></script>
+        <script src="<?= asset_version('/js/auth.js') ?>"></script>
     <?php endif; ?>
     <?php foreach (($pageScripts ?? []) as $script): ?>
-        <script src="<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>"></script>
+        <script src="<?= asset_version((string) $script) ?>"></script>
     <?php endforeach; ?>
-    <script src="/js/consultant.js"></script>
+    <script src="<?= asset_version('/js/consultant.js') ?>"></script>
 </body>
 </html>

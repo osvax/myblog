@@ -7,8 +7,8 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="/css/style.css">
-    <link rel="stylesheet" href="/admin/css/admin.css">
+    <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
+    <link rel="stylesheet" href="<?= asset_version('/admin/css/admin.css') ?>">
 </head>
 <body class="admin-page">
 <div class="admin-wrapper">
@@ -86,10 +86,10 @@
     </main>
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="/admin/js/admin.js"></script>
-<script src="/admin/js/admin-api.js"></script>
+<script src="<?= asset_version('/admin/js/admin.js') ?>"></script>
+<script src="<?= asset_version('/admin/js/admin-api.js') ?>"></script>
 <?php foreach (($pageScripts ?? []) as $script): ?>
-    <script src="<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>"></script>
+    <script src="<?= asset_version((string) $script) ?>"></script>
 <?php endforeach; ?>
 </body>
 </html>
