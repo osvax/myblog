@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-end flex-wrap gap-2 mb-3"><a href="orders.html" class="btn btn-outline-light fw-bold"><i class="bi bi-list-ul me-1"></i> Все заказы</a></div><div class="alert alert-info fw-bold" role="status">Новые заявки, ожидающие начала работы. После смены статуса на «В работе» заказ появится в разделе «Текущие».</div>
+<div class="d-flex justify-content-end flex-wrap gap-2 mb-3"><a href="orders.html" class="btn btn-outline-light fw-bold"><i class="bi bi-list-ul me-1"></i> Все заказы</a></div>
             <div class="card admin-card">
                 <div class="table-responsive">
                     <table class="table admin-table mb-0">

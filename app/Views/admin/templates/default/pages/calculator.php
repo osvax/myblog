@@ -1,7 +1,4 @@
-<div class="alert alert-info fw-bold" role="alert">
-                Настройки калькулятора сохраняются в базе данных и автоматически применяются на публичной странице «Заказать».
-            </div>
-            <div class="row g-4">
+<div class="row g-4">
                 <div class="col-lg-4">
                     <section class="card admin-card h-100">
                         <div class="card-header bg-white"><h2 class="h5 fw-bold mb-0">Типы сайтов</h2></div>

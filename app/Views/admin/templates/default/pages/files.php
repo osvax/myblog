@@ -1,5 +1,4 @@
-<div class="alert alert-info fw-bold">Файлы хранятся в закрытой папке <code>uploads/</code>; скачивание доступно только после входа. ZIP не распаковывается. Максимальный размер — 10 МБ.</div>
-            <section class="card admin-card mb-4">
+<section class="card admin-card mb-4">
                 <div class="card-header bg-white"><h2 class="h5 fw-bold mb-0">Загрузить файлы</h2></div>
                 <div class="card-body">
                     <form id="fileUploadForm">

@@ -1,7 +1,3 @@
-<div class="alert alert-warning fw-bold">
-    <i class="bi bi-exclamation-triangle"></i>
-    Изменения сразу затрагивают публичные файлы. PHP-шаблоны проверяются на синтаксис, перед сохранением создаётся резервная копия. Статические страницы хранятся в базе и доступны по своим URL.
-</div>
 <section class="card admin-card template-editor-card">
     <div class="card-header bg-white">
         <div class="row g-3 align-items-end">

@@ -1,4 +1,4 @@
-<div class="d-flex justify-content-end flex-wrap gap-2 mb-3"><a href="orders.html" class="btn btn-outline-light fw-bold"><i class="bi bi-list-ul me-1"></i> Все заказы</a></div><div class="alert alert-info fw-bold" role="status">Здесь показаны проекты, которые уже находятся в работе. Изменение статуса сразу обновляет список.</div>
+<div class="d-flex justify-content-end flex-wrap gap-2 mb-3"><a href="orders.html" class="btn btn-outline-light fw-bold"><i class="bi bi-list-ul me-1"></i> Все заказы</a></div>
             <div class="card admin-card">
                 <div class="table-responsive">
                     <table class="table admin-table mb-0">
