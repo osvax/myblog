@@ -4,18 +4,14 @@
  * Запуск: php database/migrations/run_seed_settings.php
  */
 
-require_once __DIR__ . '/../../vendor/autoload.php';
+require dirname(__DIR__, 2) . '/app/bootstrap.php';
 
-use App\Core\Database;
+$db = \App\Core\Database::connection();
 
-$db = Database::connection();
-
-// Считаем сколько уже записей
-$count = $db->query('SELECT COUNT(*) AS n FROM site_settings')->fetch()['n'];
-if ((int) $count > 0) {
-    echo "В таблице site_settings уже {$count} записей. Пропускаем.\n";
-    exit(0);
-}
+$count = (int) $db->query('SELECT COUNT(*) FROM site_settings')->fetchColumn();
+echo $count > 0
+    ? "В таблице site_settings уже {$count} записей. Обновляем...\n"
+    : "Заполняем site_settings...\n";
 
 $defaults = [
     // === general ===
@@ -28,7 +24,7 @@ $defaults = [
     // === home ===
     ['homePageMode', 'main', 'select', 'home', 1, 'Режим главной'],
     ['heroTitle', 'Личный блог о веб-разработке и дизайне', 'text', 'home', 2, 'Заголовок героя'],
-    ['heroSubtitle', 'Здесь я делюсь опытом, статьями и проектами. Всё самое интересное — в одном месте.', 'text', 'home', 3, 'Подзаголовок героя'],
+    ['heroSubtitle', 'Здесь я делюсь опытом, статьями и проектами.', 'text', 'home', 3, 'Подзаголовок героя'],
     ['homeFeaturedCount', '3', 'number', 'home', 4, 'Статей в разделе «Свежие статьи»'],
     ['heroPrimaryText', 'Читать блог', 'text', 'home', 5, 'Текст главной кнопки'],
     ['heroPrimaryUrl', '/blog.html', 'text', 'home', 6, 'Ссылка главной кнопки'],
@@ -137,22 +133,48 @@ $defaults = [
     ['portfolioShowLink', '1', 'checkbox', 'portfolio', 9, 'Показывать ссылку на проект'],
 ];
 
-$stmt = $db->connection()->prepare(
+$stmt = $db->prepare(
     "INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
-     VALUES (:key, :value, :type, :group, :order, :placeholder)"
+     VALUES (:key, :value, :type, :group, :order, :placeholder)
+     ON DUPLICATE KEY UPDATE
+         setting_value = VALUES(setting_value),
+         setting_type = VALUES(setting_type),
+         tab_group = VALUES(tab_group),
+         display_order = VALUES(display_order),
+         placeholder = VALUES(placeholder)"
 );
 
-$inserted = 0;
-foreach ($defaults as $d) {
-    $stmt->execute([
-        ':key' => $d[0],
-        ':value' => $d[1],
-        ':type' => $d[2],
-        ':group' => $d[3],
-        ':order' => $d[4],
-        ':placeholder' => $d[5],
-    ]);
-    $inserted++;
+$inserted  = 0;
+$updated   = 0;
+$unchanged = 0;
+
+$db->beginTransaction();
+try {
+    foreach ($defaults as $d) {
+        $stmt->execute([
+            ':key'         => $d[0],
+            ':value'       => $d[1],
+            ':type'        => $d[2],
+            ':group'       => $d[3],
+            ':order'       => $d[4],
+            ':placeholder' => $d[5],
+        ]);
+        $affected = $stmt->rowCount();
+        if ($affected === 1) {
+            $inserted++;
+        } elseif ($affected === 2) {
+            $updated++;
+        } else {
+            $unchanged++;
+        }
+    }
+    $db->commit();
+} catch (\Throwable $e) {
+    if ($db->inTransaction()) {
+        $db->rollBack();
+    }
+    echo "Ошибка сида: " . $e->getMessage() . "\n";
+    exit(1);
 }
 
-echo "Вставлено {$inserted} записей в site_settings.\n";
+echo "Готово: {$inserted} добавлено, {$updated} обновлено, {$unchanged} без изменений.\n";
