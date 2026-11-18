@@ -22,6 +22,10 @@
         var profileError = document.getElementById('profileError');
         var profileSuccess = document.getElementById('profileSuccess');
 
+        var passwordForm = document.getElementById('passwordForm');
+        var passwordChangeError = document.getElementById('passwordChangeError');
+        var passwordChangeSuccess = document.getElementById('passwordChangeSuccess');
+
         var activityBody = document.getElementById('activityBody');
         var activityPagination = document.getElementById('activityPagination');
         var paginationInfo = document.getElementById('paginationInfo');
@@ -272,6 +276,68 @@
             profileForm.classList.remove('was-validated');
         }
 
+        // ---------- Смена пароля ----------
+        function showPasswordMessage(errorEl, successEl, isError, message) {
+            if (errorEl) {
+                errorEl.textContent = isError ? message : '';
+                errorEl.style.display = isError ? 'block' : 'none';
+            }
+            if (successEl) {
+                successEl.textContent = isError ? '' : message;
+                successEl.style.display = isError ? 'none' : 'block';
+                if (!isError && message) {
+                    setTimeout(function () { successEl.style.display = 'none'; }, 4000);
+                }
+            }
+        }
+
+        function changePassword() {
+            var oldPassword = passwordForm.elements.namedItem('old_password').value;
+            var newPassword = passwordForm.elements.namedItem('new_password').value;
+            var newPasswordConfirm = passwordForm.elements.namedItem('new_password_confirm').value;
+
+            showPasswordMessage(passwordChangeError, passwordChangeSuccess, false, '');
+
+            if (!oldPassword) {
+                showPasswordMessage(passwordChangeError, passwordChangeSuccess, true, 'Введите текущий пароль');
+                return;
+            }
+            if (newPassword.length < 8) {
+                showPasswordMessage(passwordChangeError, passwordChangeSuccess, true, 'Новый пароль должен содержать минимум 8 символов');
+                return;
+            }
+            if (newPassword !== newPasswordConfirm) {
+                showPasswordMessage(passwordChangeError, passwordChangeSuccess, true, 'Новые пароли не совпадают');
+                return;
+            }
+
+            var submitBtn = passwordForm.querySelector('button[type="submit"]');
+            var originalHtml = submitBtn ? submitBtn.innerHTML : '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Смена...';
+            }
+
+            AdminApi.save('/api/admin/profile/' + userId + '/password', 'POST', {
+                old_password: oldPassword,
+                new_password: newPassword,
+                new_password_confirm: newPasswordConfirm
+            }).then(function () {
+                passwordForm.reset();
+                showPasswordMessage(passwordChangeError, passwordChangeSuccess, false, 'Пароль успешно изменён');
+                if (window.AdminNotifications) {
+                    window.AdminNotifications.show(true, 'Пароль успешно изменён');
+                }
+            }).catch(function (error) {
+                showPasswordMessage(passwordChangeError, passwordChangeSuccess, true, error.message || 'Не удалось сменить пароль');
+            }).finally(function () {
+                if (submitBtn) {
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                }
+            });
+        }
+
         // ---------- Обработчики событий ----------
         uploadAvatarBtn.addEventListener('click', uploadAvatar);
 
@@ -279,6 +345,13 @@
             e.preventDefault();
             saveProfile();
         });
+
+        if (passwordForm) {
+            passwordForm.addEventListener('submit', function (e) {
+                e.preventDefault();
+                changePassword();
+            });
+        }
 
         resetProfileBtn.addEventListener('click', resetForm);
 

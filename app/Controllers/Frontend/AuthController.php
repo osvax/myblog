@@ -470,6 +470,37 @@ class AuthController extends Controller
     }
 
     /**
+     * Выход из аккаунта из обычной HTML-формы (кнопка «Выйти» в тулбаре).
+     * Закрывает сессию и редиректит на главную — форма не может получить
+     * JSON-ответ, поэтому здесь именно HTTP-редирект, а не JSON.
+     */
+    public function logout($request)
+    {
+        if ($request->method() !== 'POST') {
+            return new \App\Core\Response('Метод не поддерживается', 405);
+        }
+
+        \user_start_session();
+
+        $_SESSION = [];
+
+        if (ini_get('session.use_cookies')) {
+            $params = session_get_cookie_params();
+            setcookie(session_name(), '', [
+                'expires' => time() - 42000,
+                'path' => $params['path'],
+                'domain' => $params['domain'],
+                'secure' => $params['secure'],
+                'httponly' => $params['httponly'],
+                'samesite' => 'Lax',
+            ]);
+        }
+
+        session_destroy();
+        return \App\Core\Response::redirect('/', 303);
+    }
+
+    /**
      * Проверить авторизацию пользователя.
      */
     public function checkAuth()

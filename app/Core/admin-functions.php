@@ -61,6 +61,11 @@ function admin_require_csrf()
 {
     admin_start_session();
     $provided = isset($_SERVER['HTTP_X_CSRF_TOKEN']) ? $_SERVER['HTTP_X_CSRF_TOKEN'] : '';
+    // Обычные HTML-формы (например, «Выйти» в тулбаре) не могут поставить
+    // заголовок — для них токен передаётся скрытым полем csrf_token
+    if ($provided === '' && isset($_POST['csrf_token'])) {
+        $provided = (string) $_POST['csrf_token'];
+    }
     $expected = isset($_SESSION['admin_csrf_token']) ? $_SESSION['admin_csrf_token'] : '';
     if ($provided === '' || $expected === '' || !hash_equals($expected, $provided)) {
         admin_json_response(403, ['success' => false, 'error' => 'Проверка запроса не пройдена. Обновите страницу и попробуйте снова']);

@@ -119,6 +119,7 @@ return function (Router $router) {
     $router->get('/api/admin/profile/{id}', [$profile, 'show']);
     $router->put('/api/admin/profile/{id}', [$profile, 'update']);
     $router->post('/api/admin/profile/{id}/avatar', [$profile, 'uploadAvatar']);
+    $router->post('/api/admin/profile/{id}/password', [$profile, 'changePassword']);
     $router->get('/api/admin/profile/{id}/activity', [$profile, 'getActivityHistory']);
 
     // ---------- Настройки сайта ----------

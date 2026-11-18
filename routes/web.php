@@ -104,6 +104,9 @@ return function (Router $router) {
     $router->post('/api/auth/user/logout', [$auth, 'handleLogout']);
     $router->get('/api/auth/user/check', [$auth, 'checkAuth']);
 
+    // Выход из обычной HTML-формы (кнопка «Выйти» в тулбаре): редирект на главную
+    $router->post('/logout.html', [$auth, 'logout']);
+
     // ---------- Маршруты профиля ----------
     $router->get('/profile.html', [$profile, 'show']);
     $router->post('/api/profile/update', [$profile, 'updateProfile']);

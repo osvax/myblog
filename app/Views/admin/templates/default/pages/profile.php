@@ -12,7 +12,7 @@
             <div class="card-body text-center p-4">
                 <div class="position-relative d-inline-block mb-3 text-center">
                     <img class="user-avatar-img" id="profileAvatar"
-                         src="/uploads/profile/a0e4ff889b07b84c881942047b6aa626.jpg" alt="Аватар"
+                         src="/img/avatar-placeholder.svg" alt="Аватар"
                          style="width: 120px; height: 120px; border-radius: 50%; object-fit: cover; border: 3px solid #f97316; display: block; margin: 0 auto;">
                     <label for="avatarFile" class="avatar-edit-btn" title="Изменить аватар">
                         <i class="bi bi-camera"></i>
@@ -102,6 +102,41 @@
                         </button>
                         <button class="btn btn-outline-secondary fw-bold" id="resetProfile" type="button">
                             Сбросить
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <!-- Смена пароля -->
+        <section class="card admin-card mt-4">
+            <div class="card-header bg-white">
+                <h2 class="h5 fw-bold mb-0"><i class="bi bi-shield-lock me-2"></i>Сменить пароль</h2>
+            </div>
+            <div class="card-body p-4">
+                <div id="passwordChangeError" class="alert alert-danger" style="display:none;"></div>
+                <div id="passwordChangeSuccess" class="alert alert-success" style="display:none;"></div>
+                <form id="passwordForm" novalidate>
+                    <div class="row g-3">
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold" for="oldPassword">Текущий пароль</label>
+                            <input class="form-control" type="password" id="oldPassword" name="old_password" required autocomplete="current-password">
+                            <div class="invalid-feedback">Введите текущий пароль.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold" for="newPassword">Новый пароль</label>
+                            <input class="form-control" type="password" id="newPassword" name="new_password" minlength="8" required autocomplete="new-password">
+                            <div class="invalid-feedback">Минимум 8 символов.</div>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label fw-bold" for="newPasswordConfirm">Повторите новый пароль</label>
+                            <input class="form-control" type="password" id="newPasswordConfirm" name="new_password_confirm" minlength="8" required autocomplete="new-password">
+                            <div class="invalid-feedback">Пароли должны совпадать.</div>
+                        </div>
+                    </div>
+                    <div class="mt-4">
+                        <button class="btn btn-orange fw-bold" type="submit">
+                            <i class="bi bi-key me-1"></i> Сменить пароль
                         </button>
                     </div>
                 </form>

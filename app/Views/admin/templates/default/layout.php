@@ -102,6 +102,7 @@
                     <li><hr class="dropdown-divider"></li>
                     <li>
                         <form method="post" action="/api/auth/logout">
+                            <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['admin_csrf_token'] ?? '', ENT_QUOTES, 'UTF-8') ?>">
                             <button class="dropdown-item fw-bold text-danger" type="submit"><i class="bi bi-box-arrow-right"></i> Выйти</button>
                         </form>
                     </li>

@@ -126,6 +126,63 @@ class AdminProfileController extends Controller
     }
 
     /**
+     * Сменить пароль своего аккаунта (только для владельца сессии).
+     *
+     * В разделе «Пользователи» сброс своего пароля запрещён
+     * (защита от само-блокировки), поэтому у владельца есть
+     * отдельный путь — через свой профиль.
+     */
+    public function changePassword($request, $parameters)
+    {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        \admin_require_csrf();
+
+        $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
+        if ($id <= 0) {
+            return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
+        }
+
+        // Менять можно только свой пароль
+        if ($id !== \admin_get_user_id()) {
+            return $this->json(['success' => false, 'error' => 'Можно менять только свой пароль'], 403);
+        }
+
+        $input = $request->json();
+        $oldPassword = isset($input['old_password']) && is_string($input['old_password']) ? $input['old_password'] : '';
+        $newPassword = isset($input['new_password']) && is_string($input['new_password']) ? $input['new_password'] : '';
+        $newPasswordConfirm = isset($input['new_password_confirm']) && is_string($input['new_password_confirm']) ? $input['new_password_confirm'] : '';
+
+        $db = \App\Core\Database::connection();
+        $stmt = $db->prepare("SELECT password_hash FROM users WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $user = $stmt->fetch();
+
+        if (!$user || !password_verify($oldPassword, $user['password_hash'])) {
+            return $this->json(['success' => false, 'error' => 'Неверный текущий пароль'], 400);
+        }
+        if (strlen($newPassword) < 8) {
+            return $this->json(['success' => false, 'error' => 'Новый пароль должен содержать минимум 8 символов'], 400);
+        }
+        if ($newPassword !== $newPasswordConfirm) {
+            return $this->json(['success' => false, 'error' => 'Новые пароли не совпадают'], 400);
+        }
+
+        $stmt = $db->prepare("UPDATE users SET password_hash = :hash, updated_at = NOW() WHERE id = :id");
+        $stmt->execute([
+            ':hash' => password_hash($newPassword, PASSWORD_DEFAULT),
+            ':id' => $id,
+        ]);
+
+        return $this->json(['success' => true]);
+    }
+
+    /**
      * Загрузить аватар пользователя.
      */
     public function uploadAvatar($request, $parameters)
