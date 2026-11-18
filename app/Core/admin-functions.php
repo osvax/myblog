@@ -94,7 +94,9 @@ function admin_can_access($pageSlug)
 function admin_api_required_section(string $path): string
 {
     $map = [
-        '#^/api/admin/users#' => 'users',
+        '#^/api/admin/users$#' => 'users',
+        '#^/api/admin/users/\d+/(avatar|password)$#' => 'user-edit',
+        '#^/api/admin/users/\d+$#' => 'user-edit',
         '#^/api/admin/roles#' => 'roles',
         '#^/api/admin/settings#' => 'settings',
         '#^/api/admin/custom-fields#' => 'custom-fields',

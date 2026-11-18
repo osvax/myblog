@@ -106,6 +106,8 @@ return function (Router $router) {
     $router->post('/api/admin/users', [$users, 'createUser']);
     $router->put('/api/admin/users/{id}', [$users, 'updateUser']);
     $router->delete('/api/admin/users/{id}', [$users, 'deleteUser']);
+    $router->post('/api/admin/users/{id}/avatar', [$users, 'uploadAvatar']);
+    $router->post('/api/admin/users/{id}/password', [$users, 'resetPassword']);
 
     // ---------- Роли и права ----------
     $router->get('/api/admin/roles', [$roles, 'index']);

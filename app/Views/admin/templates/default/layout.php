@@ -127,8 +127,10 @@
     <script src="<?= asset_version('/admin/js/admin.js') ?>"></script>
     <script src="<?= asset_version('/admin/js/admin-api.js') ?>"></script>
 <?php endif; ?>
+<!-- page-скрипты с defer: выполняются после разбора HTML, т.е. после Vite-модуля
+     админки (window.AdminApi / window.AdminNotifications уже готовы) -->
 <?php foreach (($pageScripts ?? []) as $script): ?>
-    <script src="<?= asset_version((string) $script) ?>"></script>
+    <script src="<?= asset_version((string) $script) ?>" defer></script>
 <?php endforeach; ?>
 
 <!-- Overlay for mobile sidebar -->

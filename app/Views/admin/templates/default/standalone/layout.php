@@ -40,7 +40,8 @@
         <?php endforeach; ?>
         <script type="module" src="<?= vite_asset($viteEntry) ?>"></script>
     <?php else: ?>
-        <script src="<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>"></script>
+        <!-- defer: классические page-скрипты выполняются после модулей в порядке документа -->
+        <script src="<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>" defer></script>
     <?php endif; ?>
 <?php endforeach; ?>
 </body>

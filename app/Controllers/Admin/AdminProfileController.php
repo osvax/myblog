@@ -26,6 +26,11 @@ class AdminProfileController extends Controller
             return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
         }
 
+        // Доступен только свой профиль (чужие пользователи — раздел «Пользователи»)
+        if ($id !== \admin_get_user_id()) {
+            return $this->json(['success' => false, 'error' => 'Можно просматривать только свой профиль'], 403);
+        }
+
         $user = (new User())->findById($id);
         if (!$user) {
             return $this->json(['success' => false, 'error' => 'Пользователь не найден'], 404);
@@ -75,6 +80,11 @@ class AdminProfileController extends Controller
         $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
         if ($id <= 0) {
             return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
+        }
+
+        // Доступен только свой профиль (чужие пользователи — раздел «Пользователи»)
+        if ($id !== \admin_get_user_id()) {
+            return $this->json(['success' => false, 'error' => 'Можно менять только свой профиль'], 403);
         }
 
         $input = $request->json();
@@ -129,6 +139,11 @@ class AdminProfileController extends Controller
         $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
         if ($id <= 0) {
             return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
+        }
+
+        // Доступен только свой профиль (чужие аватары загружаются в разделе «Пользователи»)
+        if ($id !== \admin_get_user_id()) {
+            return $this->json(['success' => false, 'error' => 'Можно менять только свой аватар'], 403);
         }
 
         if (!isset($_FILES['avatar']) || $_FILES['avatar']['error'] !== UPLOAD_ERR_OK) {
@@ -204,6 +219,11 @@ class AdminProfileController extends Controller
         $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
         if ($id <= 0) {
             return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
+        }
+
+        // Доступна только своя история посещений
+        if ($id !== \admin_get_user_id()) {
+            return $this->json(['success' => false, 'error' => 'Можно просматривать только свою историю'], 403);
         }
 
         $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
