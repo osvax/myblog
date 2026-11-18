@@ -6,7 +6,7 @@
     <title><?= htmlspecialchars($title ?? 'Администрирование', ENT_QUOTES, 'UTF-8') ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Vite-порт админки не завершён — CSS грузим легаси в обоих режимах -->
+    <!-- CSS админки — легаси в обоих режимах: admin.scss ещё не доработан до parity с /admin/css/admin.css -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
@@ -15,10 +15,26 @@
 <body>
 <?= $content ?? '' ?>
 
-<!-- Vite-порт админки не завершён — JS грузим легаси в обоих режимах -->
+<!-- Bootstrap — CDN в обоих режимах: page-скрипты обращаются к window.bootstrap вне DOMContentLoaded -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <?php foreach (($pageScripts ?? []) as $script): ?>
-    <script src="<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>"></script>
+    <?php
+    // Vite entry для standalone-страниц: admin (forgot-password, register) и login (login)
+    $viteEntry = null;
+    if ($script === '/admin/js/admin.js' && !empty($viteManifest['resources/js/admin.js'])) {
+        $viteEntry = 'resources/js/admin.js';
+    } elseif ($script === '/admin/js/login.js' && !empty($viteManifest['resources/js/login.js'])) {
+        $viteEntry = 'resources/js/login.js';
+    }
+    ?>
+    <?php if ($viteEntry): ?>
+        <?php foreach (vite_imports($viteEntry) as $import): ?>
+            <link rel="modulepreload" href="<?= htmlspecialchars($import, ENT_QUOTES, 'UTF-8') ?>">
+        <?php endforeach; ?>
+        <script type="module" src="<?= vite_asset($viteEntry) ?>"></script>
+    <?php else: ?>
+        <script src="<?= htmlspecialchars($script, ENT_QUOTES, 'UTF-8') ?>"></script>
+    <?php endif; ?>
 <?php endforeach; ?>
 </body>
 </html>

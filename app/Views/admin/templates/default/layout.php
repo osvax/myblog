@@ -6,7 +6,7 @@
     <title><?= htmlspecialchars($title ?? 'Администрирование', ENT_QUOTES, 'UTF-8') ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
     
-    <!-- Vite-порт админки не завершён — CSS грузим легаси в обоих режимах -->
+    <!-- CSS админки — легаси в обоих режимах: admin.scss ещё не доработан до parity с /admin/css/admin.css -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
     <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
@@ -108,10 +108,18 @@
     </main>
 </div>
 
-<!-- Vite-порт админки не завершён — JS грузим легаси в обоих режимах -->
+<!-- Bootstrap — CDN в обоих режимах: page-скрипты обращаются к window.bootstrap вне DOMContentLoaded -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-<script src="<?= asset_version('/admin/js/admin.js') ?>"></script>
-<script src="<?= asset_version('/admin/js/admin-api.js') ?>"></script>
+<?php if (!empty($viteManifest['resources/js/admin.js'])): ?>
+    <?php // Vite entry админки: порт admin.js + admin-api.js (window.AdminApi, window.AdminNotifications) ?>
+    <?php foreach (vite_imports('resources/js/admin.js') as $import): ?>
+        <link rel="modulepreload" href="<?= htmlspecialchars($import, ENT_QUOTES, 'UTF-8') ?>">
+    <?php endforeach; ?>
+    <script type="module" src="<?= vite_asset('resources/js/admin.js') ?>"></script>
+<?php else: ?>
+    <script src="<?= asset_version('/admin/js/admin.js') ?>"></script>
+    <script src="<?= asset_version('/admin/js/admin-api.js') ?>"></script>
+<?php endif; ?>
 <?php foreach (($pageScripts ?? []) as $script): ?>
     <script src="<?= asset_version((string) $script) ?>"></script>
 <?php endforeach; ?>

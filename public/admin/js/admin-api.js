@@ -56,6 +56,8 @@
     window.AdminApi = {
         request: request,
         get: function (path) { return request(path); },
+        // Метод post использовался users.js и roles.js, но в легаси был пропущен
+        post: function (path, data) { return request(path, { method: 'POST', body: data }); },
         save: function (path, method, data) {
             return request(path, { method: method, body: data });
         },
