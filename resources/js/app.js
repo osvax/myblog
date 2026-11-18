@@ -7,8 +7,9 @@ import 'bootstrap-icons/font/bootstrap-icons.css';
 import './bootstrap-components';
 import './navigation';
 // './consultant' включён — порт согласован с API /api/consultant.
-// './forms' пока не в бандле: формы грузятся легаси /js/forms.js
-// (иначе двойная инициализация).
+// './forms' не в бандле: формы грузятся отдельным Vite-entry 'forms'
+// (resources/js/forms.js) в production-ветке лейаута, иначе двойная
+// инициализация.
 import './consultant';
 import './lazy-images';
 import './scroll-animations';

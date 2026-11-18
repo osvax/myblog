@@ -81,7 +81,15 @@
         <script type="module" src="<?= htmlspecialchars(vite_asset('resources/js/app.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
         <!-- Остальные скрипты пока не в бандле — грузим легаси (как в dev-ветке) -->
         <?php if (!empty($includeFormsScript)): ?>
-            <script src="<?= asset_version('/js/forms.js') ?>"></script>
+            <?php if (isset($viteManifest['resources/js/forms.js'])): ?>
+                <!-- Формы: Vite-порт (заказ, обратная связь, комментарии) -->
+                <?php foreach (vite_imports('resources/js/forms.js') as $import): ?>
+                    <link rel="modulepreload" href="<?= htmlspecialchars($import, ENT_QUOTES, 'UTF-8') ?>">
+                <?php endforeach; ?>
+                <script type="module" src="<?= htmlspecialchars(vite_asset('resources/js/forms.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+            <?php else: ?>
+                <script src="<?= asset_version('/js/forms.js') ?>"></script>
+            <?php endif; ?>
         <?php endif; ?>
         <?php if (!empty($includeSiteSettings)): ?>
             <script src="<?= asset_version('/js/site-settings.js') ?>"></script>

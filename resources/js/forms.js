@@ -1,245 +1,162 @@
 // ============================================================
-// Forms handling (Order, Feedback, Comment, Auth)
+// Обработка отправки форм с всплывающими уведомлениями (toast).
+//
+// ESM-порт legacy public/js/forms.js.
+// Обрабатывает ВСЕ формы form.order-form:
+//   - форма заказа   (action="/api/forms/order", multipart)
+//   - обратная связь (action="/api/forms/feedback")
+//   - комментарии на статьях (action="/api/forms/comment")
+// Данные отправляются на action формы (MVC API), адрес не хардкодится.
+//
+// Формы авторизации (auth-form) и профиль (profile-form) обрабатывает
+// отдельный entry auth.js — здесь они не трогаются, иначе будет
+// двойная инициализация.
+//
+// Модуль выполняется после разбора DOM, DOMContentLoaded не нужен.
+// Toast берётся напрямую из bootstrap (ESM) — в production-бандле
+// глобального window.bootstrap нет (CDN-бандл грузится только в
+// dev-ветке лейаута).
 // ============================================================
 
-import { App } from './app.js';
+import { Toast } from 'bootstrap';
 
-// Base form handler
-class FormHandler {
-  constructor(formSelector, options = {}) {
-    this.form = document.querySelector(formSelector);
-    if (!this.form) return;
-    
-    this.endpoint = options.endpoint || this.form.action;
-    this.onSuccess = options.onSuccess || (() => {});
-    this.onError = options.onError || (() => {});
-    this.resetOnSuccess = options.resetOnSuccess ?? true;
-    this.showToast = options.showToast ?? true;
-    
-    this.bindEvents();
-  }
-  
-  bindEvents() {
-    this.form.addEventListener('submit', e => this.handleSubmit(e));
-    
-    // Real-time validation
-    this.form.querySelectorAll('input, select, textarea').forEach(input => {
-      input.addEventListener('blur', () => this.validateField(input));
-      input.addEventListener('input', () => this.clearFieldError(input));
+// CSRF токен из meta тега
+const csrfToken =
+    document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
+// Контейнер для уведомлений
+const toastContainer = document.createElement('div');
+toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+toastContainer.style.zIndex = '2000';
+document.body.appendChild(toastContainer);
+
+// Показ всплывающего сообщения
+function showToast(success, text) {
+    const el = document.createElement('div');
+    el.className =
+        'toast align-items-center border-0 ' + (success ? 'toast-success' : 'toast-error');
+    el.setAttribute('role', 'alert');
+    el.setAttribute('aria-live', 'assertive');
+    el.setAttribute('aria-atomic', 'true');
+    const content = document.createElement('div');
+    content.className = 'd-flex';
+    const body = document.createElement('div');
+    body.className = 'toast-body fw-bold';
+    const icon = document.createElement('i');
+    icon.className = 'bi ' + (success ? 'bi-check-circle-fill' : 'bi-x-circle-fill') + ' me-2';
+    body.append(
+        icon,
+        document.createTextNode(
+            text ||
+                (success
+                    ? 'Сообщение успешно отправлено!'
+                    : 'Не удалось отправить сообщение. Попробуйте ещё раз.'),
+        ),
+    );
+    const close = document.createElement('button');
+    close.type = 'button';
+    close.className = 'btn-close btn-close-white me-2 m-auto';
+    close.setAttribute('data-bs-dismiss', 'toast');
+    close.setAttribute('aria-label', 'Закрыть');
+    content.append(body, close);
+    el.appendChild(content);
+    toastContainer.appendChild(el);
+
+    const toast = new Toast(el, { delay: 4000 });
+    toast.show();
+
+    // Удаляем элемент после скрытия
+    el.addEventListener('hidden.bs.toast', () => el.remove());
+}
+
+function getFieldLabel(field) {
+    if (field.id) {
+        const label = document.querySelector('label[for="' + CSS.escape(field.id) + '"]');
+        if (label) return label.textContent.trim();
+    }
+    const wrappingLabel = field.closest('label');
+    if (wrappingLabel) return wrappingLabel.textContent.trim();
+    return field.getAttribute('aria-label') || field.name || 'Поле формы';
+}
+
+function getValidationMessage(form) {
+    const invalidFields = Array.from(form.querySelectorAll('input, select, textarea')).filter(
+        (field) => field.willValidate && !field.validity.valid,
+    );
+    if (!invalidFields.length) return 'Проверьте обязательные поля формы.';
+
+    const missing = [];
+    const invalid = [];
+    invalidFields.forEach((field) => {
+        const label = getFieldLabel(field);
+        const isEmpty =
+            field.type === 'checkbox' || field.type === 'radio'
+                ? !field.checked
+                : !String(field.value || '').trim();
+        const target = isEmpty && field.required ? missing : invalid;
+        if (target.indexOf(label) === -1) target.push(label);
     });
-  }
-  
-  async handleSubmit(e) {
-    e.preventDefault();
-    
-    if (!this.validateForm()) return;
-    
-    const submitBtn = this.form.querySelector('[type="submit"]');
-    const originalText = submitBtn?.innerHTML;
-    submitBtn?.classList.add('loading');
-    submitBtn?.setAttribute('disabled', 'true');
-    
-    const formData = new FormData(this.form);
-    formData.append('_token', App.csrfToken);
-    
-    try {
-      const response = await fetch(this.endpoint, {
-        method: 'POST',
-        body: formData,
-        credentials: 'same-origin',
-      });
-      
-      const data = await response.json();
-      
-      if (!response.ok) throw new Error(data.message || 'Ошибка отправки');
-      
-      if (this.showToast) {
-        App.toast(data.message || 'Успешно отправлено', 'success');
-      }
-      
-      if (this.resetOnSuccess) this.form.reset();
-      this.onSuccess(data);
-      
-    } catch (error) {
-      if (this.showToast) {
-        App.toast(error.message, 'error');
-      }
-      this.onError(error);
-    } finally {
-      submitBtn?.classList.remove('loading');
-      submitBtn?.removeAttribute('disabled');
-      if (originalText) submitBtn.innerHTML = originalText;
-    }
-  }
-  
-  validateForm() {
-    let isValid = true;
-    this.form.querySelectorAll('[required]').forEach(field => {
-      if (!this.validateField(field)) isValid = false;
-    });
-    return isValid;
-  }
-  
-  validateField(field) {
-    const value = field.value.trim();
-    let isValid = true;
-    let message = '';
-    
-    // Required
-    if (field.hasAttribute('required') && !value) {
-      isValid = false;
-      message = 'Это поле обязательно';
-    }
-    
-    // Email
-    if (isValid && field.type === 'email' && value) {
-      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-      if (!emailRegex.test(value)) {
-        isValid = false;
-        message = 'Некорректный email';
-      }
-    }
-    
-    // Phone
-    if (isValid && field.type === 'tel' && value) {
-      const phoneRegex = /^[\d\s\-\(\)\+]{10,}$/;
-      if (!phoneRegex.test(value.replace(/\s/g, ''))) {
-        isValid = false;
-        message = 'Некорректный телефон';
-      }
-    }
-    
-    // Min length
-    if (isValid && field.hasAttribute('minlength') && value.length < parseInt(field.minLength)) {
-      isValid = false;
-      message = `Минимум ${field.minLength} символов`;
-    }
-    
-    this.showFieldError(field, isValid ? null : message);
-    return isValid;
-  }
-  
-  showFieldError(field, message) {
-    const group = field.closest('.form-group, .mb-3, .consultant-field-group');
-    if (!group) return;
-    
-    let errorEl = group.querySelector('.form-error, .invalid-feedback');
-    if (!errorEl) {
-      errorEl = document.createElement('div');
-      errorEl.className = 'invalid-feedback form-error';
-      group.appendChild(errorEl);
-    }
-    
-    if (message) {
-      errorEl.textContent = message;
-      field.classList.add('is-invalid');
-      field.classList.remove('is-valid');
-      field.setAttribute('aria-invalid', 'true');
-    } else {
-      errorEl.textContent = '';
-      field.classList.remove('is-invalid');
-      field.classList.add('is-valid');
-      field.setAttribute('aria-invalid', 'false');
-    }
-  }
-  
-  clearFieldError(field) {
-    field.classList.remove('is-invalid');
-    const group = field.closest('.form-group, .mb-3, .consultant-field-group');
-    group?.querySelector('.form-error, .invalid-feedback')?.remove();
-  }
+
+    const messages = [];
+    if (missing.length) messages.push('Не заполнены обязательные поля: ' + missing.join(', ') + '.');
+    if (invalid.length) messages.push('Проверьте поля: ' + invalid.join(', ') + '.');
+    return messages.join(' ');
 }
 
-// Order form
-const orderForm = document.querySelector('#order-form, form.order-form');
-if (orderForm) {
-  new FormHandler('#order-form, form.order-form', {
-    endpoint: '/api/forms/order',
-    onSuccess: () => {
-      // Scroll to success message or redirect
-      const successEl = document.querySelector('.order-success');
-      successEl?.scrollIntoView({ behavior: 'smooth' });
-    },
-  });
-}
-
-// Feedback form
-const feedbackForm = document.querySelector('#feedback-form, form.feedback-form');
-if (feedbackForm) {
-  new FormHandler('#feedback-form, form.feedback-form', {
-    endpoint: '/api/forms/feedback',
-    onSuccess: () => {
-      const modal = bootstrap.Modal.getInstance(document.querySelector('#feedbackModal'));
-      modal?.hide();
-    },
-  });
-}
-
-// Comment form
-const commentForm = document.querySelector('#comment-form, form.comment-form');
-if (commentForm) {
-  new FormHandler('#comment-form, form.comment-form', {
-    endpoint: '/api/forms/comment',
-    onSuccess: (data) => {
-      if (data.comment) {
-        // Prepend new comment to list
-        const list = document.querySelector('.comments-list');
-        if (list) {
-          list.insertAdjacentHTML('afterbegin', data.commentHtml);
+// Отправка формы на PHP-обработчик
+document.querySelectorAll('form.order-form').forEach((form) => {
+    form.noValidate = true;
+    form.addEventListener('submit', (e) => {
+        e.preventDefault();
+        if (!form.reportValidity()) {
+            showToast(false, getValidationMessage(form));
+            return;
         }
-      }
-    },
-  });
-}
 
-// Auth forms (login, register, forgot, reset)
-document.querySelectorAll('form.auth-form').forEach(form => {
-  new FormHandler(form, {
-    endpoint: form.action,
-    onSuccess: (data) => {
-      if (data.redirect) {
-        window.location.href = data.redirect;
-      } else {
-        window.location.reload();
-      }
-    },
-  });
+        const action = form.getAttribute('action');
+        if (!action) {
+            showToast(false, 'Не удалось отправить форму: не указан адрес обработчика.');
+            return;
+        }
+
+        // Блокируем кнопку на время отправки
+        const btn = form.querySelector('button[type="submit"]');
+        if (btn) {
+            btn.disabled = true;
+            btn.dataset.originalText = btn.innerHTML;
+            btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2"></span>Отправка...';
+        }
+
+        // Отправка данных на сервер
+        const formData = new FormData(form);
+        if (csrfToken) {
+            formData.append('_token', csrfToken);
+        }
+        fetch(action, { method: 'POST', body: formData })
+            .then((response) =>
+                response.json().then((data) => {
+                    if (!response.ok || !data || !data.success) {
+                        throw new Error(
+                            (data && data.error) ||
+                                'Не удалось отправить сообщение. Попробуйте ещё раз.',
+                        );
+                    }
+                    return data;
+                }),
+            )
+            .then(() => {
+                showToast(true);
+                form.reset();
+            })
+            .catch((error) => {
+                // Сервер недоступен или ответ не JSON
+                showToast(false, error.message);
+            })
+            .finally(() => {
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = btn.dataset.originalText;
+                }
+            });
+    });
 });
-
-// File upload preview
-document.querySelectorAll('input[type="file"]').forEach(input => {
-  input.addEventListener('change', e => {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    const preview = input.parentElement.querySelector('.file-preview');
-    if (preview) preview.remove();
-    
-    if (file.type.startsWith('image/')) {
-      const img = document.createElement('img');
-      img.className = 'file-preview img-thumbnail mt-2';
-      img.style.maxWidth = '200px';
-      img.src = URL.createObjectURL(file);
-      input.parentElement.appendChild(img);
-    }
-  });
-});
-
-// Character counter for textareas
-document.querySelectorAll('textarea[maxlength]').forEach(textarea => {
-  const counter = document.createElement('div');
-  counter.className = 'form-text text-end';
-  textarea.parentElement.appendChild(counter);
-  
-  const updateCounter = () => {
-    const remaining = textarea.maxLength - textarea.value.length;
-    counter.textContent = `${textarea.value.length} / ${textarea.maxLength}`;
-    counter.style.color = remaining < 20 ? 'var(--orange)' : '';
-  };
-  
-  textarea.addEventListener('input', updateCounter);
-  updateCounter();
-});
-
-// Export for use in other modules
-export { FormHandler };
