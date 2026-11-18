@@ -20,6 +20,7 @@ $defaults = [
     ['siteDescription', 'Портфолио веб-разработчика. Блог о верстке, Bootstrap 5 и современных технологиях.', 'text', 'general', 3, 'SEO description'],
     ['adminEmail', 'admin@moyblog.ru', 'email', 'general', 4, 'Email администратора'],
     ['siteLanguage', 'Русский', 'text', 'general', 5, 'Язык сайта'],
+    ['footerText', '© {year} МойБлог. Все права защищены.', 'text', 'general', 6, 'Текст футера'],
 
     // === home ===
     ['homePageMode', 'main', 'select', 'home', 1, 'Режим главной'],
@@ -133,6 +134,22 @@ $defaults = [
     ['portfolioShowLink', '1', 'checkbox', 'portfolio', 9, 'Показывать ссылку на проект'],
 ];
 
+// Ключи, которые добавляются только при отсутствии в БД (INSERT IGNORE):
+// пользовательские предпочтения и секреты нельзя перезаписывать сидом.
+$defaultsIgnore = [
+    // === appearance ===
+    ['primaryColor', '#f11b04', 'color', 'appearance', 1, 'Основной цвет'],
+    ['headingFont', 'Montserrat', 'select', 'appearance', 2, 'Шрифт заголовков'],
+    ['darkMode', '0', 'checkbox', 'appearance', 3, 'Тёмная тема админки'],
+    ['sidebarCollapse', '0', 'checkbox', 'appearance', 4, 'Свёрнутый сайдбар по умолчанию'],
+
+    // === calculator ===
+    ['calculatorConfig', json_encode(calculator_default_config(), JSON_UNESCAPED_UNICODE), 'json', 'calculator', 1, 'Конфигурация калькулятора заказа'],
+
+    // === email (секреты — только пустой дефолт, значение пользователь вводит сам) ===
+    ['smtpPassword', '', 'text', 'email', 5, 'Пароль приложения'],
+];
+
 $stmt = $db->prepare(
     "INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
      VALUES (:key, :value, :type, :group, :order, :placeholder)
@@ -147,6 +164,12 @@ $stmt = $db->prepare(
 $inserted  = 0;
 $updated   = 0;
 $unchanged = 0;
+$skipped   = 0;
+
+$stmtIgnore = $db->prepare(
+    "INSERT IGNORE INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
+     VALUES (:key, :value, :type, :group, :order, :placeholder)"
+);
 
 $db->beginTransaction();
 try {
@@ -168,6 +191,23 @@ try {
             $unchanged++;
         }
     }
+
+    foreach ($defaultsIgnore as $d) {
+        $stmtIgnore->execute([
+            ':key'         => $d[0],
+            ':value'       => $d[1],
+            ':type'        => $d[2],
+            ':group'       => $d[3],
+            ':order'       => $d[4],
+            ':placeholder' => $d[5],
+        ]);
+        if ($stmtIgnore->rowCount() === 1) {
+            $inserted++;
+        } else {
+            $skipped++;
+        }
+    }
+
     $db->commit();
 } catch (\Throwable $e) {
     if ($db->inTransaction()) {
@@ -177,4 +217,4 @@ try {
     exit(1);
 }
 
-echo "Готово: {$inserted} добавлено, {$updated} обновлено, {$unchanged} без изменений.\n";
+echo "Готово: {$inserted} добавлено, {$updated} обновлено, {$unchanged} без изменений, {$skipped} пропущено (уже есть).\n";
