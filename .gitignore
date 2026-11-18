@@ -1,15 +1,39 @@
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Dependencies
+vendor/
+composer.lock
+
+# Node / Vite
+node_modules/
+public/build/
+public/hot
+
 # IDE
 .idea/
+.vscode/
+*.swp
+*.swo
 
-# Системный мусор
-Thumbs.db
+# OS
 .DS_Store
+Thumbs.db
 desktop.ini
+
+# Logs
+*.log
+storage/logs/*
+
+# Cache
+bootstrap/cache/*
+var/cache/*
 
 # Временные и runtime-файлы (резервные копии шаблонов, логи); .htaccess оставляем
 /var/*
 !/var/.htaccess
-*.log
 
 # Пользовательские загрузки — контент не версионируем, .htaccess сохраняем
 /public/uploads/*
@@ -29,3 +53,9 @@ desktop.ini
 
 # Конфигурация с паролем БД — в репозиторий не попадает
 /config/database.php
+
+# PHPUnit
+.phpunit.result.cache
+
+# PHPStan
+.phpstan.cache/

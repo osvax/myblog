@@ -5,10 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($title ?? 'МойБлог', ENT_QUOTES, 'UTF-8') ?></title>
     <meta name="description" content="<?= htmlspecialchars($description ?? 'Личный блог о веб-разработке и дизайне.', ENT_QUOTES, 'UTF-8') ?>">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+    <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
+    
+    <!-- Preconnect for fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
+    
+    <?php if (has_vite_manifest() && isset($viteManifest['resources/js/app.js'])): ?>
+        <!-- Production: Vite built assets (CSS + modulepreload) -->
+        <?php foreach (vite_css('resources/js/app.js') as $css): ?>
+            <link rel="stylesheet" href="<?= htmlspecialchars($css, ENT_QUOTES, 'UTF-8') ?>">
+        <?php endforeach; ?>
+        <?php foreach (vite_imports('resources/js/app.js') as $import): ?>
+            <link rel="modulepreload" href="<?= htmlspecialchars($import, ENT_QUOTES, 'UTF-8') ?>">
+        <?php endforeach; ?>
+    <?php else: ?>
+        <!-- Development: Vite dev server or fallback -->
+        <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
+    <?php endif; ?>
 </head>
 <body id="top">
     <nav class="navbar navbar-expand-lg navbar-dark bg-orange sticky-top shadow-sm">
@@ -60,19 +75,53 @@
             <p class="mb-0 small fw-bold text-white-50">Сделано с <i class="bi bi-heart-fill text-orange"></i> на Bootstrap 5</p>
         </div>
     </footer>
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-    <?php if (!empty($includeFormsScript)): ?>
-        <script src="<?= asset_version('/js/forms.js') ?>"></script>
+
+    <?php if (has_vite_manifest() && isset($viteManifest['resources/js/app.js'])): ?>
+        <!-- Production: Vite-бандл ядра (bootstrap JS, навигация, lazy-картинки, анимации, консультант) -->
+        <script type="module" src="<?= htmlspecialchars(vite_asset('resources/js/app.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+        <!-- Остальные скрипты пока не в бандле — грузим легаси (как в dev-ветке) -->
+        <?php if (!empty($includeFormsScript)): ?>
+            <script src="<?= asset_version('/js/forms.js') ?>"></script>
+        <?php endif; ?>
+        <?php if (!empty($includeSiteSettings)): ?>
+            <script src="<?= asset_version('/js/site-settings.js') ?>"></script>
+        <?php endif; ?>
+        <?php if (!empty($includeAuthScript)): ?>
+            <?php if (isset($viteManifest['resources/js/auth.js'])): ?>
+                <!-- Авторизация: Vite-порт (вход + 2FA, регистрация, восстановление, профиль) -->
+                <?php foreach (vite_imports('resources/js/auth.js') as $import): ?>
+                    <link rel="modulepreload" href="<?= htmlspecialchars($import, ENT_QUOTES, 'UTF-8') ?>">
+                <?php endforeach; ?>
+                <script type="module" src="<?= htmlspecialchars(vite_asset('resources/js/auth.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
+            <?php else: ?>
+                <script src="<?= asset_version('/js/auth.js') ?>"></script>
+            <?php endif; ?>
+        <?php endif; ?>
+        <?php foreach (($pageScripts ?? []) as $script): ?>
+            <script src="<?= asset_version((string) $script) ?>"></script>
+        <?php endforeach; ?>
+    <?php else: ?>
+        <!-- Development: Fallback to individual scripts -->
+        <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+        <?php if (!empty($includeFormsScript)): ?>
+            <script src="<?= asset_version('/js/forms.js') ?>"></script>
+        <?php endif; ?>
+        <?php if (!empty($includeSiteSettings)): ?>
+            <script src="<?= asset_version('/js/site-settings.js') ?>"></script>
+        <?php endif; ?>
+        <?php if (!empty($includeAuthScript)): ?>
+            <script src="<?= asset_version('/js/auth.js') ?>"></script>
+        <?php endif; ?>
+        <?php foreach (($pageScripts ?? []) as $script): ?>
+            <script src="<?= asset_version((string) $script) ?>"></script>
+        <?php endforeach; ?>
+        <script src="<?= asset_version('/js/consultant.js') ?>"></script>
     <?php endif; ?>
-    <?php if (!empty($includeSiteSettings)): ?>
-        <script src="<?= asset_version('/js/site-settings.js') ?>"></script>
+    
+    <!-- Session expiry for warning -->
+    <?php if (!empty($user)): ?>
+        <meta name="session-expiry" content="<?= (int) (3600 * 24) ?>"> <!-- 24 hours -->
     <?php endif; ?>
-    <?php if (!empty($includeAuthScript)): ?>
-        <script src="<?= asset_version('/js/auth.js') ?>"></script>
-    <?php endif; ?>
-    <?php foreach (($pageScripts ?? []) as $script): ?>
-        <script src="<?= asset_version((string) $script) ?>"></script>
-    <?php endforeach; ?>
-    <script src="<?= asset_version('/js/consultant.js') ?>"></script>
 </body>
 </html>

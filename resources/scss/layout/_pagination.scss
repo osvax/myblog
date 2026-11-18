@@ -1,0 +1,50 @@
+// ============================================================
+// Пагинация
+// ============================================================
+
+.pagination {
+  .page-link {
+    color: $primary-dark;
+    font-weight: $font-weight-bold;
+    border: 1px solid $border-light;
+    padding: 0.5rem 0.875rem;
+    transition: color $transition-base, background-color $transition-base, border-color $transition-base;
+
+    &:hover {
+      color: $primary;
+      background-color: $orange-light;
+      border-color: $primary;
+      z-index: 2;
+    }
+
+    &:focus {
+      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+      z-index: 3;
+    }
+  }
+
+  .page-item {
+    &:first-child .page-link,
+    &:last-child .page-link {
+      border-radius: $border-radius;
+    }
+
+    &.active {
+      .page-link {
+        background-color: $primary;
+        border-color: $primary;
+        color: $white;
+        z-index: 3;
+      }
+    }
+
+    &.disabled {
+      .page-link {
+        color: $text-light;
+        pointer-events: none;
+        background-color: $white;
+        border-color: $border-light;
+      }
+    }
+  }
+}

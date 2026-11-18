@@ -2,6 +2,15 @@
 
 define('APP_ROOT', dirname(__DIR__));
 
+// Load environment variables from .env
+if (is_file(APP_ROOT . '/vendor/autoload.php')) {
+    require_once APP_ROOT . '/vendor/autoload.php';
+    if (is_file(APP_ROOT . '/.env')) {
+        $dotenv = Dotenv\Dotenv::createImmutable(APP_ROOT);
+        $dotenv->load();
+    }
+}
+
 spl_autoload_register(function ($className) {
     $prefix = 'App\\';
     if (strncmp($className, $prefix, strlen($prefix)) !== 0) {

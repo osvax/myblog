@@ -21,6 +21,45 @@ function user_start_session(): void
         'samesite' => 'Lax',
     ]);
     session_start();
+
+    // Generate CSRF token if not exists
+    if (empty($_SESSION['csrf_token'])) {
+        $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+    }
+}
+
+/**
+ * Получить CSRF токен текущей сессии.
+ *
+ * @return string
+ */
+function csrf_token(): string
+{
+    user_start_session();
+    return $_SESSION['csrf_token'];
+}
+
+/**
+ * Проверить CSRF токен.
+ *
+ * @param string $token
+ * @return bool
+ */
+function csrf_verify(string $token): bool
+{
+    user_start_session();
+    $expected = $_SESSION['csrf_token'] ?? '';
+    return hash_equals($expected, $token);
+}
+
+/**
+ * Сгенерировать скрытое поле CSRF для форм.
+ *
+ * @return string
+ */
+function csrf_field(): string
+{
+    return '<input type="hidden" name="_token" value="' . htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') . '">';
 }
 
 /**

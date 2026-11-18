@@ -24,6 +24,37 @@ class AuthController extends Controller
     }
 
     /**
+     * Проверить rate limit для auth эндпоинтов.
+     *
+     * @param string $endpoint
+     * @param int $maxAttempts
+     * @param int $decayMinutes
+     * @return array|null Возвращает null если OK, или массив с ошибкой для json ответа
+     */
+    private function checkRateLimit(string $endpoint, int $maxAttempts, int $decayMinutes): ?array
+    {
+        $key = \App\Core\RateLimiter::makeKey($endpoint);
+        $result = \App\Core\RateLimiter::hit($key, $maxAttempts, $decayMinutes);
+
+        if (!$result['allowed']) {
+            return [
+                'success' => false,
+                'error' => 'Слишком много попыток. Попробуйте через ' . $result['retryAfter'] . ' секунд.',
+                'retryAfter' => $result['retryAfter'],
+            ];
+        }
+
+        // Добавляем заголовки rate limit
+        header('X-RateLimit-Limit: ' . $maxAttempts);
+        header('X-RateLimit-Remaining: ' . $result['remaining']);
+        if ($result['retryAfter']) {
+            header('Retry-After: ' . $result['retryAfter']);
+        }
+
+        return null;
+    }
+
+    /**
      * Показать форму регистрации.
      */
     public function register($request)
@@ -84,6 +115,12 @@ class AuthController extends Controller
     {
         if ($request->method() !== 'POST') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        // Rate limiting
+        $maxLoginAttempts = (int) ($_ENV['RATE_LIMIT_LOGIN'] ?? 5);
+        if ($error = $this->checkRateLimit('auth:login', $maxLoginAttempts, 15)) {
+            return $this->json($error, 429);
         }
 
         $input = $request->json();
@@ -272,6 +309,12 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
 
+        // Rate limiting
+        $maxRegisterAttempts = (int) ($_ENV['RATE_LIMIT_REGISTER'] ?? 3);
+        if ($error = $this->checkRateLimit('auth:register', $maxRegisterAttempts, 60)) {
+            return $this->json($error, 429);
+        }
+
         $input = $request->json();
         $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
         $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
@@ -309,6 +352,12 @@ class AuthController extends Controller
     {
         if ($request->method() !== 'POST') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        // Rate limiting
+        $maxForgotAttempts = (int) ($_ENV['RATE_LIMIT_FORGOT_PASSWORD'] ?? 2);
+        if ($error = $this->checkRateLimit('auth:forgot-password', $maxForgotAttempts, 60)) {
+            return $this->json($error, 429);
         }
 
         $input = $request->json();
@@ -350,6 +399,12 @@ class AuthController extends Controller
     {
         if ($request->method() !== 'POST') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        // Rate limiting
+        $maxResetAttempts = (int) ($_ENV['RATE_LIMIT_FORGOT_PASSWORD'] ?? 2);
+        if ($error = $this->checkRateLimit('auth:reset-password', $maxResetAttempts, 60)) {
+            return $this->json($error, 429);
         }
 
         $input = $request->json();
@@ -450,9 +505,10 @@ class AuthController extends Controller
         $body .= $resetLink . "\n\n";
         $body .= "Ссылка действует 1 час.\n";
 
-        $headers = "From: МойБлог <no-reply@moyblog.ru>\r\n";
-        $headers .= "Content-Type: text/plain; charset=UTF-8\r\n";
+        $htmlBody = '<p>Для сброса пароля перейдите по ссылке:</p>';
+        $htmlBody .= '<p><a href="' . htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8') . '</a></p>';
+        $htmlBody .= '<p>Ссылка действует 1 час.</p>';
 
-        @mail($to, $subject, $body, $headers);
+        \App\Core\Mailer::send($subject, $body, $to, '', $htmlBody);
     }
 }

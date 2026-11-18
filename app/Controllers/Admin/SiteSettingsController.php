@@ -109,4 +109,19 @@ class SiteSettingsController extends Controller
 
         return $this->json(['success' => true]);
     }
+
+    /**
+     * Тест отправки email через SMTP.
+     */
+    public function testEmail($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        \admin_require_csrf();
+
+        $result = \App\Core\Mailer::testConnection();
+        return $this->json($result);
+    }
 }

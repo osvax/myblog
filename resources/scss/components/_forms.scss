@@ -1,0 +1,89 @@
+// ============================================================
+// Формы
+// ============================================================
+
+// Order form
+.order-form {
+  border-top: 6px solid $primary;
+}
+
+// Form controls focus
+.form-control:focus,
+.form-select:focus {
+  border-color: $primary;
+  box-shadow: 0 0 0 0.25rem rgba($primary, 0.25);
+}
+
+.form-check-input:checked {
+  background-color: $primary;
+  border-color: $primary;
+}
+
+// Auth forms
+.auth-card {
+  max-width: 440px;
+  margin: 2rem auto;
+  padding: 2rem;
+  @include card-base();
+
+  @include media-breakpoint-down(sm) {
+    margin: 1rem;
+    padding: 1.5rem;
+  }
+}
+
+.auth-form {
+  .form-group {
+    margin-bottom: 1.25rem;
+  }
+
+  .form-label {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: $text-main;
+  }
+
+  .form-control {
+    border: 1px solid #ddd;
+    border-radius: $border-radius-sm;
+    padding: 0.75rem 1rem;
+    transition: border-color $transition-base, box-shadow $transition-base;
+
+    &:focus {
+      border-color: $primary;
+      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+    }
+  }
+}
+
+.btn-block {
+  width: 100%;
+  padding: 0.875rem;
+  font-size: 1rem;
+}
+
+.auth-links {
+  margin-top: 1.5rem;
+  text-align: center;
+
+  p {
+    margin: 0.5rem 0;
+    color: $text-muted;
+  }
+
+  a {
+    color: $primary;
+    font-weight: 600;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+    }
+  }
+}
+
+.auth-description {
+  color: $text-muted;
+  margin-bottom: 1.5rem;
+  line-height: 1.6;
+}

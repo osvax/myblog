@@ -37,6 +37,10 @@ class View
                 $data['footerText'] = $data['footerText'] ?? '© {year} МойБлог. Все права защищены.';
             }
         }
+        
+        // Vite manifest for production asset loading
+        $data['viteManifest'] = \vite_manifest();
+        
         $data['content'] = self::capture($base . '/pages/' . $page, $data);
         $data['title'] = $data['title'] ?? ($area === 'admin' ? 'Администрирование' : 'МойБлог');
         return self::render($base . '/layout', $data);
@@ -70,6 +74,10 @@ class View
             }
         }
         $data['title'] = $data['title'] ?? ($page === 'login' ? 'Авторизация — Админ-панель' : 'Администрирование');
+        
+        // Vite manifest for production asset loading
+        $data['viteManifest'] = \vite_manifest();
+        
         return self::render($base . '/layout', $data);
     }
 

@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\Sanitizer;
 
 class LandingPage
 {
@@ -65,6 +66,9 @@ class LandingPage
         int $isActive = 1,
         int $editId = 0
     ): array {
+        // Санитизируем HTML контент перед сохранением (защита от XSS)
+        $htmlContent = Sanitizer::clean($htmlContent);
+
         $db = Database::connection();
 
         if ($editId > 0) {

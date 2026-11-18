@@ -1,0 +1,40 @@
+// ============================================================
+// Сайдбар
+// ============================================================
+
+aside {
+  .card {
+    border-top: 4px solid $primary;
+    border-radius: $border-radius-lg;
+    box-shadow: 0 0.5rem 1rem rgba(53, 53, 53, 0.08);
+
+    .card-header {
+      background-color: $white;
+      border-bottom: 1px solid rgba(53, 53, 53, 0.08);
+      font-weight: $font-weight-bold;
+    }
+
+    .card-body {
+      padding: 1rem;
+    }
+
+    .list-group-item {
+      border: none;
+      padding: 0.5rem 0;
+      background: transparent;
+      color: $text-main;
+      font-weight: $font-weight-normal;
+      transition: color $transition-base, padding-left $transition-base;
+
+      &:hover {
+        color: $primary;
+        padding-left: 0.5rem;
+      }
+
+      &.active {
+        color: $primary;
+        font-weight: $font-weight-bold;
+      }
+    }
+  }
+}

@@ -1,0 +1,36 @@
+// ============================================================
+// Навигация
+// ============================================================
+
+.navbar {
+  .nav-link {
+    transition: color $transition-base, opacity $transition-base;
+    font-weight: $font-weight-normal;
+
+    &:hover {
+      color: $text-main;
+    }
+  }
+
+  .nav-link.active {
+    color: $text-main;
+    border-bottom: 3px solid $text-main;
+  }
+}
+
+.navbar-brand {
+  font-size: 1.4rem;
+  font-weight: $font-weight-bold;
+  color: $white !important;
+
+  i {
+    margin-right: 0.5rem;
+  }
+}
+
+// Mobile navbar collapse
+@media (max-width: 991.98px) {
+  .navbar-collapse {
+    margin-top: 0.5rem;
+  }
+}

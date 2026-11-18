@@ -5,6 +5,7 @@ namespace App\Controllers\Frontend;
 use App\Controllers\Controller;
 use App\Models\ContentRepository;
 use App\Models\LandingPage;
+use App\Core\Sanitizer;
 
 class HomeController extends Controller
 {
@@ -19,7 +20,8 @@ class HomeController extends Controller
         if ($homePageMode === 'static') {
             $page = (new LandingPage())->findActive('home');
             if ($page && !empty($page['html_content'])) {
-                return $page['html_content'];
+                // Defense in depth: санитизируем и при выводе
+                return Sanitizer::clean($page['html_content']);
             }
             return new \App\Core\Response('Главная страница не найдена', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
         }

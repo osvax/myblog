@@ -192,7 +192,8 @@
             fetch('/api/auth/reset-password', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ token: token, password: password })
+                // password_confirm обязателен: сервер проверяет совпадение
+                body: JSON.stringify({ token: token, password: password, password_confirm: passwordConfirm })
             })
                 .then(function (response) {
                     return response.json().then(function (data) {

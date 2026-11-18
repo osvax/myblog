@@ -1,0 +1,65 @@
+// ============================================================
+// Кнопки и утилиты
+// ============================================================
+
+// Orange utilities
+.bg-orange {
+  background-color: $primary !important;
+}
+
+.bg-orange-light {
+  background-color: $orange-light;
+}
+
+.bg-353535 {
+  background-color: $dark !important;
+}
+
+.text-orange {
+  color: $primary !important;
+}
+
+.btn-orange {
+  @include btn-base();
+}
+
+.link-orange {
+  color: $primary;
+  text-decoration: none;
+  font-weight: $font-weight-normal;
+
+  &:hover {
+    color: $primary-dark;
+    text-decoration: underline;
+  }
+}
+
+// Toast notifications
+.toast-success {
+  background-color: #198754;
+  color: $white;
+}
+
+.toast-error {
+  background-color: #dc3545;
+  color: $white;
+}
+
+// Search form
+.search-form {
+  .form-control:focus {
+    box-shadow: none;
+  }
+
+  .btn-orange {
+    border-radius: 0;
+  }
+}
+
+.search-input {
+  &::placeholder {
+    color: $text-main;
+    opacity: 1;
+  }
+  color: $text-main;
+}

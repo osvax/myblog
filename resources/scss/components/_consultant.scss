@@ -1,0 +1,363 @@
+// ============================================================
+// Виджет консультанта
+// ============================================================
+
+.consultant-widget {
+  position: fixed;
+  bottom: 1.25rem;
+  z-index: $zindex-toast - 10;
+
+  &[data-position="left"] {
+    left: 1.25rem;
+
+    .consultant-panel {
+      right: auto;
+      left: 0;
+    }
+  }
+
+  &[data-position="right"] {
+    right: 1.25rem;
+  }
+}
+
+.consultant-fab {
+  border: 6px solid rgba($white, 0.82);
+  width: 5.25rem;
+  height: 5.25rem;
+  border-radius: $border-radius-round;
+  box-shadow: 0 0.25rem 0.4rem rgba(35, 35, 35, 0.2);
+  padding: 0;
+  font-weight: $font-weight-bold;
+  @include flex-center;
+  cursor: pointer;
+  transition: box-shadow $transition-base, filter $transition-base;
+  animation: consultant-fab-wobble 2.8s ease-in-out infinite;
+
+  &:hover {
+    filter: brightness(1.04);
+    box-shadow: 0 0.3rem 0.5rem rgba(35, 35, 35, 0.22);
+  }
+
+  @include focus-visible($primary, 4px);
+
+  &.has-consultant-reply {
+    animation: consultant-reply-attention 1.35s ease-in-out infinite;
+  }
+
+  &.consultant-fab-alert-red {
+    background-color: #dc3545 !important;
+  }
+}
+
+@keyframes consultant-fab-wobble {
+  0%, 100% { transform: rotate(0) translateY(0); }
+  25% { transform: rotate(-2.5deg) translateY(-1px); }
+  50% { transform: rotate(0) translateY(-2px); }
+  75% { transform: rotate(2.5deg) translateY(-1px); }
+}
+
+@keyframes consultant-reply-attention {
+  0%, 100% {
+    transform: rotate(0) scale(1);
+    background-color: $primary;
+    box-shadow: 0 0.65rem 1.5rem rgba(53, 53, 53, 0.24);
+  }
+  18% {
+    transform: rotate(-10deg) scale(1.08);
+    background-color: #e83e8c;
+    box-shadow: 0 0.7rem 1.6rem rgba(232, 62, 140, 0.38);
+  }
+  36% {
+    transform: rotate(10deg) scale(1.08);
+    background-color: #635bff;
+    box-shadow: 0 0.7rem 1.6rem rgba(99, 91, 255, 0.38);
+  }
+  54% {
+    transform: rotate(-7deg) scale(1.05);
+    background-color: #12a594;
+    box-shadow: 0 0.7rem 1.6rem rgba(18, 165, 148, 0.38);
+  }
+  72% {
+    transform: rotate(7deg) scale(1.05);
+    background-color: $primary;
+    box-shadow: 0 0.7rem 1.6rem rgba(255, 140, 26, 0.38);
+  }
+}
+
+.consultant-fab-icon {
+  display: inline-flex;
+  width: 100%;
+  height: 100%;
+  @include flex-center;
+  font-size: 1.55rem;
+}
+
+.consultant-fab-label {
+  display: none;
+}
+
+.consultant-panel {
+  position: absolute;
+  right: 0;
+  bottom: 4.65rem;
+  width: min(380px, calc(100vw - 2rem));
+  height: min(590px, calc(100vh - 7rem));
+  height: min(590px, calc(100dvh - 7rem));
+  min-height: 0;
+  background: $white;
+  color: $text-main;
+  border-radius: $border-radius-xl;
+  box-shadow: 0 1.2rem 3rem rgba(35, 35, 35, 0.22);
+  overflow: hidden;
+  border: 1px solid rgba(53, 53, 53, 0.08);
+  display: none;
+  flex-direction: column;
+
+  &.is-open {
+    display: flex;
+  }
+}
+
+.consultant-panel-header {
+  background: linear-gradient(125deg, $dark 0%, $dark-darker 100%);
+  color: $white;
+  padding: 1rem 1.1rem;
+  @include flex-between;
+  gap: 0.75rem;
+  flex-shrink: 0;
+
+  strong,
+  small {
+    display: block;
+    color: $white;
+  }
+
+  strong {
+    font-size: 0.98rem;
+  }
+
+  small {
+    margin-top: 0.2rem;
+    color: rgba($white, 0.7);
+    font-size: 0.72rem;
+    font-weight: 600;
+  }
+}
+
+.consultant-close {
+  @include flex-center;
+  width: 2rem;
+  height: 2rem;
+  border: none;
+  border-radius: $border-radius-round;
+  background: rgba($white, 0.12);
+  color: $white;
+  font-size: 1.35rem;
+  cursor: pointer;
+  transition: background-color $transition-base, transform $transition-base;
+
+  &:hover {
+    background: rgba($white, 0.22);
+    transform: rotate(90deg);
+  }
+}
+
+.consultant-message-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: 1rem;
+  background: $bg-light;
+}
+
+.consultant-message {
+  display: flex;
+  margin-bottom: 0.75rem;
+
+  &.user {
+    justify-content: flex-start;
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  &.admin {
+    justify-content: flex-end;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+}
+
+.consultant-message-meta {
+  margin: 0.2rem 0.35rem 0;
+  color: #707780;
+  font-size: 0.7rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.consultant-message-checks {
+  color: #8a929b;
+  font-size: 0.85rem;
+  letter-spacing: -0.2rem;
+  padding-right: 0.18rem;
+
+  &.read {
+    color: #168de2;
+  }
+}
+
+.consultant-typing-indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.18rem;
+  align-self: flex-start;
+  padding: 0.55rem 0.8rem;
+  margin: 0.2rem 0 0.6rem;
+  border-radius: 1rem 1rem 1rem 0.3rem;
+  background: #f1f3f5;
+  color: #626a73;
+  font-size: 0.78rem;
+
+  i {
+    width: 0.28rem;
+    height: 0.28rem;
+    margin-left: 0.05rem;
+    border-radius: $border-radius-round;
+    background: currentColor;
+    animation: consultant-typing-dot 1s infinite ease-in-out;
+
+    &:nth-of-type(2) { animation-delay: 0.15s; }
+    &:nth-of-type(3) { animation-delay: 0.3s; }
+  }
+}
+
+@keyframes consultant-typing-dot {
+  0%, 60%, 100% { opacity: 0.35; transform: translateY(0); }
+  30% { opacity: 1; transform: translateY(-3px); }
+}
+
+.consultant-bubble {
+  max-width: 85%;
+  padding: 0.7rem 0.8rem;
+  border-radius: 1rem;
+  line-height: 1.5;
+  font-size: 0.88rem;
+  word-break: break-word;
+
+  .consultant-message.user & {
+    background: #f1f3f5;
+    color: $text-main;
+    border-bottom-left-radius: 0.3rem;
+  }
+
+  .consultant-message.admin & {
+    background: $primary;
+    color: $white;
+    border-bottom-right-radius: 0.3rem;
+  }
+}
+
+.consultant-empty {
+  color: #666;
+  padding: 0.85rem 1rem;
+  border-radius: 0.25rem 1rem 1rem 1rem;
+  background: $white;
+  box-shadow: 0 0.25rem 0.75rem rgba(53, 53, 53, 0.06);
+  font-size: 0.83rem;
+  line-height: 1.55;
+}
+
+.consultant-closed-notice {
+  margin-top: 0.75rem;
+  background: #f1f3f5;
+  color: #626a73;
+  text-align: center;
+}
+
+.consultant-form {
+  background: $white;
+  padding: 1rem;
+  border-top: 1px solid rgba(53, 53, 53, 0.07);
+  @include flex-column;
+  gap: 0.75rem;
+  flex-shrink: 0;
+
+  [hidden] {
+    display: none !important;
+  }
+}
+
+.consultant-field-group {
+  @include flex-column;
+  gap: 0.4rem;
+  font-size: 0.77rem;
+  font-weight: $font-weight-normal;
+
+  label {
+    color: #454545;
+    letter-spacing: 0.01em;
+  }
+
+  input,
+  textarea {
+    @include form-input-base;
+    width: 100%;
+  }
+
+  textarea {
+    min-height: 76px;
+    resize: vertical;
+  }
+}
+
+.consultant-submit {
+  @include btn-base(
+    $bg: linear-gradient(120deg, $primary 0%, #f47b0b 100%),
+    $hover-bg: linear-gradient(120deg, $primary-dark 0%, $primary 100%)
+  );
+  border: none;
+  border-radius: $border-radius;
+  padding: 0.8rem 1rem;
+  cursor: pointer;
+  box-shadow: 0 0.35rem 0.8rem rgba(255, 140, 26, 0.2);
+  transition: transform $transition-base, box-shadow $transition-base, filter $transition-base;
+
+  &:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.03);
+    box-shadow: 0 0.55rem 1rem rgba(255, 140, 26, 0.27);
+  }
+}
+
+// Responsive
+@media (max-width: 420px) {
+  .consultant-widget {
+    bottom: 0.85rem;
+
+    &[data-position="left"] { left: 0.85rem; }
+    &[data-position="right"] { right: 0.85rem; }
+  }
+
+  .consultant-fab {
+    width: 4.6rem;
+    height: 4.6rem;
+  }
+
+  .consultant-panel {
+    width: calc(100vw - 1.7rem);
+    height: min(590px, calc(100vh - 6rem));
+    height: min(590px, calc(100dvh - 6rem));
+    bottom: 4.25rem;
+  }
+}
+
+@include reduced-motion {
+  .consultant-fab,
+  .consultant-fab.has-consultant-reply,
+  .consultant-typing-indicator i {
+    animation: none;
+  }
+}

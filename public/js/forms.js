@@ -5,6 +5,9 @@
 
 document.addEventListener('DOMContentLoaded', function () {
 
+    // CSRF токен из meta тега
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || '';
+
     // Контейнер для уведомлений
     const toastContainer = document.createElement('div');
     toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
@@ -106,7 +109,11 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             // Отправка данных на сервер
-            fetch(action, { method: 'POST', body: new FormData(form) })
+            const formData = new FormData(form);
+            if (csrfToken) {
+                formData.append('_token', csrfToken);
+            }
+            fetch(action, { method: 'POST', body: formData })
                 .then(function (response) {
                     return response.json().then(function (data) {
                         if (!response.ok || !data || !data.success) {

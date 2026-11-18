@@ -14,10 +14,58 @@ class FormController extends Controller
         $this->content = new ContentRepository();
     }
 
+    /**
+     * Проверить rate limit для форм.
+     */
+    private function checkFormRateLimit(string $formType): ?array
+    {
+        $limits = [
+            'order' => (int) ($_ENV['RATE_LIMIT_ORDER'] ?? 5),
+            'feedback' => (int) ($_ENV['RATE_LIMIT_CONTACT'] ?? 5),
+            'comment' => (int) ($_ENV['RATE_LIMIT_COMMENT'] ?? 10),
+        ];
+        $decayMinutes = [
+            'order' => 60,
+            'feedback' => 60,
+            'comment' => 10,
+        ];
+
+        $maxAttempts = $limits[$formType] ?? 5;
+        $decay = $decayMinutes[$formType] ?? 60;
+
+        $key = \App\Core\RateLimiter::makeKey('form:' . $formType);
+        $result = \App\Core\RateLimiter::hit($key, $maxAttempts, $decay);
+
+        if (!$result['allowed']) {
+            return [
+                'success' => false,
+                'error' => 'Слишком много отправок. Попробуйте через ' . $result['retryAfter'] . ' секунд.',
+                'retryAfter' => $result['retryAfter'],
+            ];
+        }
+
+        header('X-RateLimit-Limit: ' . $maxAttempts);
+        header('X-RateLimit-Remaining: ' . $result['remaining']);
+        if ($result['retryAfter']) {
+            header('Retry-After: ' . $result['retryAfter']);
+        }
+
+        return null;
+    }
+
     public function order($request)
     {
         if ($request->method() !== 'POST') {
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        // Rate limiting
+        if ($error = $this->checkFormRateLimit('order')) {
+            return $this->json($error, 429);
+        }
+
+        if (!$this->verifyCsrf($request)) {
+            return $this->json(['success' => false, 'error' => 'Неверный CSRF токен'], 419);
         }
         $data = $this->fields([
             'name', 'email', 'phone', 'contact_person', 'type', 'budget',
@@ -116,11 +164,29 @@ class FormController extends Controller
 
     public function feedback($request)
     {
+        if (!$this->verifyCsrf($request)) {
+            return $this->json(['success' => false, 'error' => 'Неверный CSRF токен'], 419);
+        }
+
+        // Rate limiting
+        if ($error = $this->checkFormRateLimit('feedback')) {
+            return $this->json($error, 429);
+        }
+
         return $this->message($request, 'feedback');
     }
 
     public function comment($request)
     {
+        if (!$this->verifyCsrf($request)) {
+            return $this->json(['success' => false, 'error' => 'Неверный CSRF токен'], 419);
+        }
+
+        // Rate limiting
+        if ($error = $this->checkFormRateLimit('comment')) {
+            return $this->json($error, 429);
+        }
+
         return $this->message($request, 'comment');
     }
 
@@ -259,18 +325,38 @@ class FormController extends Controller
     {
         $safeName = str_replace(["\r", "\n"], '', $name);
         $safeEmail = str_replace(["\r", "\n"], '', $email);
-        $headers = "From: МойБлог <no-reply@moyblog.ru>\r\n" .
-            'Reply-To: ' . $safeName . ' <' . $safeEmail . ">\r\n" .
-            "Content-Type: text/plain; charset=UTF-8\r\n" .
-            "MIME-Version: 1.0\r\n";
-        $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         // Получатель — из настройки «Email администратора» (fallback osvax@yandex.ru)
         $recipient = trim((string) (new \App\Models\SiteSettings())->get('adminEmail', ''));
         if (!filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
             $recipient = 'osvax@yandex.ru';
         }
-        if (!mail($recipient, $encodedSubject, $body, $headers)) {
-            error_log('Could not send notification email for a saved website form submission.');
+        // Also send copy to sender if valid email
+        $copyToSender = filter_var($safeEmail, FILTER_VALIDATE_EMAIL);
+
+        $htmlBody = nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));
+
+        // Send to admin
+        \App\Core\Mailer::send($subject, $body, $recipient, 'Admin', $htmlBody);
+
+        // Send copy to sender
+        if ($copyToSender) {
+            $copySubject = 'Копия вашего сообщения — ' . $subject;
+            $copyBody = "Это копия вашего сообщения, отправленного через форму на сайте.\n\n" . $body;
+            $copyHtmlBody = '<p>Это копия вашего сообщения, отправленного через форму на сайте.</p>' . $htmlBody;
+            \App\Core\Mailer::send($copySubject, $copyBody, $safeEmail, $safeName, $copyHtmlBody);
         }
+    }
+
+    private function verifyCsrf($request): bool
+    {
+        // Check _token in POST data or X-CSRF-Token header
+        $token = '';
+        if ($request->method() === 'POST') {
+            $token = $_POST['_token'] ?? '';
+        }
+        if ($token === '') {
+            $token = $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+        }
+        return \csrf_verify($token);
     }
 }

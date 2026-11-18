@@ -1,0 +1,51 @@
+// ============================================================
+// Main frontend stylesheet
+// ============================================================
+
+// 1. Variables & Config (must come before Bootstrap)
+@import 'variables';
+@import 'mixins';
+
+// 2. Bootstrap (full - handles its own dependencies)
+@import 'bootstrap/scss/bootstrap';
+
+// 3. Layout
+@import 'layout/base';
+@import 'layout/navbar';
+@import 'layout/sidebar';
+@import 'layout/pagination';
+@import 'layout/footer';
+
+// 4. Components
+@import 'components/buttons';
+@import 'components/landing';
+@import 'components/cards';
+@import 'components/forms';
+@import 'components/comments';
+@import 'components/profile';
+@import 'components/consultant';
+
+// Print styles
+@media print {
+  .navbar,
+  .consultant-widget,
+  footer,
+  .btn,
+  .pagination {
+    display: none !important;
+  }
+
+  body {
+    font-size: 12pt;
+    line-height: 1.5;
+  }
+
+  a {
+    text-decoration: none;
+    color: $dark;
+  }
+
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+}

@@ -1,0 +1,51 @@
+// ============================================================
+// Подвал
+// ============================================================
+
+footer {
+  background-color: $dark !important;
+  margin-bottom: -1px;
+  color: rgba($white, 0.7);
+  font-weight: $font-weight-normal;
+
+  a {
+    color: rgba($white, 0.9);
+    text-decoration: none;
+    transition: color $transition-base;
+
+    &:hover {
+      color: $primary;
+      text-decoration: underline;
+    }
+  }
+
+  .social-btn {
+    background-color: rgba($white, 0.1);
+    color: $white;
+    border: none;
+
+    &:hover {
+      background-color: $primary;
+      color: $white;
+    }
+  }
+
+  hr {
+    border-color: rgba($white, 0.15);
+  }
+
+  small {
+    color: rgba($white, 0.5);
+  }
+}
+
+// Body layout for sticky footer
+body {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  > footer {
+    margin-top: auto;
+  }
+}

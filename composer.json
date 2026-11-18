@@ -1,0 +1,44 @@
+{
+    "name": "valentin/myblog",
+    "description": "Personal blog with PHP MVC, Bootstrap 5, and vanilla JS",
+    "type": "project",
+    "require": {
+        "php": ">=8.1",
+        "vlucas/phpdotenv": "^5.6",
+        "symfony/mailer": "^7.0",
+        "symfony/mime": "^7.0",
+        "ezyang/htmlpurifier": "^4.18",
+        "predis/predis": "^2.2"
+    },
+    "require-dev": {
+        "phpstan/phpstan": "^1.11",
+        "squizlabs/php_codesniffer": "^3.8",
+        "phpunit/phpunit": "^10.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "files": [
+            "app/Core/admin-functions.php",
+            "app/Core/auth.php",
+            "app/Core/custom-fields.php",
+            "app/Core/slug.php",
+            "app/Core/assets.php",
+            "app/Core/calculator.php",
+            "app/Core/menu.php"
+        ]
+    },
+    "scripts": {
+        "phpstan": "phpstan analyse app --level=5",
+        "cs": "phpcs --standard=PSR12 app",
+        "cs:fix": "phpcbf --standard=PSR12 app",
+        "test": "phpunit"
+    },
+    "config": {
+        "optimize-autoloader": true,
+        "sort-packages": true
+    },
+    "minimum-stability": "stable",
+    "prefer-stable": true
+}

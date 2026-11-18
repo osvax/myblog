@@ -1,0 +1,141 @@
+// ============================================================
+// Миксины
+// ============================================================
+
+// Flexbox helpers
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+// Absolute positioning
+@mixin absolute($top: null, $right: null, $bottom: null, $left: null) {
+  position: absolute;
+  @if $top != null { top: $top; }
+  @if $right != null { right: $right; }
+  @if $bottom != null { bottom: $bottom; }
+  @if $left != null { left: $left; }
+}
+
+// Text truncation
+@mixin text-truncate($lines: 1) {
+  @if $lines == 1 {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  } @else {
+    display: -webkit-box;
+    -webkit-line-clamp: $lines;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+}
+
+// Focus visible styles
+@mixin focus-visible($color: $primary, $offset: 2px) {
+  &:focus-visible {
+    outline: 3px solid rgba($color, 0.35);
+    outline-offset: $offset;
+  }
+}
+
+// Hover lift effect
+@mixin hover-lift($distance: -6px, $shadow: 0 1rem 2rem rgba(53, 53, 53, 0.15)) {
+  transition: transform $transition-slow, box-shadow $transition-slow;
+  &:hover {
+    transform: translateY($distance);
+    box-shadow: $shadow !important;
+  }
+}
+
+// Card base
+@mixin card-base($bg: $white, $shadow: 0 0.5rem 1rem rgba(53, 53, 53, 0.08)) {
+  background-color: $bg;
+  border-radius: $border-radius-lg;
+  box-shadow: $shadow;
+  transition: transform $transition-slow, box-shadow $transition-slow;
+}
+
+// Button base
+@mixin btn-base($bg: $primary, $text: $white, $hover-bg: $primary-dark) {
+  background-color: $bg;
+  border-color: $bg;
+  color: $text;
+  font-weight: $font-weight-bold;
+  transition: background-color $transition-base, transform $transition-base;
+
+  &:hover,
+  &:focus {
+    background-color: $hover-bg;
+    border-color: $hover-bg;
+    color: $text;
+    transform: translateY(-2px);
+  }
+}
+
+// Form input base
+@mixin form-input-base {
+  border: 1px solid $border-light;
+  border-radius: $border-radius;
+  padding: 0.72rem 0.85rem;
+  background: $bg-input;
+  color: $text-main;
+  font: 500 0.86rem/1.45 $font-family-base;
+  transition: border-color $transition-base, box-shadow $transition-base, background-color $transition-base;
+
+  &::placeholder {
+    color: $text-light;
+    font-weight: 500;
+  }
+
+  &:focus {
+    outline: 0;
+    border-color: $primary;
+    background: $white;
+    box-shadow: 0 0 0 0.2rem rgba($primary, 0.14);
+  }
+}
+
+// Media query helpers
+@mixin media-breakpoint-down($breakpoint) {
+  @media (max-width: map-get($grid-breakpoints, $breakpoint) - 0.02px) {
+    @content;
+  }
+}
+
+@mixin media-breakpoint-up($breakpoint) {
+  @media (min-width: map-get($grid-breakpoints, $breakpoint)) {
+    @content;
+  }
+}
+
+@mixin media-breakpoint-only($breakpoint) {
+  @if $breakpoint == xs {
+    @media (max-width: map-get($grid-breakpoints, sm) - 0.02px) {
+      @content;
+    }
+  } @else {
+    @media (min-width: map-get($grid-breakpoints, $breakpoint)) and (max-width: map-get($grid-breakpoints, map-get($grid-breakpoints, $breakpoint)) - 0.02px) {
+      @content;
+    }
+  }
+}
+
+// Reduced motion
+@mixin reduced-motion {
+  @media (prefers-reduced-motion: reduce) {
+    @content;
+  }
+}

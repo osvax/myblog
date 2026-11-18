@@ -1,0 +1,106 @@
+// ============================================================
+// Лендинг-страницы
+// ============================================================
+
+// Blog section
+.lp-post {
+  @include card-base();
+  border: 2px solid transparent;
+  transition: transform $transition-slow, border-color $transition-slow;
+
+  &:hover {
+    transform: translateX(8px);
+    border-color: $primary;
+  }
+}
+
+.lp-post-icon {
+  width: 70px;
+  height: 70px;
+  border-radius: $border-radius-lg;
+  @include flex-center;
+  flex-shrink: 0;
+}
+
+// Portfolio section
+.lp-portfolio {
+  background-color: $dark;
+}
+
+.lp-work {
+  background-color: rgba($white, 0.06);
+  border: 2px solid rgba($white, 0.1);
+  border-radius: $border-radius-lg;
+  color: $white;
+  transition: transform $transition-slow, border-color $transition-slow;
+
+  &:hover {
+    transform: translateY(-8px);
+    border-color: $primary;
+  }
+
+  h5 {
+    color: $white;
+  }
+}
+
+// Order section (steps)
+.lp-step {
+  background-color: rgba($white, 0.12);
+  border-radius: $border-radius-lg;
+  backdrop-filter: blur(4px);
+}
+
+.lp-step-num {
+  width: 60px;
+  height: 60px;
+  border-radius: $border-radius-round;
+  background-color: $white;
+  color: $primary;
+  font-size: 1.6rem;
+  font-weight: $font-weight-bold;
+  @include flex-center;
+}
+
+// Hero section
+.hero {
+  background-color: $primary;
+}
+
+.hero-icon {
+  color: rgba($white, 0.85);
+}
+
+// Wave divider
+.wave {
+  display: block;
+  width: 100%;
+  height: 100px;
+  margin-bottom: -1px;
+}
+
+.hero-img {
+  max-width: 480px;
+  filter: drop-shadow(0 1.5rem 2rem rgba(53, 53, 53, 0.45));
+  transition: transform $transition-slower;
+
+  &:hover {
+    transform: scale(1.03);
+  }
+}
+
+// Page header
+.page-header {
+  background-color: $primary;
+}
+
+// Feature items (home page)
+.feature-item {
+  background-color: $orange-light;
+  border-radius: $border-radius-lg;
+  transition: transform $transition-slow;
+
+  &:hover {
+    transform: translateY(-6px);
+  }
+}
