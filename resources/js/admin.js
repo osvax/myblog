@@ -1,6 +1,7 @@
 // ============================================================
 // Административная панель «МойБлог» — Vite entry
 // Порт public/admin/js/admin.js + public/admin/js/admin-api.js
+// CSS — resources/scss/admin.scss (порт admin.css + темы сайта)
 //
 // Глобальные объекты для page-скриптов (/admin/js/*.js):
 //   window.AdminApi, window.AdminNotifications
@@ -8,6 +9,7 @@
 // до выполнения модуля — page-скрипты обращаются к нему на top-level.
 // ============================================================
 
+import '../scss/admin.scss';
 import { AdminApi } from './admin-api.js';
 
 window.AdminApi = AdminApi;
