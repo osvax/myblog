@@ -1,0 +1,45 @@
+// ============================================================
+// Полный текст статьи (публичная страница)
+// ============================================================
+
+.article-content {
+  font-size: 1.05rem;
+  line-height: 1.75;
+
+  > p:first-of-type {
+    font-size: 1.15rem;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: $border-radius;
+  }
+
+  iframe {
+    max-width: 100%;
+  }
+
+  // Блоки кода из редактора (подсветка добавляет классы hljs)
+  pre {
+    overflow-x: auto;
+    border-radius: $border-radius;
+
+    code {
+      display: block;
+      padding: 1rem;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      background-color: transparent;
+    }
+  }
+
+  code {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, 'Liberation Mono', 'Courier New', monospace;
+  }
+
+  blockquote {
+    padding: 0.5rem 1.25rem;
+    border-left: 4px solid $primary;
+  }
+}

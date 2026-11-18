@@ -106,13 +106,9 @@ class BlogController extends Controller
         $article['body'] = $this->prepareArticleBody($article['body_html'] ?? '');
         $article['readingTime'] = max(1, (int) ceil(str_word_count(strip_tags($article['body_html'] ?? '')) / 200));
 
-        // Для статей, созданных в админке, отдельного шаблона может не быть —
-        // используем универсальный dynamic-article.php
+        // Универсальный шаблон: полное описание статьи всегда берётся из базы (body_html),
+        // статические шаблоны постов её не подменяют
         $template = 'dynamic-article';
-        if (preg_match('/^[a-z0-9-]+$/', (string) $article['slug']) &&
-            is_file(APP_ROOT . '/app/Views/frontend/templates/default/pages/' . $article['slug'] . '.php')) {
-            $template = $article['slug'];
-        }
 
         $allArticles = [];
         foreach ($content->articles(true) as $a) {
@@ -126,6 +122,18 @@ class BlogController extends Controller
         $currentIndex = array_search($slug, $slugs, true);
         $prev = $currentIndex > 0 ? $allArticles[$slugs[$currentIndex - 1]] : null;
         $next = $currentIndex !== false && $currentIndex < count($slugs) - 1 ? $allArticles[$slugs[$currentIndex + 1]] : null;
+
+        // Сайдбар «Свежие записи»: до 5 статей, текущую пропускаем
+        $latestArticles = [];
+        foreach ($allArticles as $latestSlug => $latestArticle) {
+            if ($latestSlug === $slug) {
+                continue;
+            }
+            $latestArticles[] = $latestArticle;
+            if (count($latestArticles) >= 5) {
+                break;
+            }
+        }
 
         // Рубрики для сайдбара страницы статьи (динамически из базы)
         $sidebarCategories = $content->categories();
@@ -150,6 +158,7 @@ class BlogController extends Controller
             'article' => $article,
             'prevArticle' => $prev,
             'nextArticle' => $next,
+            'latestArticles' => $latestArticles,
             'comments' => $comments,
             'commentsCount' => $commentsCount,
             'commentsVisible' => $commentsVisible,
@@ -158,6 +167,8 @@ class BlogController extends Controller
             // Форма комментария отправляется через AJAX forms.js с тостом,
             // иначе браузер уходит на JSON-ответ обработчика
             'includeFormsScript' => true,
+            // Подсветка синтаксиса вставленного в редактор кода (Vite entry article)
+            'includeArticleScript' => true,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

@@ -12,6 +12,37 @@
   }
 }
 
+// Обложка статьи в карточке блога: картинка из поля «Обложка»,
+// без картинки — иконка рубрики по центру (16:9, object-fit: cover)
+.post-card-cover {
+  position: relative;
+  display: block;
+  aspect-ratio: 16 / 9;
+  background-color: $orange-light;
+  overflow: hidden;
+
+  img {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform $transition-base;
+  }
+
+  .post-card-cover-icon {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+}
+
+.post-card:hover .post-card-cover img {
+  transform: scale(1.03);
+}
+
 // Contact cards
 .contact-item {
   @include card-base();

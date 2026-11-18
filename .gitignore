@@ -47,6 +47,9 @@ var/cache/*
 !/public/uploads/blog/
 /public/uploads/blog/*
 !/public/uploads/blog/.htaccess
+!/public/uploads/images/
+/public/uploads/images/*
+!/public/uploads/images/.htaccess
 !/public/uploads/portfolio/
 /public/uploads/portfolio/*
 !/public/uploads/portfolio/.htaccess

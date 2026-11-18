@@ -73,8 +73,10 @@ class FileManagerController extends Controller
                     return $this->json(['success' => false, 'error' => 'Не удалось прочитать папку загрузок'], 500);
                 }
                 foreach ($entries as $entry) {
+                    // Имя файла: человекочитаемый slug (латиница, цифры, тире)
+                    // — сюда же попадают старые имена-хэши [a-f0-9]{32}
                     if ($entry === '.' || $entry === '..' ||
-                        !preg_match('/^[a-f0-9]{32}\.(jpg|jpeg|png|doc|docx|xls|xlsx|xml|zip)$/', $entry) ||
+                        !preg_match('/^[a-z0-9][a-z0-9-]*\.(jpg|jpeg|png|doc|docx|xls|xlsx|xml|zip)$/', $entry) ||
                         !in_array(strtolower(pathinfo($entry, PATHINFO_EXTENSION)), $extensions, true)) {
                         continue;
                     }
@@ -217,17 +219,13 @@ class FileManagerController extends Controller
                 return $this->json(['success' => false, 'error' => 'Не удалось создать папку загрузок'], 500);
             }
         }
+        $this->ensureImagesSecurityHtaccess($categoryDirectory);
         $realRoot = realpath($root);
         $realTarget = realpath($targetDirectory);
         if ($realRoot === false || $realTarget === false || dirname(dirname($realTarget)) !== $realRoot) {
             return $this->json(['success' => false, 'error' => 'Некорректная папка загрузки'], 500);
         }
-        try {
-            $filename = bin2hex(random_bytes(16)) . '.' . $extension;
-        } catch (\Throwable $error) {
-            error_log('Не удалось создать безопасное имя файла файлового менеджера.');
-            return $this->json(['success' => false, 'error' => 'Не удалось подготовить имя файла'], 500);
-        }
+        $filename = $this->readableFilename($originalName, $extension, $targetDirectory);
         $destination = $targetDirectory . DIRECTORY_SEPARATOR . $filename;
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
             error_log('Не удалось переместить загруженный файл в файловый менеджер.');
@@ -283,6 +281,64 @@ class FileManagerController extends Controller
         return null;
     }
 
+    /**
+     * Человекочитаемое имя файла из исходного: транслитерация через slugify,
+     * нижний регистр, суффиксы -2/-3 при коллизиях, запасной хэш если имя пустое.
+     * Запрещённые Windows-имена (con, prn, aux, nul, com1-9, lpt1-9) не используются.
+     */
+    private function readableFilename($originalName, $extension, $directory)
+    {
+        $reserved = ['con', 'prn', 'aux', 'nul'];
+        for ($i = 1; $i <= 9; $i++) {
+            $reserved[] = 'com' . $i;
+            $reserved[] = 'lpt' . $i;
+        }
+
+        $base = slugify(pathinfo($originalName, PATHINFO_FILENAME));
+        $base = substr($base, 0, 60);
+        $base = rtrim($base, '-');
+        if ($base === '' || in_array($base, $reserved, true)) {
+            $base = bin2hex(random_bytes(16));
+        }
+
+        $filename = $base . '.' . $extension;
+        $counter = 2;
+        while (file_exists($directory . DIRECTORY_SEPARATOR . $filename) && $counter < 1000) {
+            $filename = $base . '-' . $counter . '.' . $extension;
+            $counter++;
+        }
+        if ($counter >= 1000) {
+            $filename = bin2hex(random_bytes(16)) . '.' . $extension;
+        }
+        return $filename;
+    }
+
+    /**
+     * Обеспечиваем .htaccess в папке изображений файлового менеджера:
+     * родительский uploads/.htaccess закрывает доступ (Require all denied),
+     * без вложенного .htaccess все файлы images/* отдавались бы 403.
+     * Файл закоммичен в репозиторий; дописываем, если папка была воссоздана без него.
+     */
+    private function ensureImagesSecurityHtaccess($imagesDirectory)
+    {
+        $expected = $this->uploadsPath() . DIRECTORY_SEPARATOR . 'images';
+        if ($imagesDirectory !== $expected || is_file($imagesDirectory . DIRECTORY_SEPARATOR . '.htaccess')) {
+            return;
+        }
+        $content = "# Запрет исполнения PHP в директории изображений файлового менеджера\n" .
+            '<FilesMatch "\.(php|php2|php3|php4|php5|php6|php7|php8|phtml|phar)$">' . "\n" .
+            "    Require all denied\n" .
+            "</FilesMatch>\n\n" .
+            "# Запрет просмотра директории\n" .
+            "Options -Indexes\n\n" .
+            "# Разрешаем чтение изображений; остальные файлы (документы, метаданные .meta.json)\n" .
+            "# выдаются только через админ-API /api/admin/files с проверкой прав\n" .
+            '<FilesMatch "\.(jpg|jpeg|png|gif|webp|svg|ico)$">' . "\n" .
+            "    Require all granted\n" .
+            "</FilesMatch>\n";
+        @file_put_contents($imagesDirectory . DIRECTORY_SEPARATOR . '.htaccess', $content, LOCK_EX);
+    }
+
     private function safePath($relativePath)
     {
         if (!is_string($relativePath) || strpos($relativePath, "\0") !== false || strpos($relativePath, '\\') !== false) {
@@ -291,7 +347,8 @@ class FileManagerController extends Controller
         $parts = explode('/', $relativePath);
         if (count($parts) !== 3 || !isset($this->categories[$parts[0]]) ||
             !in_array($parts[1], $this->sections, true) ||
-            !preg_match('/^[a-f0-9]{32}\.(jpg|jpeg|png|doc|docx|xls|xlsx|xml|zip)$/', $parts[2]) ||
+            // Имя: латиница/цифры/тире (человекочитаемый slug; старые хэши тоже проходят)
+            !preg_match('/^[a-z0-9][a-z0-9-]*\.(jpg|jpeg|png|doc|docx|xls|xlsx|xml|zip)$/', $parts[2]) ||
             !in_array(strtolower(pathinfo($parts[2], PATHINFO_EXTENSION)), $this->categories[$parts[0]], true)) {
             return null;
         }

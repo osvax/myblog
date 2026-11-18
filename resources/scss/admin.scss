@@ -1738,3 +1738,123 @@ body.templates-page .admin-content {
 .activity-refresh-btn .spin {
     animation: spin .6s linear;
 }
+
+// ============================================================
+// Редактор статьи: правая кнопка по картинке — меню обработки
+// (обрезка, поворот, увеличение, уменьшение)
+// ============================================================
+
+.article-img-edit-menu {
+    position: fixed;
+    z-index: 2100;
+    min-width: 210px;
+    padding: 6px;
+    background-color: #fff;
+    border: 1px solid #e3e6ea;
+    border-radius: 10px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.18);
+    display: none;
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        width: 100%;
+        padding: 7px 10px;
+        font-size: .9rem;
+        color: #333;
+        background: none;
+        border: 0;
+        border-radius: 7px;
+        text-align: left;
+        cursor: pointer;
+
+        &:hover {
+            background-color: var(--orange-light);
+            color: var(--orange-dark);
+        }
+
+        i {
+            font-size: 1rem;
+        }
+    }
+}
+
+// Всплывающее окно «Файлы»: карточка не-изображения (документы, таблицы и т.д.)
+.picker-file-card {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    height: 100%;
+    min-height: 110px;
+    padding: 10px 8px;
+    background-color: #fff;
+    border: 1px solid #e3e6ea;
+    border-radius: 10px;
+
+    .picker-file-card-icon {
+        font-size: 1.75rem;
+        color: var(--orange);
+    }
+
+    .picker-file-card-name {
+        max-width: 100%;
+        font-size: .78rem;
+        font-weight: 600;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .picker-file-card-meta {
+        font-size: .7rem;
+        color: #98a2b3;
+    }
+}
+
+// Модальное окно обрезки изображения в редакторе статьи
+.article-crop-stage {
+    position: relative;
+    display: inline-block;
+    line-height: 0;
+    cursor: crosshair;
+    touch-action: none;
+    user-select: none;
+}
+
+.article-crop-image {
+    display: block;
+    max-width: 100%;
+    max-height: 420px;
+
+    // display:block из CSS перекрывает скрытие через атрибут hidden
+    &[hidden] { display: none; }
+}
+
+#articleCropStageWrap {
+    text-align: center;
+}
+
+.article-crop-selection {
+    position: absolute;
+    border: 2px dashed var(--orange);
+    background-color: rgba(255, 140, 26, 0.18);
+    cursor: move;
+    line-height: 0;
+}
+
+.article-crop-handle {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: #fff;
+    border: 2px solid var(--orange);
+    border-radius: 2px;
+
+    &.article-crop-handle-tl { top: -6px; left: -6px; cursor: nwse-resize; }
+    &.article-crop-handle-tr { top: -6px; right: -6px; cursor: nesw-resize; }
+    &.article-crop-handle-bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
+    &.article-crop-handle-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
+}

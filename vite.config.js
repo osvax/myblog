@@ -21,6 +21,7 @@ export default defineConfig({
         'consultant': 'resources/js/consultant.js',
         'calculator': 'resources/js/calculator.js',
         'login': 'resources/js/login.js',
+        'article': 'resources/js/article.js',
       },
     },
     minify: 'esbuild',

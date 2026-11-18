@@ -52,7 +52,7 @@
                                 <?php endif; ?>
                                 <li><hr class="dropdown-divider"></li>
                                 <li>
-                                    <form method="post" action="/api/auth/user/logout" style="display:inline;">
+                                    <form method="post" action="/logout.html" style="display:inline;">
                                         <button class="dropdown-item text-danger" type="submit"><i class="bi bi-box-arrow-right"></i> Выйти</button>
                                     </form>
                                 </li>
@@ -103,6 +103,18 @@
                 <script type="module" src="<?= htmlspecialchars(vite_asset('resources/js/auth.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
             <?php else: ?>
                 <script src="<?= asset_version('/js/auth.js') ?>"></script>
+            <?php endif; ?>
+        <?php endif; ?>
+        <?php if (!empty($includeArticleScript)): ?>
+            <?php if (isset($viteManifest['resources/js/article.js'])): ?>
+                <!-- Страница статьи: подсветка синтаксиса кода (highlight.js) -->
+                <?php foreach (vite_css('resources/js/article.js') as $css): ?>
+                    <link rel="stylesheet" href="<?= htmlspecialchars($css, ENT_QUOTES, 'UTF-8') ?>">
+                <?php endforeach; ?>
+                <?php foreach (vite_imports('resources/js/article.js') as $import): ?>
+                    <link rel="modulepreload" href="<?= htmlspecialchars($import, ENT_QUOTES, 'UTF-8') ?>">
+                <?php endforeach; ?>
+                <script type="module" src="<?= htmlspecialchars(vite_asset('resources/js/article.js'), ENT_QUOTES, 'UTF-8') ?>"></script>
             <?php endif; ?>
         <?php endif; ?>
         <?php foreach (($pageScripts ?? []) as $script): ?>
