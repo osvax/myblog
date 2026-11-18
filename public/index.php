@@ -40,7 +40,23 @@ foreach ([APP_ROOT . '/routes/web.php', APP_ROOT . '/routes/api.php'] as $routeF
     $registerRoutes($router);
 }
 
-$response = $router->dispatch(App\Core\Request::fromGlobals());
+// ---------- Единая проверка прав для /api/admin/* ----------
+// Аутентификация сессии обязательна; для эндпоинтов конкретного раздела
+// дополнительно проверяется право роли на этот раздел (roles + role_permissions).
+$request = App\Core\Request::fromGlobals();
+if (strpos($request->path(), '/api/admin/') === 0) {
+    if (!\admin_is_authenticated()) {
+        App\Core\Response::json(['success' => false, 'error' => 'Требуется авторизация'], 401)->send();
+        exit;
+    }
+    $apiSection = \admin_api_required_section($request->path());
+    if ($apiSection !== '' && !\admin_can_access($apiSection)) {
+        App\Core\Response::json(['success' => false, 'error' => 'Нет прав на этот раздел'], 403)->send();
+        exit;
+    }
+}
+
+$response = $router->dispatch($request);
 
 // Логируем посещение для авторизованного пользователя
 if (function_exists('current_user') && current_user()) {

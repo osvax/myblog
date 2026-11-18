@@ -136,12 +136,28 @@ return array (
       0 => 'js/order-edit.js',
     ),
   ),
-  'orders' => 
+  'orders' =>
   array (
     'title' => 'Заказы — заявки с сайта',
-    'scripts' => 
+    'scripts' =>
     array (
       0 => 'js/orders.js',
+    ),
+  ),
+  'roles' =>
+  array (
+    'title' => 'Роли и права доступа',
+    'scripts' =>
+    array (
+      0 => 'js/roles.js',
+    ),
+  ),
+  'role-edit' =>
+  array (
+    'title' => 'Настройка роли',
+    'scripts' =>
+    array (
+      0 => 'js/role-edit.js',
     ),
   ),
   'portfolio-edit' => 

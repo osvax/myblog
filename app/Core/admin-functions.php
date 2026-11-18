@@ -74,33 +74,48 @@ function admin_can_access($pageSlug)
         return true;
     }
 
-    if ($role === 'editor') {
-        $allowedPages = [
-            'index',        // Дашборд (только просмотр)
-            'blog',         // Блог
-            'portfolio',    // Портфолио
-            'files',        // Файлы
-            'profile',      // Профиль
-            'user-edit',    // Карточка пользователя (просмотр)
-        ];
-        return in_array($pageSlug, $allowedPages, true);
+    // Права роли читаются из БД (roles + role_permissions); кэш на время запроса
+    static $allowedCache = null;
+    if ($allowedCache === null) {
+        try {
+            $allowedCache = (new \App\Models\Role())->permissionsForKey($role);
+        } catch (\Throwable $error) {
+            $allowedCache = [];
+        }
     }
+    return in_array($pageSlug, $allowedCache, true);
+}
 
-    if ($role === 'manager') {
-        $allowedPages = [
-            'index',            // Дашборд
-            'consultant',       // Консультант
-            'orders',           // Заказы
-            'current-orders',   // Текущие
-            'new-orders',       // Новые
-            'calculator',       // Калькулятор
-            'profile',          // Профиль
-            'user-edit',        // Карточка пользователя (просмотр)
-        ];
-        return in_array($pageSlug, $allowedPages, true);
+/**
+ * Раздел админки, к которому относится API-эндпоинт /api/admin/*.
+ * '' — доступ любой авторизованной админ-сессии (профиль, медиа, дашборд);
+ * null — путь не требует проверки раздела (не бывает, т.к. вызывается только для /api/admin/).
+ */
+function admin_api_required_section(string $path): string
+{
+    $map = [
+        '#^/api/admin/users#' => 'users',
+        '#^/api/admin/roles#' => 'roles',
+        '#^/api/admin/settings#' => 'settings',
+        '#^/api/admin/custom-fields#' => 'custom-fields',
+        '#^/api/admin/templates#' => 'templates',
+        '#^/api/admin/menus#' => 'menus',
+        '#^/api/admin/calculator#' => 'calculator',
+        '#^/api/admin/files#' => 'files',
+        '#^/api/admin/articles#' => 'blog',
+        '#^/api/admin/projects#' => 'portfolio',
+        '#^/api/admin/categories#' => 'categories',
+        '#^/api/admin/orders#' => 'orders',
+        '#^/api/admin/messages#' => 'messages',
+        '#^/api/admin/landing-page#' => 'landing-pages',
+        '#^/api/admin/pages#' => 'landing-pages',
+    ];
+    foreach ($map as $pattern => $section) {
+        if (preg_match($pattern, $path) === 1) {
+            return $section;
+        }
     }
-
-    return false;
+    return '';
 }
 
 function admin_json_response($status, $payload)

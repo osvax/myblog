@@ -24,7 +24,12 @@ class AdminUser
             return ['valid' => false, 'configured' => true, 'error' => 'Неверный email или пароль'];
         }
 
-        if (!in_array($user['role'], ['admin', 'editor', 'manager'], true)) {
+        // В админку пускаем роли, заведённые в БД и имеющие хотя бы один раздел
+        // (роль «admin» — всегда). Набор разделов настраивается в «Роли и права».
+        $role = (string) $user['role'];
+        $roleModel = new \App\Models\Role();
+        $roleRow = $roleModel->byKey($role);
+        if (!$roleRow || ($role !== 'admin' && !$roleModel->permissions((int) $roleRow['id']))) {
             return ['valid' => false, 'configured' => true, 'error' => 'Доступ запрещён'];
         }
 
@@ -34,7 +39,8 @@ class AdminUser
             'email' => $user['email'],
             'user_id' => (int) $user['id'],
             'name' => $user['name'],
-            'role' => $user['role'],
+            'role' => $role,
+            'role_name' => $roleRow['name'],
         ];
     }
 }

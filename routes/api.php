@@ -10,6 +10,7 @@ use App\Controllers\Admin\LandingPageAdminController;
 use App\Controllers\Admin\LandingPageController;
 use App\Controllers\Admin\MediaController;
 use App\Controllers\Admin\MenuController;
+use App\Controllers\Admin\RolesController;
 use App\Controllers\Admin\SiteSettingsController;
 use App\Controllers\Admin\SystemController;
 use App\Controllers\Admin\TemplateController;
@@ -33,6 +34,7 @@ return function (Router $router) {
     $customFields = new CustomFieldController();
     $calculator = new CalculatorController();
     $menus = new MenuController();
+    $roles = new RolesController();
     $landingPage = new LandingPageController();
     $landingPageAdmin = new LandingPageAdminController();
 
@@ -104,6 +106,12 @@ return function (Router $router) {
     $router->post('/api/admin/users', [$users, 'createUser']);
     $router->put('/api/admin/users/{id}', [$users, 'updateUser']);
     $router->delete('/api/admin/users/{id}', [$users, 'deleteUser']);
+
+    // ---------- Роли и права ----------
+    $router->get('/api/admin/roles', [$roles, 'index']);
+    $router->post('/api/admin/roles', [$roles, 'create']);
+    $router->put('/api/admin/roles/{id}', [$roles, 'update']);
+    $router->delete('/api/admin/roles/{id}', [$roles, 'delete']);
 
     // ---------- Профиль пользователя ----------
     $router->get('/api/admin/profile/{id}', [$profile, 'show']);

@@ -20,16 +20,22 @@ class UsersController extends Controller
         }
 
         $users = (new User())->all();
+        $roleModel = new \App\Models\Role();
+        $roleNames = [];
+        foreach ($roleModel->all() as $role) {
+            $roleNames[$role['role_key']] = $role['name'];
+        }
 
         return $this->json([
             'success' => true,
-            'users' => array_map(function ($user) {
+            'users' => array_map(function ($user) use ($roleNames) {
                 return [
                     'id' => (int) $user['id'],
                     'email' => $user['email'],
                     'name' => $user['name'],
                     'avatar_path' => $user['avatar_path'] ?? '',
                     'role' => $user['role'],
+                    'role_name' => $roleNames[$user['role']] ?? $user['role'],
                     'is_active' => (bool) $user['is_active'],
                     'created_at' => $user['created_at'],
                     'updated_at' => $user['updated_at'],
@@ -67,6 +73,7 @@ class UsersController extends Controller
                 'email' => $user['email'],
                 'name' => $user['name'],
                 'role' => $user['role'],
+                'role_name' => (new \App\Models\Role())->byKey((string) $user['role'])['name'] ?? $user['role'],
                 'is_active' => (bool) $user['is_active'],
                 'created_at' => $user['created_at'],
                 'updated_at' => $user['updated_at'],
@@ -98,7 +105,7 @@ class UsersController extends Controller
         if (strlen($name) < 2 || strlen($name) > 160) {
             return $this->json(['success' => false, 'error' => 'Имя должно содержать от 2 до 160 символов'], 400);
         }
-        if (!in_array($role, ['user', 'editor', 'manager', 'admin'], true)) {
+        if (!(new \App\Models\Role())->exists($role)) {
             return $this->json(['success' => false, 'error' => 'Неверная роль'], 400);
         }
 
@@ -173,7 +180,7 @@ class UsersController extends Controller
         if (strlen($password) < 8) {
             return $this->json(['success' => false, 'error' => 'Пароль должен содержать минимум 8 символов'], 400);
         }
-        if (!in_array($role, ['user', 'editor', 'manager', 'admin'], true)) {
+        if (!(new \App\Models\Role())->exists($role)) {
             return $this->json(['success' => false, 'error' => 'Неверная роль'], 400);
         }
 

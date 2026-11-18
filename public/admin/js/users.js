@@ -7,6 +7,7 @@
     var pageSize = 10;
     var page = 1;
     var allUsers = [];
+    var roleNames = {}; // role_key → название из таблицы ролей
 
     function escapeHtml(value) {
         return String(value).replace(/[&<>"']/g, function (char) {
@@ -42,7 +43,7 @@
         pageUsers.forEach(function (user) {
             var statusClass = user.is_active ? 'bg-success' : 'bg-danger';
             var statusText = user.is_active ? 'Активен' : 'Заблокирован';
-            var roleLabel = user.role === 'admin' ? 'Администратор' : (user.role === 'editor' ? 'Редактор' : (user.role === 'manager' ? 'Менеджер' : 'Пользователь'));
+            var roleLabel = user.role_name || roleNames[user.role] || user.role;
             var roleClass = user.role === 'admin' ? 'bg-warning text-dark' : (user.role === 'editor' ? 'bg-info text-white' : (user.role === 'manager' ? 'bg-success text-white' : 'bg-secondary'));
             var createdAt = formatDate(user.created_at);
 
@@ -71,6 +72,24 @@
         }).catch(function (error) {
             console.error('Не удалось загрузить пользователей.', error);
             tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger py-4">' + escapeHtml(error.message) + '</td></tr>';
+        });
+    }
+
+    // Роли для селекта в модалке добавления (из таблицы ролей)
+    var roleSelect = document.getElementById('newUserRole');
+    if (roleSelect) {
+        window.AdminApi.get('/api/admin/roles').then(function (data) {
+            var roles = data.roles || [];
+            if (!roles.length) return;
+            roleSelect.innerHTML = '';
+            roles.forEach(function (role) {
+                var option = document.createElement('option');
+                option.value = role.role_key;
+                option.textContent = role.name;
+                roleSelect.appendChild(option);
+            });
+        }).catch(function (error) {
+            console.error('Не удалось загрузить роли.', error);
         });
     }
 

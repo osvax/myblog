@@ -18,18 +18,13 @@
     <!-- Текущий ID пользователя для JS -->
     <script>
         window.ADMIN_USER_ID = <?= (int) ($currentUserId ?? 0) ?>;
+        window.ADMIN_USER_ROLE = <?= json_encode((string) ($userRole ?? ''), JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>;
     </script>
     <aside class="admin-sidebar" id="adminSidebar">
         <div class="admin-brand p-3">
             <i class="bi bi-lightning-charge-fill text-orange"></i> МойБлог
             <?php
-            $roleLabels = [
-                'admin' => 'Администратор',
-                'editor' => 'Редактор',
-                'manager' => 'Менеджер',
-                'user' => 'Пользователь',
-            ];
-            $roleLabel = $roleLabels[$userRole ?? ''] ?? 'Администратор';
+            $roleLabel = $userRoleName !== '' ? $userRoleName : ($userRole ?? 'Администратор');
             $roleBadgeClass = $userRole === 'admin' ? 'bg-warning text-dark' : ($userRole === 'editor' ? 'bg-info text-white' : ($userRole === 'manager' ? 'bg-success text-white' : 'bg-secondary'));
             ?>
             <span class="badge <?= $roleBadgeClass ?> fw-bold"><?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></span>

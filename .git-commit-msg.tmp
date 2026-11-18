@@ -1,7 +1,0 @@
-fix: seed site_settings, default values, исправление модели
-
-- run_seed_settings.php: скрипт заполнения site_settings 90+ настройками
-- settings.php: добавлены default values для всех пустых полей (контакты, mail, smtp)
-- SiteSettings.php: исправлено использование $this->db вместо Database::connection()
-- Настройки теперь корректно сохраняются и читаются frontend контроллерами
-- Для запуска: php database/migrations/run_seed_settings.php
