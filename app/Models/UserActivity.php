@@ -150,7 +150,6 @@ class UserActivity
         $projectIn = $projectUrls !== [] ? "{$alias}.page_url IN (" . implode(', ', $projectUrls) . ") OR " : '';
 
         return "CASE
-            WHEN {$alias}.page_url LIKE '/admin%' OR {$alias}.page_url LIKE '/api/admin%' OR {$alias}.page_url = '/mvc/admin' THEN 'admin'
             WHEN {$alias}.page_url IN ('/', '/index.html', '/mvc', '/health') THEN 'home'
             WHEN {$articleIn}{$alias}.page_url = '/blog.html' OR {$alias}.page_url LIKE '/category/%' THEN 'blog'
             WHEN {$projectIn}{$alias}.page_url IN ('/portfolio.html', '/messages.html', '/orders.html', '/settings.html') OR {$alias}.page_url LIKE '/project-%' THEN 'portfolio'

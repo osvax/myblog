@@ -63,7 +63,7 @@ if (function_exists('current_user') && current_user()) {
     $user = current_user();
     $pageUrl = $_SERVER['REQUEST_URI'] ?? '/';
     $pageTitle = 'Пользовательская страница';
-    \App\Core\VisitLogger::log('user', $pageUrl, $pageTitle);
+    \App\Core\VisitLogger::log($pageUrl, $pageTitle);
 }
 
 $response->send();

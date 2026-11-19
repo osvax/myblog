@@ -130,7 +130,6 @@
                     <option value="blog">Блог</option>
                     <option value="portfolio">Портфолио</option>
                     <option value="auth">Аккаунт</option>
-                    <option value="admin">Админ-панель</option>
                     <option value="other">Другое</option>
                 </select>
             </div>

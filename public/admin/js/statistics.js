@@ -8,7 +8,6 @@
         blog: 'Блог',
         portfolio: 'Портфолио',
         auth: 'Аккаунт',
-        admin: 'Админ-панель',
         other: 'Другое'
     };
     var BROWSER_LABELS = {

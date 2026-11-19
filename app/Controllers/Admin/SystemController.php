@@ -31,33 +31,12 @@ class SystemController extends Controller
     }
 
     /**
-     * Последняя активность авторизованных пользователей (для дашборда).
-     */
-    public function activity($request)
-    {
-        if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
-        }
-        if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
-        }
-
-        $db = \App\Core\Database::connection();
-        $rows = $db->query(
-            'SELECT ua.page_url, ua.page_title, ua.visited_at, COALESCE(u.name, ' . "'Пользователь'" . ') AS name
-             FROM ' . db_table('user_activities') . ' ua LEFT JOIN ' . db_table('users') . ' u ON u.id = ua.user_id
-             ORDER BY ua.visited_at DESC, ua.id DESC LIMIT 8'
-        )->fetchAll();
-        return $this->json(['success' => true, 'activities' => $rows]);
-    }
-
-    /**
      * Статистика посещений для дашборда: онлайн (15 минут),
      * за сегодня и последние визиты (блок «Трафик сайта»).
      *
      * Фильтры трафика (GET): date_from, date_to (YYYY-MM-DD),
      * time_from, time_to (HH:MM[:SS]), browser (chrome|edge|firefox|
-     * safari|opera|other), section (home|blog|portfolio|auth|admin|other),
+     * safari|opera|other), section (home|blog|portfolio|auth|other),
      * page (с 1).
      */
     public function statistics($request)
@@ -174,7 +153,7 @@ class SystemController extends Controller
             $filters['browser'] = $browser;
         }
         $section = trim((string) ($_GET['section'] ?? ''));
-        if (in_array($section, ['home', 'blog', 'portfolio', 'auth', 'admin', 'other'], true)) {
+        if (in_array($section, ['home', 'blog', 'portfolio', 'auth', 'other'], true)) {
             $filters['section'] = $section;
         }
 

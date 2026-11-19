@@ -119,7 +119,9 @@ class PageController extends Controller
     }
 
     /**
-     * Записать посещение админ-страницы.
+     * Обновить данные о последнем входе администратора (last_visit/last_ip).
+     * Посещения админ-панели в статистику сайта (user_activities) не записываются —
+     * статистика ведётся только по публичной части сайта.
      */
     public static function logVisit(): void
     {
@@ -132,53 +134,14 @@ class PageController extends Controller
             return;
         }
 
-        $pageUrl = $_SERVER['REQUEST_URI'] ?? '/admin';
-        $pageTitle = $_SERVER['QUERY_STRING'] ?? 'Админ-панель';
-
         try {
-            $ipAddress = self::getIpAddress();
-            $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
-            // Страница входа (откуда пришёл администратор) — для блока «Трафик сайта»
-            $referrer = isset($_SERVER['HTTP_REFERER']) && is_string($_SERVER['HTTP_REFERER'])
-                ? substr($_SERVER['HTTP_REFERER'], 0, 500)
-                : null;
-
             $db = \App\Core\Database::connection();
 
-            // Обновляем last_visit и last_ip
-            try {
-                $stmt = $db->prepare(
-                    "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip WHERE id = :id"
-                );
-                $stmt->execute([':ip' => $ipAddress, ':id' => $userId]);
-            } catch (\Exception $e) {
-                // Поле может не существовать
-            }
-
-            // Записываем активность
-            try {
-                $stmt = $db->prepare(
-                    "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, referrer, visited_at)
-                     VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, :referrer, NOW())"
-                );
-                $stmt->execute([
-                    ':user_id' => $userId,
-                    ':page_url' => $pageUrl,
-                    ':page_title' => $pageTitle,
-                    ':ip_address' => $ipAddress,
-                    ':user_agent' => $userAgent,
-                    ':referrer' => $referrer,
-                ]);
-            } catch (\Exception $e) {
-                // Таблица может не существовать
-            }
-
-            // Автоочистка старых записей статистики (не чаще раза в сутки)
-            try {
-                (new \App\Models\UserActivity())->autoClean();
-            } catch (\Exception $e) {
-                // Не ломаем запись посещения
-            }
+            // Обновляем last_visit и last_ip (используется в списке пользователей и профиле)
+            $stmt = $db->prepare(
+                "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip WHERE id = :id"
+            );
+            $stmt->execute([':ip' => self::getIpAddress(), ':id' => $userId]);
         } catch (\Exception $e) {
             // Ничего не делаем при ошибке
         }

@@ -4,33 +4,32 @@ namespace App\Core;
 
 /**
  * Middleware для автоматической записи посещений страниц.
- * Вызывается в конце обработки запроса для logged-in пользователей.
+ * Вызывается в конце обработки запроса для logged-in пользователей
+ * публичной части сайта (админ-панель в статистику не записывается).
  */
 class VisitLogger
 {
     /**
-     * Записать посещение для авторизованного пользователя.
+     * Записать посещение страницы для авторизованного пользователя.
      *
-     * @param string $userType 'admin' или 'user'
      * @param string $pageUrl URL страницы
      * @param string $pageTitle Заголовок страницы
      * @return void
      */
-    public static function log(string $userType, string $pageUrl, string $pageTitle): void
+    public static function log(string $pageUrl, string $pageTitle): void
     {
         try {
-            $userId = null;
-            $sessionId = null;
+            // Посещения админ-панели не учитываются: статистика — только публичная часть сайта
+            $path = (string) (parse_url($pageUrl, PHP_URL_PATH) ?: $pageUrl);
+            if ($path === '/admin' || strpos($path, '/admin/') === 0
+                || strpos($path, '/api/admin/') === 0 || $path === '/mvc/admin') {
+                return;
+            }
 
-            if ($userType === 'admin') {
-                admin_start_session();
-                $userId = admin_get_user_id();
-                $sessionId = session_id();
-            } elseif ($userType === 'user') {
-                if (session_status() === PHP_SESSION_ACTIVE) {
-                    $userId = (int) ($_SESSION['user_id'] ?? 0);
-                    $sessionId = session_id();
-                }
+            $userId = 0;
+
+            if (session_status() === PHP_SESSION_ACTIVE) {
+                $userId = (int) ($_SESSION['user_id'] ?? 0);
             }
 
             if (!$userId) {
