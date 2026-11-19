@@ -150,6 +150,7 @@ $defaultsIgnore = [
     ['statisticsRetentionDays', '90', 'number', 'statistics', 1, 'Срок хранения посещений (дней), 0 — без ограничения'],
     ['statisticsAutoClean', '1', 'checkbox', 'statistics', 2, 'Автоочистка записей по сроку хранения'],
     ['statisticsSections', json_encode(['home', 'blog', 'portfolio', 'auth', 'other'], JSON_UNESCAPED_SLASHES), 'json', 'statistics', 3, 'Разделы, по которым ведётся статистика (JSON-массив)'],
+    ['statisticsUpdateInterval', '900', 'number', 'statistics', 4, 'Интервал обновления статистики (секунды), дашборд'],
 
     // === email (секреты — только пустой дефолт, значение пользователь вводит сам) ===
     ['smtpPassword', '', 'text', 'email', 5, 'Пароль приложения'],

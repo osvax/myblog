@@ -51,12 +51,19 @@ class SystemController extends Controller
         $activity = new \App\Models\UserActivity();
         $traffic = $activity->traffic($this->validatedTrafficFilters());
 
+        // Интервал автообновления статистики дашборда (настройка раздела «Статистика сайта»)
+        $updateInterval = (int) (new \App\Models\SiteSettings())->get('statisticsUpdateInterval', 900);
+        if ($updateInterval < 5) {
+            $updateInterval = 900;
+        }
+
         return $this->json([
             'success' => true,
             'online' => $activity->onlineCount(),
             'today' => $activity->todayCount(),
             'traffic' => $traffic['rows'],
             'pagination' => $traffic['pagination'],
+            'updateInterval' => $updateInterval,
         ]);
     }
 
@@ -89,6 +96,11 @@ class SystemController extends Controller
         }
 
         $data = (new \App\Models\UserActivity())->overview();
+        $updateInterval = (int) (new \App\Models\SiteSettings())->get('statisticsUpdateInterval', 900);
+        if ($updateInterval < 5) {
+            $updateInterval = 900;
+        }
+        $data['updateInterval'] = $updateInterval;
         return $this->json(array_merge(['success' => true], $data));
     }
 

@@ -234,10 +234,15 @@
                     <label class="form-check-label fw-bold" for="statAutoClean">Автоочистка по сроку (раз в сутки)</label>
                 </div>
             </div>
-            <div class="col-12 col-md-4 d-flex flex-wrap gap-2">
-                <button type="button" class="btn btn-orange fw-bold" id="statSaveRetentionBtn"><i class="bi bi-save me-1"></i>Сохранить</button>
-                <button type="button" class="btn btn-outline-danger fw-bold" id="statCleanNowBtn"><i class="bi bi-trash3 me-1"></i>Очистить сейчас</button>
+            <div class="col-12 col-md-4">
+                <label class="form-label fw-bold" for="statUpdateInterval">Интервал обновления статистики (сек)</label>
+                <input type="number" class="form-control" id="statUpdateInterval" min="5" step="5" value="900">
             </div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+            <button type="button" class="btn btn-orange fw-bold" id="statSaveRetentionBtn"><i class="bi bi-save me-1"></i>Сохранить</button>
+            <button type="button" class="btn btn-outline-danger fw-bold" id="statCleanNowBtn"><i class="bi bi-trash3 me-1"></i>Очистить сейчас</button>
+            <span class="small text-muted">Посещения и трафик на дашборде обновляются с заданным интервалом, «Посетители онлайн» — каждые 3 секунды.</span>
         </div>
         <div class="d-flex flex-wrap gap-4 small text-muted mt-3">
             <span><i class="bi bi-hdd me-1"></i>Записей: <b id="statRecordsCount">—</b></span>

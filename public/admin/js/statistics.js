@@ -736,6 +736,7 @@
         // Настройки — из ответа overview
         document.getElementById('statRetentionDays').value = String(data.retentionDays);
         document.getElementById('statAutoClean').checked = !!data.autoClean;
+        document.getElementById('statUpdateInterval').value = String(parseInt(data.updateInterval, 10) || 900);
         setSections(Array.isArray(data.statisticsSections) ? data.statisticsSections : []);
     }
 
@@ -849,19 +850,27 @@
         loadTraffic();
     }
 
-    // ---------- Хранение данных ----------
+    // ---------- Хранение данных и интервал обновления ----------
     function bindRetentionControls() {
         var retentionSelect = document.getElementById('statRetentionDays');
         var autoClean = document.getElementById('statAutoClean');
+        var updateInterval = document.getElementById('statUpdateInterval');
 
         document.getElementById('statSaveRetentionBtn').addEventListener('click', function () {
+            var interval = parseInt(updateInterval.value, 10);
+            if (!interval || interval < 5) {
+                notify('warning', 'Интервал обновления — не менее 5 секунд');
+                return;
+            }
+            updateInterval.value = String(interval);
             window.AdminApi.save('/api/admin/settings', 'PUT', {
                 statisticsRetentionDays: retentionSelect.value,
-                statisticsAutoClean: autoClean.checked ? '1' : '0'
+                statisticsAutoClean: autoClean.checked ? '1' : '0',
+                statisticsUpdateInterval: String(interval)
             }).then(function () {
-                notify('success', 'Настройки хранения данных сохранены');
+                notify('success', 'Настройки хранения и обновления сохранены');
             }).catch(function (error) {
-                notify('error', error.message || 'Не удалось сохранить настройки хранения');
+                notify('error', error.message || 'Не удалось сохранить настройки');
             });
         });
 

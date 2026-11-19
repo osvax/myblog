@@ -269,17 +269,31 @@
             body.innerHTML = html;
         }
 
-        // Онлайн/сегодня и таблица трафика: первичная загрузка и опрос раз в 30 секунд
+        // Онлайн/сегодня и таблица трафика: первичная загрузка, далее автообновление
+        // по интервалу из настроек (по умолчанию 15 минут);
+        // «Посетители онлайн» опрашивается отдельно каждые 3 секунды
+        var statUpdateInterval = 900;
+        var statisticsTimer = null;
+        function scheduleStatistics() {
+            if (statisticsTimer) {
+                clearTimeout(statisticsTimer);
+            }
+            statisticsTimer = setTimeout(loadStatistics, statUpdateInterval * 1000);
+        }
+
         function loadStatistics() {
             window.AdminApi.get(trafficQueryString()).then(function (data) {
+                statUpdateInterval = parseInt(data.updateInterval, 10) || statUpdateInterval;
                 document.getElementById('dashboardOnlineCount').textContent = String(data.online);
                 document.getElementById('dashboardTodayCount').textContent = String(data.today);
                 renderTraffic(data.traffic || []);
                 renderTrafficPagination(data.pagination);
+                scheduleStatistics();
             }).catch(function (error) {
                 console.error('Не удалось обновить статистику посещений.', error);
                 document.getElementById('dashboardOnlineCount').textContent = '—';
                 document.getElementById('dashboardTodayCount').textContent = '—';
+                scheduleStatistics();
             });
         }
 
@@ -331,7 +345,6 @@
         updateCommentCount();
         loadOrderCounts();
         loadStatistics();
-        window.setInterval(loadStatistics, 30000);
         // Посетители онлайн — обновляем каждые 3 секунды
         window.setInterval(loadOnlineCount, 3000);
         window.addEventListener('admin-orders-state-changed', loadOrderCounts);
