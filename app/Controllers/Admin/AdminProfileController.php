@@ -260,45 +260,4 @@ class AdminProfileController extends Controller
             'avatar_path' => $avatarPath,
         ]);
     }
-
-    /**
-     * Получить историю посещений.
-     */
-    public function getActivityHistory($request, $parameters)
-    {
-        if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
-        }
-        if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
-        }
-
-        $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
-        if ($id <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
-        }
-
-        // Доступна только своя история посещений
-        if ($id !== \admin_get_user_id()) {
-            return $this->json(['success' => false, 'error' => 'Можно просматривать только свою историю'], 403);
-        }
-
-        $page = isset($_GET['page']) ? max(1, (int) $_GET['page']) : 1;
-        $perPage = 20;
-
-        $activities = new UserActivity();
-        $totalCount = $activities->getTotalCount($id);
-        $history = $activities->getHistory($id, $page, $perPage);
-
-        return $this->json([
-            'success' => true,
-            'activities' => $history,
-            'pagination' => [
-                'page' => $page,
-                'per_page' => $perPage,
-                'total' => $totalCount,
-                'pages' => ceil($totalCount / $perPage),
-            ],
-        ]);
-    }
 }

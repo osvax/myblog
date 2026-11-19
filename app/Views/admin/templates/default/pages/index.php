@@ -1,16 +1,16 @@
 <!-- Статистика -->
 <div class="row g-4 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <a class="stat-card p-3 d-flex align-items-center gap-3 text-decoration-none" href="blog.html">
-            <div class="stat-icon"><i class="bi bi-journal-text"></i></div>
-            <div><h3 class="fw-bold mb-0" id="dashboardArticlesCount">—</h3><p class="fw-bold text-muted mb-0">Опубликовано статей</p></div>
-        </a>
+        <div class="stat-card p-3 d-flex align-items-center gap-3 h-100">
+            <div class="stat-icon"><i class="bi bi-activity"></i></div>
+            <div><h3 class="fw-bold mb-0" id="dashboardOnlineCount">—</h3><p class="fw-bold text-muted mb-0">Посетители онлайн</p></div>
+        </div>
     </div>
     <div class="col-sm-6 col-xl-3">
-        <a class="stat-card p-3 d-flex align-items-center gap-3 text-decoration-none" href="portfolio.html">
-            <div class="stat-icon"><i class="bi bi-briefcase"></i></div>
-            <div><h3 class="fw-bold mb-0" id="dashboardProjectsCount">—</h3><p class="fw-bold text-muted mb-0">Работ в портфолио</p></div>
-        </a>
+        <div class="stat-card p-3 d-flex align-items-center gap-3 h-100">
+            <div class="stat-icon"><i class="bi bi-calendar-day"></i></div>
+            <div><h3 class="fw-bold mb-0" id="dashboardTodayCount">—</h3><p class="fw-bold text-muted mb-0">Посетители сегодня</p></div>
+        </div>
     </div>
     <div class="col-sm-6 col-xl-3">
         <a class="stat-card p-3 d-flex align-items-center gap-3 text-decoration-none" href="users.html">
@@ -39,10 +39,20 @@
             <div><h3 class="fw-bold mb-0" id="dashboardNewOrdersValue">—</h3><p class="fw-bold text-muted mb-0">Новые заказы</p></div>
         </a>
     </div>
+    <div class="col-12 col-xl-6">
+        <div class="stat-card dashboard-clock-card p-3 d-flex align-items-center gap-3 h-100">
+            <div class="stat-icon"><i class="bi bi-clock-history"></i></div>
+            <div class="flex-grow-1 text-center">
+                <time id="dashboardClock" class="dashboard-clock fw-bold">--:--:--</time>
+                <time id="dashboardDate" class="small text-muted fw-bold">Загрузка даты…</time>
+            </div>
+            <span id="dashboardTimezone" class="small text-muted"></span>
+        </div>
+    </div>
 </div>
 
 <div class="row g-4 mb-4 dashboard-overview">
-    <div class="col-xl-5">
+    <div class="col-xl-6">
         <section class="card admin-card h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center gap-2">
                 <h2 class="h5 fw-bold mb-0">Продажи по месяцам</h2>
@@ -54,17 +64,7 @@
             </div>
         </section>
     </div>
-    <div class="col-xl-2">
-        <section class="card admin-card dashboard-clock-card h-100 text-center">
-            <div class="card-body d-flex flex-column align-items-center justify-content-center p-3">
-                <i class="bi bi-clock-history text-orange fs-3 mb-2" aria-hidden="true"></i>
-                <time id="dashboardClock" class="dashboard-clock fw-bold">--:--:--</time>
-                <time id="dashboardDate" class="small text-muted fw-bold mt-2">Загрузка даты…</time>
-                <span id="dashboardTimezone" class="small text-muted mt-1"></span>
-            </div>
-        </section>
-    </div>
-    <div class="col-xl-5">
+    <div class="col-xl-6">
         <section class="card admin-card h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center">
                 <h2 class="h5 fw-bold mb-0">О системе</h2>
@@ -85,10 +85,28 @@
     </div>
 </div>
 
-<!-- Быстрые действия -->
-<h5 class="fw-bold mb-3">Быстрые действия</h5>
-<div class="row g-3">
-    <div class="col-md-4"><a href="article-edit.html" class="text-decoration-none"><div class="stat-card p-3 d-flex align-items-center gap-3"><div class="stat-icon"><i class="bi bi-plus-circle"></i></div><span class="fw-bold text-dark">Добавить статью</span></div></a></div>
-    <div class="col-md-4"><a href="portfolio-edit.html" class="text-decoration-none"><div class="stat-card p-3 d-flex align-items-center gap-3"><div class="stat-icon"><i class="bi bi-plus-circle"></i></div><span class="fw-bold text-dark">Добавить работу</span></div></a></div>
-    <div class="col-md-4"><a href="user-edit.html" class="text-decoration-none"><div class="stat-card p-3 d-flex align-items-center gap-3"><div class="stat-icon"><i class="bi bi-person-plus"></i></div><span class="fw-bold text-dark">Добавить пользователя</span></div></a></div>
-</div>
+<!-- Трафик сайта -->
+<section class="card admin-card">
+    <div class="card-header bg-white">
+        <h2 class="h5 fw-bold mb-0"><i class="bi bi-activity me-2"></i>Трафик сайта</h2>
+    </div>
+    <div class="card-body p-0">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead>
+                    <tr>
+                        <th style="width:140px;">IP-адрес</th>
+                        <th style="width:110px;">Дата</th>
+                        <th style="width:90px;">Время</th>
+                        <th style="width:150px;">Браузер</th>
+                        <th>Страница входа</th>
+                        <th>Страница посещения</th>
+                    </tr>
+                </thead>
+                <tbody id="trafficBody">
+                    <tr><td colspan="6" class="text-center text-muted py-4">Загрузка…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>

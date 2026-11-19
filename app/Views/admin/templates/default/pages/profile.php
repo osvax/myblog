@@ -142,39 +142,5 @@
                 </form>
             </div>
         </section>
-
-        <!-- История посещений -->
-        <section class="card admin-card mt-4">
-            <div class="card-header bg-white">
-                <h2 class="h5 fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>История посещений</h2>
-            </div>
-            <div class="card-body p-0">
-                <div class="table-responsive">
-                    <table class="table table-hover mb-0" id="activityTable">
-                        <thead>
-                            <tr>
-                                <th style="width:180px;">Дата и время</th>
-                                <th>Страница</th>
-                                <th style="width:140px;">IP-адрес</th>
-                                <th style="width:200px;" class="d-none d-xl-table-cell">Браузер</th>
-                            </tr>
-                        </thead>
-                        <tbody id="activityBody">
-                            <tr><td colspan="4" class="text-center text-muted py-4">Загрузка…</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-                <!-- Пагинация -->
-                <div class="d-flex justify-content-center align-items-center gap-2 p-3 border-top" id="activityPagination" hidden>
-                    <button class="btn btn-outline-secondary btn-sm" type="button" id="prevPageBtn">
-                        <i class="bi bi-chevron-left"></i>
-                    </button>
-                    <span class="small text-muted" id="paginationInfo"></span>
-                    <button class="btn btn-outline-secondary btn-sm" type="button" id="nextPageBtn">
-                        <i class="bi bi-chevron-right"></i>
-                    </button>
-                </div>
-            </div>
-        </section>
     </div>
 </div>

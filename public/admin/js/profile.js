@@ -4,7 +4,6 @@
     document.addEventListener('DOMContentLoaded', function () {
         var userId = 0;
         var currentProfile = null;
-        var activityPage = 1;
 
         // ---------- DOM элементы ----------
         var profileAvatar = document.getElementById('profileAvatar');
@@ -26,12 +25,6 @@
         var passwordChangeError = document.getElementById('passwordChangeError');
         var passwordChangeSuccess = document.getElementById('passwordChangeSuccess');
 
-        var activityBody = document.getElementById('activityBody');
-        var activityPagination = document.getElementById('activityPagination');
-        var paginationInfo = document.getElementById('paginationInfo');
-        var prevPageBtn = document.getElementById('prevPageBtn');
-        var nextPageBtn = document.getElementById('nextPageBtn');
-
         // ---------- Вспомогательные функции ----------
         function showError(msg) {
             profileError.textContent = msg;
@@ -52,34 +45,9 @@
             avatarSuccess.textContent = error ? '' : message;
         }
 
-        function formatDateTime(dateStr) {
-            if (!dateStr) return '—';
-            var d = new Date(dateStr);
-            return d.toLocaleDateString('ru-RU', { day: '2-digit', month: '2-digit', year: 'numeric' }) +
-                ' ' + d.toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' });
-        }
-
-        function timeAgo(dateStr) {
-            if (!dateStr) return '—';
-            var d = new Date(dateStr);
-            var now = new Date();
-            var diff = Math.floor((now - d) / 1000);
-            if (diff < 60) return 'только что';
-            if (diff < 3600) return Math.floor(diff / 60) + ' мин. назад';
-            if (diff < 86400) return Math.floor(diff / 3600) + ' ч. назад';
-            if (diff < 604800) return Math.floor(diff / 86400) + ' дн. назад';
-            return formatDateTime(dateStr);
-        }
-
         function roleLabel(role) {
             var labels = { user: 'Пользователь', editor: 'Редактор', manager: 'Менеджер', admin: 'Администратор' };
             return labels[role] || role;
-        }
-
-        function escapeHtml(str) {
-            var div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
         }
 
         // ---------- Загрузка данных профиля ----------
@@ -129,60 +97,8 @@
                 profileForm.elements.namedItem('bio').value = data.user.bio || '';
                 profileForm.elements.namedItem('timezone').value = data.user.timezone || '';
                 profileForm.elements.namedItem('language').value = data.user.language || 'ru';
-
-                // История
-                activityPage = 1;
-                loadActivity();
             }).catch(function (error) {
                 showError('Не удалось загрузить профиль: ' + error.message);
-            });
-        }
-
-        // ---------- История посещений ----------
-        function loadActivity() {
-            activityBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Загрузка…</td></tr>';
-
-            AdminApi.get('/api/admin/profile/' + userId + '/activity?page=' + activityPage).then(function (data) {
-                var activities = data.activities || [];
-                var pagination = data.pagination || {};
-
-                if (activities.length === 0) {
-                    activityBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Нет записей о посещениях</td></tr>';
-                    activityPagination.hidden = true;
-                    return;
-                }
-
-                var html = '';
-                activities.forEach(function (item) {
-                    var userAgent = item.user_agent || '';
-                    var browser = '';
-                    if (userAgent.indexOf('Chrome') !== -1) browser = 'Chrome';
-                    else if (userAgent.indexOf('Firefox') !== -1) browser = 'Firefox';
-                    else if (userAgent.indexOf('Safari') !== -1) browser = 'Safari';
-                    else if (userAgent.indexOf('Edge') !== -1) browser = 'Edge';
-                    else if (userAgent.indexOf('MSIE') !== -1 || userAgent.indexOf('Trident') !== -1) browser = 'IE';
-                    else browser = 'Другой';
-
-                    html += '<tr>' +
-                        '<td class="text-nowrap">' + formatDateTime(item.visited_at) + '</td>' +
-                        '<td><a href="' + escapeHtml(item.page_url) + '" class="text-decoration-none" target="_blank">' + escapeHtml(item.page_title || item.page_url) + '</a></td>' +
-                        '<td class="text-nowrap">' + escapeHtml(item.ip_address) + '</td>' +
-                        '<td class="text-nowrap d-none d-xl-table-cell">' + browser + '</td>' +
-                        '</tr>';
-                });
-                activityBody.innerHTML = html;
-
-                if (pagination.pages > 1) {
-                    activityPagination.hidden = false;
-                    paginationInfo.textContent = pagination.page + ' из ' + pagination.pages;
-                    prevPageBtn.disabled = pagination.page <= 1;
-                    nextPageBtn.disabled = pagination.page >= pagination.pages;
-                } else {
-                    activityPagination.hidden = true;
-                }
-            }).catch(function (error) {
-                activityBody.innerHTML = '<tr><td colspan="4" class="text-center text-muted py-4">Ошибка загрузки: ' + escapeHtml(error.message) + '</td></tr>';
-                activityPagination.hidden = true;
             });
         }
 
@@ -354,18 +270,6 @@
         }
 
         resetProfileBtn.addEventListener('click', resetForm);
-
-        prevPageBtn.addEventListener('click', function () {
-            if (activityPage > 1) {
-                activityPage--;
-                loadActivity();
-            }
-        });
-
-        nextPageBtn.addEventListener('click', function () {
-            activityPage++;
-            loadActivity();
-        });
 
         // ---------- Инициализация ----------
         loadProfile();

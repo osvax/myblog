@@ -124,23 +124,6 @@
             document.querySelector('.dashboard-new-orders-icon').classList.toggle('has-new-orders', newCount > 0);
         }
 
-        // Счётчики статей и работ портфолио — из базы
-        function updateContentCounts() {
-            window.AdminApi.get('/api/admin/articles').then(function (data) {
-                var published = (data.articles || []).filter(function (article) {
-                    return article.active !== false;
-                }).length;
-                document.getElementById('dashboardArticlesCount').textContent = String(published);
-            }).catch(function () {
-                document.getElementById('dashboardArticlesCount').textContent = '—';
-            });
-            window.AdminApi.get('/api/admin/projects').then(function (data) {
-                document.getElementById('dashboardProjectsCount').textContent = String((data.projects || []).length);
-            }).catch(function () {
-                document.getElementById('dashboardProjectsCount').textContent = '—';
-            });
-        }
-
         // Пользователи — из базы (раньше брались из localStorage)
         function updateUserCount() {
             window.AdminApi.get('/api/admin/users').then(function (data) {
@@ -166,16 +149,6 @@
         function loadOrderCounts() {
             window.AdminApi.get('/api/admin/orders').then(function (data) {
                 updateOrderCounts(data.orders);
-            }).catch(function (error) {
-                console.error('Не удалось обновить счётчики заказов.', error);
-                document.getElementById('dashboardNewOrdersValue').textContent = '—';
-                document.getElementById('dashboardCurrentOrdersCount').textContent = '—';
-            });
-        }
-
-        function loadOrderCounts() {
-            window.AdminApi.get('/api/admin/orders').then(function (data) {
-                updateOrderCounts(data.orders);
                 renderSalesChart(data.orders);
             }).catch(function (error) {
                 console.error('Не удалось обновить счётчики заказов.', error);
@@ -184,83 +157,76 @@
             });
         }
 
-        // ---------- Активность ----------
-        function renderActivity(activities) {
-            var body = document.getElementById('activityBody');
+        // ---------- Трафик сайта ----------
+        var BROWSERS = {
+            chrome: { icon: 'bi-browser-chrome', label: 'Chrome' },
+            edge: { icon: 'bi-browser-edge', label: 'Edge' },
+            firefox: { icon: 'bi-browser-firefox', label: 'Firefox' },
+            safari: { icon: 'bi-browser-safari', label: 'Safari' },
+            opera: { icon: 'bi-globe2', label: 'Opera' },
+            other: { icon: 'bi-globe2', label: 'Браузер' }
+        };
+
+        function detectBrowser(userAgent) {
+            var ua = String(userAgent || '');
+            // Edge определяется первым — его UA также содержит Chrome
+            if (ua.indexOf('Edg/') !== -1) return 'edge';
+            if (ua.indexOf('OPR/') !== -1 || ua.indexOf('Opr/') !== -1) return 'opera';
+            if (ua.indexOf('Firefox/') !== -1) return 'firefox';
+            if (ua.indexOf('Chrome/') !== -1) return 'chrome';
+            if (ua.indexOf('Safari/') !== -1) return 'safari';
+            return 'other';
+        }
+
+        function escapeHtml(value) {
+            var div = document.createElement('div');
+            div.textContent = value == null ? '' : String(value);
+            return div.innerHTML;
+        }
+
+        function renderTraffic(rows) {
+            var body = document.getElementById('trafficBody');
             if (!body) return;
-            if (!activities || !activities.length) {
-                body.innerHTML = '<div class="activity-empty"><i class="bi bi-hourglass-split"></i>Пока нет записей об активности';
+            if (!rows || !rows.length) {
+                body.innerHTML = '<tr><td colspan="6" class="text-center text-muted py-4">Посещений пока нет</td></tr>';
                 return;
             }
-            var list = '<ul class="activity-list">';
-            activities.forEach(function (a) {
-                var iconClass = 'page-view';
-                var icon = 'bi-window';
-                var url = (a.page_url || '').toLowerCase();
-                if (url.indexOf('login') !== -1 || url.indexOf('auth') !== -1) {
-                    iconClass = 'login';
-                    icon = 'bi-box-arrow-in-right';
-                }
-                var timeAgo = timeAgoFromISO(a.visited_at);
-                list += '<li class="activity-item">' +
-                    '<span class="activity-icon ' + iconClass + '"><i class="bi ' + icon + '"></i></span>' +
-                    '<div class="activity-info">' +
-                    '<div class="activity-title" title="' + escapeHtml(a.page_title || a.page_url || '') + '">' +
-                    escapeHtml(a.page_title || a.page_url || '—') + '</div>' +
-                    '<div class="activity-meta">' + escapeHtml(a.name || 'Пользователь') + '</div>' +
-                    '</div>' +
-                    '<span class="activity-time">' + timeAgo + '</span>' +
-                    '</li>';
+            var html = '';
+            rows.forEach(function (row) {
+                var visited = row.visited_at ? new Date(String(row.visited_at).replace(' ', 'T')) : null;
+                var browser = BROWSERS[detectBrowser(row.user_agent)] || BROWSERS.other;
+                html += '<tr>' +
+                    '<td class="text-nowrap">' + escapeHtml(row.ip_address) + '</td>' +
+                    '<td class="text-nowrap">' + (visited ? visited.toLocaleDateString('ru-RU') : '—') + '</td>' +
+                    '<td class="text-nowrap">' + (visited ? visited.toLocaleTimeString('ru-RU', { hour12: false }) : '—') + '</td>' +
+                    '<td class="text-nowrap"><i class="bi ' + browser.icon + ' me-1" aria-hidden="true"></i>' + browser.label + '</td>' +
+                    '<td class="text-break">' + (row.referrer ? escapeHtml(row.referrer) : '—') + '</td>' +
+                    '<td class="text-break">' + escapeHtml(row.page_url || '—') + '</td>' +
+                    '</tr>';
             });
-            list += '</ul>';
-            body.innerHTML = list;
+            body.innerHTML = html;
         }
 
-        function timeAgoFromISO(iso) {
-            if (!iso) return '—';
-            var d = new Date(iso);
-            if (isNaN(d)) return iso;
-            var now = new Date();
-            var diff = Math.floor((now - d) / 1000);
-            if (diff < 60) return 'только что';
-            if (diff < 3600) return Math.floor(diff / 60) + ' мин назад';
-            if (diff < 86400) return Math.floor(diff / 3600) + ' ч назад';
-            if (diff < 604800) return Math.floor(diff / 86400) + ' дн назад';
-            return d.toLocaleDateString('ru-RU');
-        }
-
-        function loadActivity() {
-            window.AdminApi.get('/api/admin/activity')
-                .then(function (data) {
-                    renderActivity(data.activities);
-                })
-                .catch(function (err) {
-                    console.error('Не удалось загрузить активность.', err);
-                    var body = document.getElementById('activityBody');
-                    if (body) body.innerHTML = '<div class="activity-error">Не удалось загрузить</div>';
-                });
-        }
-
-        // Обновление активности по клику на кнопку
-        function bindActivityRefresh() {
-            var btn = document.getElementById('activityRefreshBtn');
-            if (!btn) return;
-            btn.addEventListener('click', function () {
-                var icon = btn.querySelector('i');
-                if (icon) icon.className = 'bi bi-arrow-clockwise spin';
-                loadActivity();
-                setTimeout(function () { if (icon) icon.className = 'bi bi-arrow-clockwise'; }, 1500);
+        // Онлайн/сегодня и таблица трафика: первичная загрузка и опрос раз в 30 секунд
+        function loadStatistics() {
+            window.AdminApi.get('/api/admin/dashboard/statistics').then(function (data) {
+                document.getElementById('dashboardOnlineCount').textContent = String(data.online);
+                document.getElementById('dashboardTodayCount').textContent = String(data.today);
+                renderTraffic(data.traffic || []);
+            }).catch(function (error) {
+                console.error('Не удалось обновить статистику посещений.', error);
+                document.getElementById('dashboardOnlineCount').textContent = '—';
+                document.getElementById('dashboardTodayCount').textContent = '—';
             });
         }
 
         updateClock();
         window.setInterval(updateClock, 1000);
         updateUserCount();
-        updateContentCounts();
         updateCommentCount();
         loadOrderCounts();
-        loadActivity();
-        bindActivityRefresh();
+        loadStatistics();
+        window.setInterval(loadStatistics, 30000);
         window.addEventListener('admin-orders-state-changed', loadOrderCounts);
         window.addEventListener('storage', function (event) {
             if (event.key === 'myblog.admin.orders.state.v1') loadOrderCounts();

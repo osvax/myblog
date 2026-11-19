@@ -138,6 +138,10 @@ class PageController extends Controller
         try {
             $ipAddress = self::getIpAddress();
             $userAgent = $_SERVER['HTTP_USER_AGENT'] ?? '';
+            // Страница входа (откуда пришёл администратор) — для блока «Трафик сайта»
+            $referrer = isset($_SERVER['HTTP_REFERER']) && is_string($_SERVER['HTTP_REFERER'])
+                ? substr($_SERVER['HTTP_REFERER'], 0, 500)
+                : null;
 
             $db = \App\Core\Database::connection();
 
@@ -154,8 +158,8 @@ class PageController extends Controller
             // Записываем активность
             try {
                 $stmt = $db->prepare(
-                    "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, visited_at)
-                     VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())"
+                    "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, referrer, visited_at)
+                     VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, :referrer, NOW())"
                 );
                 $stmt->execute([
                     ':user_id' => $userId,
@@ -163,6 +167,7 @@ class PageController extends Controller
                     ':page_title' => $pageTitle,
                     ':ip_address' => $ipAddress,
                     ':user_agent' => $userAgent,
+                    ':referrer' => $referrer,
                 ]);
             } catch (\Exception $e) {
                 // Таблица может не существовать

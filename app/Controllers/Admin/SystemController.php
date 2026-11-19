@@ -50,4 +50,43 @@ class SystemController extends Controller
         )->fetchAll();
         return $this->json(['success' => true, 'activities' => $rows]);
     }
+
+    /**
+     * Статистика посещений для дашборда: онлайн (15 минут),
+     * за сегодня и последние визиты (трафик сайта).
+     */
+    public function statistics($request)
+    {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'GET') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $db = \App\Core\Database::connection();
+        $table = db_table('user_activities');
+
+        $online = (int) $db->query(
+            "SELECT COUNT(DISTINCT ip_address) FROM {$table} WHERE visited_at >= (NOW() - INTERVAL 15 MINUTE)"
+        )->fetchColumn();
+
+        $today = (int) $db->query(
+            "SELECT COUNT(DISTINCT ip_address) FROM {$table} WHERE visited_at >= CURDATE()"
+        )->fetchColumn();
+
+        $traffic = $db->query(
+            "SELECT ip_address, visited_at, user_agent, referrer, page_url
+             FROM {$table}
+             ORDER BY visited_at DESC, id DESC
+             LIMIT 15"
+        )->fetchAll();
+
+        return $this->json([
+            'success' => true,
+            'online' => $online,
+            'today' => $today,
+            'traffic' => $traffic,
+        ]);
+    }
 }
