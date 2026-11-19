@@ -15,7 +15,7 @@ class LandingPage
     public function getAll(): array
     {
         $db = Database::connection();
-        $stmt = $db->query("SELECT * FROM landing_pages ORDER BY slug ASC");
+        $stmt = $db->query("SELECT * FROM " . db_table('landing_pages') . " ORDER BY slug ASC");
         return $stmt->fetchAll();
     }
 
@@ -28,7 +28,7 @@ class LandingPage
     public function findBySlug(string $slug): ?array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT * FROM landing_pages WHERE slug = :slug LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM " . db_table('landing_pages') . " WHERE slug = :slug LIMIT 1");
         $stmt->execute([':slug' => $slug]);
         $result = $stmt->fetch();
         return $result ?: null;
@@ -43,7 +43,7 @@ class LandingPage
     public function findActive(string $slug): ?array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT * FROM landing_pages WHERE slug = :slug AND is_active = 1 LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM " . db_table('landing_pages') . " WHERE slug = :slug AND is_active = 1 LIMIT 1");
         $stmt->execute([':slug' => $slug]);
         $result = $stmt->fetch();
         return $result ?: null;
@@ -73,7 +73,7 @@ class LandingPage
 
         if ($editId > 0) {
             $stmt = $db->prepare(
-                "UPDATE landing_pages
+                "UPDATE " . db_table('landing_pages') . "
                  SET title = :title, html_content = :html, is_active = :active, generated_at = NOW(), updated_at = NOW()
                  WHERE id = :id"
             );
@@ -91,13 +91,13 @@ class LandingPage
             return ['success' => true, 'id' => $editId, 'action' => 'updated'];
         }
 
-        $stmt = $db->prepare("SELECT id FROM landing_pages WHERE slug = :slug LIMIT 1");
+        $stmt = $db->prepare("SELECT id FROM " . db_table('landing_pages') . " WHERE slug = :slug LIMIT 1");
         $stmt->execute([':slug' => $slug]);
         $existing = $stmt->fetch();
 
         if ($existing) {
             $stmt = $db->prepare(
-                "UPDATE landing_pages
+                "UPDATE " . db_table('landing_pages') . "
                  SET title = :title, html_content = :html, is_active = :active, generated_at = NOW(), updated_at = NOW()
                  WHERE id = :id"
             );
@@ -112,7 +112,7 @@ class LandingPage
         }
 
         $stmt = $db->prepare(
-            "INSERT INTO landing_pages (slug, title, html_content, is_active, generated_at, created_at, updated_at)
+            "INSERT INTO " . db_table('landing_pages') . " (slug, title, html_content, is_active, generated_at, created_at, updated_at)
              VALUES (:slug, :title, :html, :active, NOW(), NOW(), NOW())"
         );
         $stmt->execute([
@@ -135,7 +135,7 @@ class LandingPage
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE landing_pages SET is_active = NOT is_active, updated_at = NOW() WHERE id = :id"
+            "UPDATE " . db_table('landing_pages') . " SET is_active = NOT is_active, updated_at = NOW() WHERE id = :id"
         );
         $stmt->execute([':id' => $pageId]);
 
@@ -151,7 +151,7 @@ class LandingPage
     public function delete(int $pageId): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("DELETE FROM landing_pages WHERE id = :id");
+        $stmt = $db->prepare("DELETE FROM " . db_table('landing_pages') . " WHERE id = :id");
         $stmt->execute([':id' => $pageId]);
 
         return ['success' => $stmt->rowCount() > 0];

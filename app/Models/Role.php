@@ -16,14 +16,14 @@ class Role
         $db = Database::connection();
         return $db->query(
             'SELECT r.id, r.role_key, r.name, r.description, r.is_system,
-                    (SELECT COUNT(*) FROM users u WHERE u.role = r.role_key) AS users_count
-             FROM roles r ORDER BY r.is_system DESC, r.id ASC'
+                    (SELECT COUNT(*) FROM ' . db_table('users') . ' u WHERE u.role = r.role_key) AS users_count
+             FROM ' . db_table('roles') . ' r ORDER BY r.is_system DESC, r.id ASC'
         )->fetchAll();
     }
 
     public function byId(int $id): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM roles WHERE id = :id LIMIT 1');
+        $stmt = Database::connection()->prepare('SELECT * FROM ' . db_table('roles') . ' WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         return $row ?: null;
@@ -31,7 +31,7 @@ class Role
 
     public function byKey(string $key): ?array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM roles WHERE role_key = :key LIMIT 1');
+        $stmt = Database::connection()->prepare('SELECT * FROM ' . db_table('roles') . ' WHERE role_key = :key LIMIT 1');
         $stmt->execute(['key' => $key]);
         $row = $stmt->fetch();
         return $row ?: null;
@@ -45,7 +45,7 @@ class Role
     /** Разрешённые страницы роли. */
     public function permissions(int $roleId): array
     {
-        $stmt = Database::connection()->prepare('SELECT page_slug FROM role_permissions WHERE role_id = :id ORDER BY page_slug');
+        $stmt = Database::connection()->prepare('SELECT page_slug FROM ' . db_table('role_permissions') . ' WHERE role_id = :id ORDER BY page_slug');
         $stmt->execute(['id' => $roleId]);
         return array_column($stmt->fetchAll(), 'page_slug');
     }
@@ -70,7 +70,7 @@ class Role
         }
 
         $stmt = Database::connection()->prepare(
-            'INSERT INTO roles (role_key, name, description, is_system) VALUES (:key, :name, :description, 0)'
+            'INSERT INTO ' . db_table('roles') . ' (role_key, name, description, is_system) VALUES (:key, :name, :description, 0)'
         );
         $stmt->execute([
             'key' => $key,
@@ -93,7 +93,7 @@ class Role
         $db = Database::connection();
         $db->beginTransaction();
         try {
-            $stmt = $db->prepare('UPDATE roles SET name = :name, description = :description WHERE id = :id');
+            $stmt = $db->prepare('UPDATE ' . db_table('roles') . ' SET name = :name, description = :description WHERE id = :id');
             $stmt->execute([
                 'name' => trim($name),
                 'description' => trim($description),
@@ -101,9 +101,9 @@ class Role
             ]);
             if ($permissions !== null) {
                 $known = $this->knownPages();
-                $stmt = $db->prepare('DELETE FROM role_permissions WHERE role_id = :id');
+                $stmt = $db->prepare('DELETE FROM ' . db_table('role_permissions') . ' WHERE role_id = :id');
                 $stmt->execute(['id' => $id]);
-                $stmt = $db->prepare('INSERT IGNORE INTO role_permissions (role_id, page_slug) VALUES (:id, :page)');
+                $stmt = $db->prepare('INSERT IGNORE INTO ' . db_table('role_permissions') . ' (role_id, page_slug) VALUES (:id, :page)');
                 foreach (array_unique($permissions) as $page) {
                     if (!is_string($page) || !in_array($page, $known, true)) {
                         continue;
@@ -130,12 +130,12 @@ class Role
         if (!empty($role['is_system'])) {
             return ['success' => false, 'error' => 'Стартовые роли удалять нельзя'];
         }
-        $stmt = Database::connection()->prepare('SELECT COUNT(*) FROM users WHERE role = :key');
+        $stmt = Database::connection()->prepare('SELECT COUNT(*) FROM ' . db_table('users') . ' WHERE role = :key');
         $stmt->execute(['key' => $role['role_key']]);
         if ((int) $stmt->fetchColumn() > 0) {
             return ['success' => false, 'error' => 'Роль назначена пользователям — сначала смените им роль'];
         }
-        $stmt = Database::connection()->prepare('DELETE FROM roles WHERE id = :id');
+        $stmt = Database::connection()->prepare('DELETE FROM ' . db_table('roles') . ' WHERE id = :id');
         $stmt->execute(['id' => $id]);
         return ['success' => true];
     }

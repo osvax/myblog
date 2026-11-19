@@ -15,7 +15,7 @@ class LandingPageManager
     public function generate(string $pageSlug = 'home'): string
     {
         $db = Database::connection();
-        $stmt = $db->query("SELECT * FROM landing_page_settings WHERE is_active = 1 ORDER BY field_group ASC, display_order ASC");
+        $stmt = $db->query("SELECT * FROM " . db_table('landing_page_settings') . " WHERE is_active = 1 ORDER BY field_group ASC, display_order ASC");
         $settings = $stmt->fetchAll();
 
         // Группируем по секциям

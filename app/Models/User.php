@@ -21,14 +21,14 @@ class User
         $db = Database::connection();
 
         // Проверяем, не занят ли email
-        $stmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare("SELECT id FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         if ($stmt->fetch()) {
             return ['success' => false, 'error' => 'Пользователь с таким email уже существует'];
         }
 
         $stmt = $db->prepare(
-            "INSERT INTO users (email, password_hash, name, phone, position, created_at, updated_at)
+            "INSERT INTO " . db_table('users') . " (email, password_hash, name, phone, position, created_at, updated_at)
              VALUES (:email, :password_hash, :name, :phone, :position, NOW(), NOW())"
         );
         $stmt->execute([
@@ -51,7 +51,7 @@ class User
     public function findByEmail(string $email): ?array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
         return $user ?: null;
@@ -70,7 +70,7 @@ class User
             "SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
                     last_visit, last_ip, phone, about, position, bio, timezone, language,
                     totp_secret, totp_enabled
-             FROM users WHERE id = :id LIMIT 1"
+             FROM " . db_table('users') . " WHERE id = :id LIMIT 1"
         );
         $stmt->execute([':id' => $id]);
         $user = $stmt->fetch();
@@ -87,7 +87,7 @@ class User
     public function verifyCredentials(string $email, string $password): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
@@ -138,7 +138,7 @@ class User
 
         $db = Database::connection();
         $stmt = $db->prepare(
-            "SELECT * FROM users WHERE reset_token = :token AND reset_expires > NOW() LIMIT 1"
+            "SELECT * FROM " . db_table('users') . " WHERE reset_token = :token AND reset_expires > NOW() LIMIT 1"
         );
         $stmt->execute([':token' => $token]);
         $user = $stmt->fetch();
@@ -156,7 +156,7 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE users SET password_hash = :password_hash, reset_token = '', reset_expires = NULL, updated_at = NOW()
+            "UPDATE " . db_table('users') . " SET password_hash = :password_hash, reset_token = '', reset_expires = NULL, updated_at = NOW()
              WHERE id = :id"
         );
         $stmt->execute([
@@ -180,7 +180,7 @@ class User
 
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE users SET reset_token = :token, reset_expires = :expires, updated_at = NOW()
+            "UPDATE " . db_table('users') . " SET reset_token = :token, reset_expires = :expires, updated_at = NOW()
              WHERE id = :id"
         );
         $stmt->execute([
@@ -219,7 +219,7 @@ class User
     ): array {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE users SET
+            "UPDATE " . db_table('users') . " SET
                 name = :name,
                 phone = :phone,
                 about = :about,
@@ -263,7 +263,7 @@ class User
         // Обновляем last_visit и last_ip
         try {
             $stmt = $db->prepare(
-                "UPDATE users SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id"
+                "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id"
             );
             $stmt->execute([
                 ':ip_address' => $ipAddress,
@@ -276,7 +276,7 @@ class User
         // Записываем активность
         try {
             $stmt = $db->prepare(
-                "INSERT INTO user_activities (user_id, page_url, page_title, ip_address, user_agent, visited_at)
+                "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, visited_at)
                  VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())"
             );
             $stmt->execute([
@@ -314,7 +314,7 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE users SET totp_secret = :secret, totp_enabled = 0, updated_at = NOW() WHERE id = :id"
+            "UPDATE " . db_table('users') . " SET totp_secret = :secret, totp_enabled = 0, updated_at = NOW() WHERE id = :id"
         );
         $stmt->execute(['secret' => $secret, 'id' => $userId]);
         return ['success' => true];
@@ -327,7 +327,7 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE users SET totp_enabled = :enabled, updated_at = NOW() WHERE id = :id"
+            "UPDATE " . db_table('users') . " SET totp_enabled = :enabled, updated_at = NOW() WHERE id = :id"
         );
         $stmt->execute([
             'enabled' => $enabled ? 1 : 0,
@@ -347,7 +347,7 @@ class User
         $stmt = $db->query(
             "SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
                     last_visit, last_ip, phone, about, position
-             FROM users ORDER BY created_at DESC"
+             FROM " . db_table('users') . " ORDER BY created_at DESC"
         );
         return $stmt->fetchAll();
     }

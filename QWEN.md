@@ -5,6 +5,7 @@
 ## Среда
 - OSPanel: Apache + MariaDB, PHP 8.5.1. CLI PHP: `C:\PHP\php.exe` — PHP-скрипты запускать только через него.
 - БД: `val_myblog`, логин/пароль `val` — реквизиты в `config/database.php`.
+- Префикс таблиц: `DB_PREFIX` в `.env` (сейчас `va_`). Имена таблиц в SQL — **только** через хелпер `db_table('users')` (определён в `app/Core/Database.php`), без хардкода префикса. Статичные .sql-миграции 001–013 — история (сырые имена); новые таблицы — по образцу `database/migrations/014_db_table_prefix.sql`.
 - Локальный домен: `myblog.loc`. Каталог сессий PHP: `E:\OSPanel\temp\PHP-8.5\default\session\`.
 - Vite 5: `npm run build` (входы: app, admin, forms, auth, consultant, calculator, login; outDir `public/build`).
 - Ветка разработки: `dev`.

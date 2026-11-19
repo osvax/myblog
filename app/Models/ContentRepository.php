@@ -17,7 +17,7 @@ class ContentRepository
         $where = $publishedOnly ? 'WHERE a.is_published = 1' : '';
         $statement = $this->db->query(
             'SELECT a.*, c.name AS category, c.slug AS category_slug
-             FROM articles a LEFT JOIN categories c ON c.id = a.category_id ' . $where . '
+             FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id ' . $where . '
              ORDER BY a.published_at DESC, a.created_at DESC'
         );
         return array_map([$this, 'articleRow'], $statement->fetchAll());
@@ -27,7 +27,7 @@ class ContentRepository
     {
         $statement = $this->db->prepare(
             'SELECT a.*, c.name AS category, c.slug AS category_slug
-             FROM articles a LEFT JOIN categories c ON c.id = a.category_id WHERE a.id = :id'
+             FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id WHERE a.id = :id'
         );
         $statement->execute(['id' => $id]);
         $row = $statement->fetch();
@@ -37,7 +37,7 @@ class ContentRepository
     public function articleBySlug($slug, $publishedOnly = true)
     {
         $sql = 'SELECT a.*, c.name AS category, c.slug AS category_slug
-                FROM articles a LEFT JOIN categories c ON c.id = a.category_id WHERE a.slug = :slug';
+                FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id WHERE a.slug = :slug';
         if ($publishedOnly) {
             $sql .= ' AND a.is_published = 1';
         }
@@ -55,7 +55,7 @@ class ContentRepository
     public function commentCounts(): array
     {
         $rows = $this->db->query(
-            "SELECT article_slug, COUNT(*) AS n FROM messages
+            "SELECT article_slug, COUNT(*) AS n FROM " . db_table('messages') . "
              WHERE message_type = 'comment' AND is_approved = 1 AND article_slug <> ''
              GROUP BY article_slug"
         )->fetchAll();
@@ -71,7 +71,7 @@ class ContentRepository
      */
     public function categoryBySlug(string $slug): ?array
     {
-        $statement = $this->db->prepare('SELECT id, name, slug, description FROM categories WHERE slug = :slug LIMIT 1');
+        $statement = $this->db->prepare('SELECT id, name, slug, description FROM ' . db_table('categories') . ' WHERE slug = :slug LIMIT 1');
         $statement->execute(['slug' => $slug]);
         $row = $statement->fetch();
         return $row ?: null;
@@ -83,7 +83,7 @@ class ContentRepository
     public function articlesByCategory(string $categorySlug, bool $publishedOnly = true): array
     {
         $sql = 'SELECT a.*, c.name AS category, c.slug AS category_slug
-                FROM articles a LEFT JOIN categories c ON c.id = a.category_id
+                FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id
                 WHERE c.slug = :slug';
         if ($publishedOnly) {
             $sql .= ' AND a.is_published = 1';
@@ -95,13 +95,13 @@ class ContentRepository
 
     public function saveArticle(array $article)
     {
-        $category = $this->db->prepare('SELECT id FROM categories WHERE name = :name');
+        $category = $this->db->prepare('SELECT id FROM ' . db_table('categories') . ' WHERE name = :name');
         $category->execute(['name' => $article['category']]);
         $categoryId = $category->fetchColumn();
         if (!$categoryId) {
             // Автогенерация slug рубрики из названия (кириллица транслитерируется)
             $slug = \slugify($article['category']);
-            $insertCategory = $this->db->prepare('INSERT INTO categories (name, slug) VALUES (:name, :slug)');
+            $insertCategory = $this->db->prepare('INSERT INTO ' . db_table('categories') . ' (name, slug) VALUES (:name, :slug)');
             $insertCategory->execute([
                 'name' => $article['category'],
                 'slug' => $slug !== '' ? $slug : substr(hash('sha256', $article['category']), 0, 32),
@@ -110,7 +110,7 @@ class ContentRepository
         }
 
         $statement = $this->db->prepare(
-            'INSERT INTO articles
+            'INSERT INTO ' . db_table('articles') . '
                 (id, slug, title, description, body_html, category_id, author, published_at, icon, cover_path, tags_json, is_published)
              VALUES
                 (:id, :slug, :title, :description, :body_html, :category_id, :author, :published_at, :icon, :cover_path, :tags_json, :is_published)
@@ -139,7 +139,7 @@ class ContentRepository
 
     public function deleteArticle($id)
     {
-        $statement = $this->db->prepare('DELETE FROM articles WHERE id = :id');
+        $statement = $this->db->prepare('DELETE FROM ' . db_table('articles') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         return $statement->rowCount() > 0;
     }
@@ -147,13 +147,13 @@ class ContentRepository
     public function projects($publishedOnly = false)
     {
         $where = $publishedOnly ? 'WHERE is_published = 1' : '';
-        $statement = $this->db->query('SELECT * FROM portfolio_projects ' . $where . ' ORDER BY created_at DESC');
+        $statement = $this->db->query('SELECT * FROM ' . db_table('portfolio_projects') . ' ' . $where . ' ORDER BY created_at DESC');
         return array_map([$this, 'projectRow'], $statement->fetchAll());
     }
 
     public function projectById($id)
     {
-        $statement = $this->db->prepare('SELECT * FROM portfolio_projects WHERE id = :id');
+        $statement = $this->db->prepare('SELECT * FROM ' . db_table('portfolio_projects') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         $row = $statement->fetch();
         return $row ? $this->projectRow($row) : null;
@@ -161,7 +161,7 @@ class ContentRepository
 
     public function projectBySlug($slug, $publishedOnly = true)
     {
-        $sql = 'SELECT * FROM portfolio_projects WHERE slug = :slug' . ($publishedOnly ? ' AND is_published = 1' : '');
+        $sql = 'SELECT * FROM ' . db_table('portfolio_projects') . ' WHERE slug = :slug' . ($publishedOnly ? ' AND is_published = 1' : '');
         $statement = $this->db->prepare($sql);
         $statement->execute(['slug' => $slug]);
         $row = $statement->fetch();
@@ -171,7 +171,7 @@ class ContentRepository
     public function saveProject(array $project)
     {
         $statement = $this->db->prepare(
-            'INSERT INTO portfolio_projects
+            'INSERT INTO ' . db_table('portfolio_projects') . '
                 (id, slug, title, technologies, icon, description, task_json, solution, client, project_year, duration, stack, results_json, screenshots_json, is_published)
              VALUES
                 (:id, :slug, :title, :technologies, :icon, :description, :task_json, :solution, :client, :project_year, :duration, :stack, :results_json, :screenshots_json, :is_published)
@@ -212,13 +212,13 @@ class ContentRepository
      */
     private function saveProjectGallery($projectId, array $items)
     {
-        $delete = $this->db->prepare('DELETE FROM project_gallery WHERE project_id = :id');
+        $delete = $this->db->prepare('DELETE FROM ' . db_table('project_gallery') . ' WHERE project_id = :id');
         $delete->execute(['id' => $projectId]);
         if (!$items) {
             return;
         }
         $insert = $this->db->prepare(
-            'INSERT INTO project_gallery (project_id, path, description, sort_order) VALUES (:id, :path, :description, :sort)'
+            'INSERT INTO ' . db_table('project_gallery') . ' (project_id, path, description, sort_order) VALUES (:id, :path, :description, :sort)'
         );
         foreach (array_values($items) as $index => $item) {
             $insert->execute([
@@ -237,13 +237,13 @@ class ContentRepository
      */
     private function saveProjectInfoItems($projectId, array $items)
     {
-        $delete = $this->db->prepare('DELETE FROM project_info_items WHERE project_id = :id');
+        $delete = $this->db->prepare('DELETE FROM ' . db_table('project_info_items') . ' WHERE project_id = :id');
         $delete->execute(['id' => $projectId]);
         if (!$items) {
             return;
         }
         $insert = $this->db->prepare(
-            'INSERT INTO project_info_items (project_id, kind, name, value, file_path, sort_order)
+            'INSERT INTO ' . db_table('project_info_items') . ' (project_id, kind, name, value, file_path, sort_order)
              VALUES (:id, :kind, :name, :value, :filePath, :sort)'
         );
         foreach (array_values($items) as $index => $item) {
@@ -260,11 +260,11 @@ class ContentRepository
 
     public function deleteProject($id)
     {
-        $statement = $this->db->prepare('DELETE FROM portfolio_projects WHERE id = :id');
+        $statement = $this->db->prepare('DELETE FROM ' . db_table('portfolio_projects') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
-        $galleryDelete = $this->db->prepare('DELETE FROM project_gallery WHERE project_id = :id');
+        $galleryDelete = $this->db->prepare('DELETE FROM ' . db_table('project_gallery') . ' WHERE project_id = :id');
         $galleryDelete->execute(['id' => $id]);
-        $infoDelete = $this->db->prepare('DELETE FROM project_info_items WHERE project_id = :id');
+        $infoDelete = $this->db->prepare('DELETE FROM ' . db_table('project_info_items') . ' WHERE project_id = :id');
         $infoDelete->execute(['id' => $id]);
         return $statement->rowCount() > 0;
     }
@@ -273,7 +273,7 @@ class ContentRepository
     {
         return $this->db->query(
             'SELECT c.id, c.name, c.slug, c.description, COUNT(a.id) AS articles
-             FROM categories c LEFT JOIN articles a ON a.category_id = c.id
+             FROM ' . db_table('categories') . ' c LEFT JOIN ' . db_table('articles') . ' a ON a.category_id = c.id
              GROUP BY c.id ORDER BY c.name'
         )->fetchAll();
     }
@@ -281,36 +281,36 @@ class ContentRepository
     public function saveCategory($id, $name, $slug, $description)
     {
         if ($id === null) {
-            $statement = $this->db->prepare('INSERT INTO categories (name, slug, description) VALUES (:name, :slug, :description)');
+            $statement = $this->db->prepare('INSERT INTO ' . db_table('categories') . ' (name, slug, description) VALUES (:name, :slug, :description)');
             $statement->execute(['name' => $name, 'slug' => $slug, 'description' => $description]);
             return (int) $this->db->lastInsertId();
         }
-        $statement = $this->db->prepare('UPDATE categories SET name = :name, slug = :slug, description = :description WHERE id = :id');
+        $statement = $this->db->prepare('UPDATE ' . db_table('categories') . ' SET name = :name, slug = :slug, description = :description WHERE id = :id');
         $statement->execute(['name' => $name, 'slug' => $slug, 'description' => $description, 'id' => $id]);
         if ($statement->rowCount() > 0) {
             return (int) $id;
         }
-        $exists = $this->db->prepare('SELECT 1 FROM categories WHERE id = :id');
+        $exists = $this->db->prepare('SELECT 1 FROM ' . db_table('categories') . ' WHERE id = :id');
         $exists->execute(['id' => $id]);
         return $exists->fetchColumn() !== false ? (int) $id : false;
     }
 
     public function deleteCategory($id)
     {
-        $statement = $this->db->prepare('DELETE FROM categories WHERE id = :id');
+        $statement = $this->db->prepare('DELETE FROM ' . db_table('categories') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         return $statement->rowCount() > 0;
     }
 
     public function orderList()
     {
-        $rows = $this->db->query('SELECT * FROM orders ORDER BY order_date DESC, id DESC')->fetchAll();
+        $rows = $this->db->query('SELECT * FROM ' . db_table('orders') . ' ORDER BY order_date DESC, id DESC')->fetchAll();
         return array_map([$this, 'orderRow'], $rows);
     }
 
     public function orderById($id)
     {
-        $statement = $this->db->prepare('SELECT * FROM orders WHERE id = :id');
+        $statement = $this->db->prepare('SELECT * FROM ' . db_table('orders') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         $row = $statement->fetch();
         return $row ? $this->orderRow($row) : null;
@@ -320,7 +320,7 @@ class ContentRepository
     {
         $details = $data;
         $statement = $this->db->prepare(
-            'UPDATE orders SET client_name = :client_name, email = :email, phone = :phone,
+            'UPDATE ' . db_table('orders') . ' SET client_name = :client_name, email = :email, phone = :phone,
                 project_type = :project_type, budget = :budget, deadline = :deadline,
                 order_date = :order_date, status = :status, details_json = :details_json
              WHERE id = :id'
@@ -342,7 +342,7 @@ class ContentRepository
 
     public function deleteOrder($id)
     {
-        $statement = $this->db->prepare('DELETE FROM orders WHERE id = :id');
+        $statement = $this->db->prepare('DELETE FROM ' . db_table('orders') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         return $statement->rowCount() > 0;
     }
@@ -370,7 +370,7 @@ class ContentRepository
             'calculatorDetails' => $data['calculatorDetails'],
         ];
         $statement = $this->db->prepare(
-            'INSERT INTO orders (client_name, email, phone, project_type, budget, deadline, order_date, status, details_json)
+            'INSERT INTO ' . db_table('orders') . ' (client_name, email, phone, project_type, budget, deadline, order_date, status, details_json)
              VALUES (:client_name, :email, :phone, :project_type, :budget, :deadline, :order_date, :status, :details_json)'
         );
         $statement->execute([
@@ -390,7 +390,7 @@ class ContentRepository
     public function createMessage(array $message)
     {
         $statement = $this->db->prepare(
-            'INSERT INTO messages (message_type, name, email, phone, subject, body, article_slug, parent_id, is_staff)
+            'INSERT INTO ' . db_table('messages') . ' (message_type, name, email, phone, subject, body, article_slug, parent_id, is_staff)
              VALUES (:message_type, :name, :email, :phone, :subject, :body, :article_slug, :parent_id, :is_staff)'
         );
         $statement->execute([
@@ -409,7 +409,7 @@ class ContentRepository
 
     public function messages()
     {
-        return $this->db->query('SELECT * FROM messages ORDER BY created_at DESC, id DESC')->fetchAll();
+        return $this->db->query('SELECT * FROM ' . db_table('messages') . ' ORDER BY created_at DESC, id DESC')->fetchAll();
     }
 
     /**
@@ -417,7 +417,7 @@ class ContentRepository
      */
     public function messageById(int $id): ?array
     {
-        $statement = $this->db->prepare('SELECT * FROM messages WHERE id = :id LIMIT 1');
+        $statement = $this->db->prepare('SELECT * FROM ' . db_table('messages') . ' WHERE id = :id LIMIT 1');
         $statement->execute(['id' => $id]);
         $row = $statement->fetch();
         return $row ?: null;
@@ -437,7 +437,7 @@ class ContentRepository
         }
 
         $statement = $this->db->prepare(
-            'INSERT INTO messages (message_type, name, email, phone, subject, body, article_slug, parent_id, is_staff, is_approved, is_read)
+            'INSERT INTO ' . db_table('messages') . ' (message_type, name, email, phone, subject, body, article_slug, parent_id, is_staff, is_approved, is_read)
              VALUES (:message_type, :name, :email, :phone, :subject, :body, :article_slug, :parent_id, 1, 1, 1)'
         );
         $statement->execute([
@@ -462,7 +462,7 @@ class ContentRepository
     public function commentsByArticle(string $slug): array
     {
         $statement = $this->db->prepare(
-            "SELECT id, parent_id, is_staff, name, body, created_at FROM messages
+            "SELECT id, parent_id, is_staff, name, body, created_at FROM " . db_table('messages') . "
              WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1
              ORDER BY created_at ASC, id ASC"
         );
@@ -479,7 +479,7 @@ class ContentRepository
     public function commentsCount(string $slug): int
     {
         $statement = $this->db->prepare(
-            "SELECT COUNT(*) FROM messages
+            "SELECT COUNT(*) FROM " . db_table('messages') . "
              WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1"
         );
         $statement->execute(['slug' => $slug]);
@@ -488,7 +488,7 @@ class ContentRepository
 
     public function updateMessage($id, array $data)
     {
-        $statement = $this->db->prepare('UPDATE messages SET is_read = :is_read, is_approved = :is_approved WHERE id = :id');
+        $statement = $this->db->prepare('UPDATE ' . db_table('messages') . ' SET is_read = :is_read, is_approved = :is_approved WHERE id = :id');
         $statement->execute([
             'is_read' => !empty($data['isRead']) ? 1 : 0,
             'is_approved' => !empty($data['isApproved']) ? 1 : 0,
@@ -497,14 +497,14 @@ class ContentRepository
         if ($statement->rowCount() > 0) {
             return true;
         }
-        $exists = $this->db->prepare('SELECT 1 FROM messages WHERE id = :id');
+        $exists = $this->db->prepare('SELECT 1 FROM ' . db_table('messages') . ' WHERE id = :id');
         $exists->execute(['id' => $id]);
         return $exists->fetchColumn() !== false;
     }
 
     public function deleteMessage($id)
     {
-        $statement = $this->db->prepare('DELETE FROM messages WHERE id = :id');
+        $statement = $this->db->prepare('DELETE FROM ' . db_table('messages') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         return $statement->rowCount() > 0;
     }
@@ -539,7 +539,7 @@ class ContentRepository
     public function projectGalleryItems($projectId)
     {
         $statement = $this->db->prepare(
-            'SELECT path, description FROM project_gallery WHERE project_id = :id ORDER BY sort_order, id'
+            'SELECT path, description FROM ' . db_table('project_gallery') . ' WHERE project_id = :id ORDER BY sort_order, id'
         );
         $statement->execute(['id' => $projectId]);
         return $statement->fetchAll();
@@ -552,7 +552,7 @@ class ContentRepository
     public function projectInfoItems($projectId)
     {
         $statement = $this->db->prepare(
-            'SELECT kind, name, value, file_path FROM project_info_items WHERE project_id = :id ORDER BY sort_order, id'
+            'SELECT kind, name, value, file_path FROM ' . db_table('project_info_items') . ' WHERE project_id = :id ORDER BY sort_order, id'
         );
         $statement->execute(['id' => $projectId]);
         return $statement->fetchAll();

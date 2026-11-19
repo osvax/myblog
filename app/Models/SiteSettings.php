@@ -14,7 +14,7 @@ class SiteSettings
     public function all(): array
     {
         $db = Database::connection();
-        $stmt = $db->query("SELECT * FROM site_settings ORDER BY tab_group, display_order");
+        $stmt = $db->query("SELECT * FROM " . db_table('site_settings') . " ORDER BY tab_group, display_order");
         $rows = $stmt->fetchAll();
 
         $result = [];
@@ -33,7 +33,7 @@ class SiteSettings
     public function grouped(): array
     {
         $db = Database::connection();
-        $stmt = $db->query("SELECT * FROM site_settings ORDER BY tab_group, display_order");
+        $stmt = $db->query("SELECT * FROM " . db_table('site_settings') . " ORDER BY tab_group, display_order");
         $rows = $stmt->fetchAll();
 
         $result = [];
@@ -62,7 +62,7 @@ class SiteSettings
     public function get(string $key, $default = null)
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT setting_value, setting_type FROM site_settings WHERE setting_key = :key LIMIT 1");
+        $stmt = $db->prepare("SELECT setting_value, setting_type FROM " . db_table('site_settings') . " WHERE setting_key = :key LIMIT 1");
         $stmt->execute([':key' => $key]);
         $row = $stmt->fetch();
 
@@ -87,7 +87,7 @@ class SiteSettings
         try {
             foreach ($settings as $key => $value) {
                 $stmt = $db->prepare(
-                    "INSERT INTO site_settings (setting_key, setting_value, setting_type, updated_at)
+                    "INSERT INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, updated_at)
                      VALUES (:key, :value, 'text', NOW())
                      ON DUPLICATE KEY UPDATE setting_value = :value2, setting_type = 'text', updated_at = NOW()"
                 );
@@ -120,7 +120,7 @@ class SiteSettings
         try {
             foreach ($settings as $key => $value) {
                 // Определяем тип поля
-                $stmt = $db->prepare("SELECT setting_type FROM site_settings WHERE setting_key = :key LIMIT 1");
+                $stmt = $db->prepare("SELECT setting_type FROM " . db_table('site_settings') . " WHERE setting_key = :key LIMIT 1");
                 $stmt->execute([':key' => $key]);
                 $row = $stmt->fetch();
 
@@ -130,7 +130,7 @@ class SiteSettings
                 $formattedValue = $this->formatValue($value, $type);
 
                 $stmt = $db->prepare(
-                    "INSERT INTO site_settings (setting_key, setting_value, setting_type, updated_at)
+                    "INSERT INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, updated_at)
                      VALUES (:key, :value, :type, NOW())
                      ON DUPLICATE KEY UPDATE setting_value = :value2, setting_type = :type2, updated_at = NOW()"
                 );
@@ -188,19 +188,19 @@ class SiteSettings
         string $placeholder = ''
     ): array {
         // Проверяем уникальность
-        $stmt = $this->db->prepare("SELECT id FROM site_settings WHERE setting_key = :key LIMIT 1");
+        $stmt = $this->db->prepare("SELECT id FROM " . db_table('site_settings') . " WHERE setting_key = :key LIMIT 1");
         $stmt->execute([':key' => $key]);
         if ($stmt->fetch()) {
             return ['success' => false, 'error' => 'Поле с таким именем уже существует'];
         }
 
         // Получаем максимальный порядок для группы
-        $stmt = $this->db->prepare("SELECT COALESCE(MAX(display_order), 0) + 1 AS max_order FROM site_settings WHERE tab_group = :group");
+        $stmt = $this->db->prepare("SELECT COALESCE(MAX(display_order), 0) + 1 AS max_order FROM " . db_table('site_settings') . " WHERE tab_group = :group");
         $stmt->execute([':group' => $tabGroup]);
         $order = (int) $stmt->fetch()['max_order'];
 
         $stmt = $this->db->prepare(
-            "INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
+            "INSERT INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
              VALUES (:key, :value, :type, :group, :order, :placeholder)"
         );
         $stmt->execute([
@@ -223,7 +223,7 @@ class SiteSettings
      */
     public function deleteCustomField(string $key): array
     {
-        $stmt = $this->db->prepare("DELETE FROM site_settings WHERE setting_key = :key");
+        $stmt = $this->db->prepare("DELETE FROM " . db_table('site_settings') . " WHERE setting_key = :key");
         $stmt->execute([':key' => $key]);
 
         if ($stmt->rowCount() === 0) {

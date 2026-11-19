@@ -9,7 +9,7 @@ echo "=== Creating site_settings table ===\n";
 
 // Drop table if exists
 try {
-    $db->exec("DROP TABLE IF EXISTS site_settings");
+    $db->exec("DROP TABLE IF EXISTS " . db_table('site_settings') . "");
     echo "  Old table dropped\n";
 } catch (\Exception $e) {
     // Ignore
@@ -26,7 +26,7 @@ if ($sql) {
 
 // Verify table exists
 try {
-    $stmt = $db->query("SHOW COLUMNS FROM site_settings");
+    $stmt = $db->query("SHOW COLUMNS FROM " . db_table('site_settings') . "");
     $cols = $stmt->fetchAll();
     echo "  Columns: " . count($cols) . "\n";
     foreach ($cols as $col) {
@@ -110,7 +110,7 @@ $defaults = [
 ];
 
 $stmt = $db->prepare(
-    "INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder, options)
+    "INSERT INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, tab_group, display_order, placeholder, options)
      VALUES (:key, :value, :type, :group, :order, :placeholder, :options)
      ON DUPLICATE KEY UPDATE
          setting_value = VALUES(setting_value),

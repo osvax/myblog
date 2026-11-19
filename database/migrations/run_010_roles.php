@@ -12,7 +12,7 @@ $db = Database::connection();
 
 echo "=== Создание таблиц ролей и прав ===\n";
 
-$db->exec('CREATE TABLE IF NOT EXISTS roles (
+$db->exec('CREATE TABLE IF NOT EXISTS ' . db_table('roles') . ' (
     id BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
     role_key VARCHAR(64) NOT NULL,
     name VARCHAR(120) NOT NULL,
@@ -24,19 +24,19 @@ $db->exec('CREATE TABLE IF NOT EXISTS roles (
     UNIQUE KEY uq_roles_key (role_key)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
 
-$db->exec('CREATE TABLE IF NOT EXISTS role_permissions (
+$db->exec('CREATE TABLE IF NOT EXISTS ' . db_table('role_permissions') . ' (
     role_id BIGINT UNSIGNED NOT NULL,
     page_slug VARCHAR(120) NOT NULL,
     PRIMARY KEY (role_id, page_slug),
-    CONSTRAINT fk_role_permissions_role FOREIGN KEY (role_id) REFERENCES roles (id) ON DELETE CASCADE
+    CONSTRAINT fk_role_permissions_role FOREIGN KEY (role_id) REFERENCES ' . db_table('roles') . ' (id) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci');
 echo "  Готово\n";
 
 // Поле role должно позволять произвольные ключи новых ролей.
 echo "=== Расширение users.role ===\n";
-$column = $db->query("SHOW COLUMNS FROM users LIKE 'role'")->fetch();
+$column = $db->query("SHOW COLUMNS FROM " . db_table('users') . " LIKE 'role'")->fetch();
 if ($column && stripos((string) $column['Type'], 'enum') === 0) {
-    $db->exec('ALTER TABLE users MODIFY role VARCHAR(64) NOT NULL DEFAULT "user"');
+    $db->exec('ALTER TABLE ' . db_table('users') . ' MODIFY role VARCHAR(64) NOT NULL DEFAULT "user"');
     echo "  ENUM → VARCHAR(64)\n";
 } else {
     echo "  Уже VARCHAR, пропускаем\n";
@@ -63,10 +63,10 @@ $roles = [
 ];
 
 echo "=== Заполнение стартовых ролей ===\n";
-$findRole = $db->prepare('SELECT id FROM roles WHERE role_key = :key LIMIT 1');
-$insertRole = $db->prepare('INSERT INTO roles (role_key, name, description, is_system) VALUES (:key, :name, :description, :is_system)');
-$clearPerms = $db->prepare('DELETE FROM role_permissions WHERE role_id = :role_id');
-$insertPerm = $db->prepare('INSERT IGNORE INTO role_permissions (role_id, page_slug) VALUES (:role_id, :page_slug)');
+$findRole = $db->prepare('SELECT id FROM ' . db_table('roles') . ' WHERE role_key = :key LIMIT 1');
+$insertRole = $db->prepare('INSERT INTO ' . db_table('roles') . ' (role_key, name, description, is_system) VALUES (:key, :name, :description, :is_system)');
+$clearPerms = $db->prepare('DELETE FROM ' . db_table('role_permissions') . ' WHERE role_id = :role_id');
+$insertPerm = $db->prepare('INSERT IGNORE INTO ' . db_table('role_permissions') . ' (role_id, page_slug) VALUES (:role_id, :page_slug)');
 
 $db->beginTransaction();
 try {

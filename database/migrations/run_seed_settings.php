@@ -8,7 +8,7 @@ require dirname(__DIR__, 2) . '/app/bootstrap.php';
 
 $db = \App\Core\Database::connection();
 
-$count = (int) $db->query('SELECT COUNT(*) FROM site_settings')->fetchColumn();
+$count = (int) $db->query('SELECT COUNT(*) FROM ' . db_table('site_settings') . '')->fetchColumn();
 echo $count > 0
     ? "В таблице site_settings уже {$count} записей. Обновляем...\n"
     : "Заполняем site_settings...\n";
@@ -151,7 +151,7 @@ $defaultsIgnore = [
 ];
 
 $stmt = $db->prepare(
-    "INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
+    "INSERT INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
      VALUES (:key, :value, :type, :group, :order, :placeholder)
      ON DUPLICATE KEY UPDATE
          setting_value = VALUES(setting_value),
@@ -167,7 +167,7 @@ $unchanged = 0;
 $skipped   = 0;
 
 $stmtIgnore = $db->prepare(
-    "INSERT IGNORE INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
+    "INSERT IGNORE INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
      VALUES (:key, :value, :type, :group, :order, :placeholder)"
 );
 

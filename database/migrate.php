@@ -34,16 +34,16 @@ try {
         $categorySlug = mb_strtolower(strtr(mb_strtolower(trim($name)), $translitMap));
         $categorySlug = trim(preg_replace('/[^a-z0-9]+/', '-', $categorySlug), '-');
         $category = $connection->prepare(
-            'INSERT INTO categories (name, slug) VALUES (:name, :slug)
+            'INSERT INTO ' . db_table('categories') . ' (name, slug) VALUES (:name, :slug)
              ON DUPLICATE KEY UPDATE name = VALUES(name)'
         );
         $category->execute(['name' => $name, 'slug' => $categorySlug !== '' ? $categorySlug : hash('sha256', $name)]);
-        $lookup = $connection->prepare('SELECT id FROM categories WHERE name = :name');
+        $lookup = $connection->prepare('SELECT id FROM ' . db_table('categories') . ' WHERE name = :name');
         $lookup->execute(['name' => $name]);
         $categories[$name] = (int) $lookup->fetchColumn();
 
         $insert = $connection->prepare(
-            'INSERT IGNORE INTO articles
+            'INSERT IGNORE INTO ' . db_table('articles') . '
                 (id, slug, title, description, body_html, category_id, author, published_at, icon, is_published)
              VALUES
                 (:id, :slug, :title, :description, NULL, :category_id, :author, :published_at, :icon, 1)'
@@ -62,7 +62,7 @@ try {
 
     foreach ($seed['projects'] as $slug => $project) {
         $insert = $connection->prepare(
-            'INSERT IGNORE INTO portfolio_projects
+            'INSERT IGNORE INTO ' . db_table('portfolio_projects') . '
                 (id, slug, title, technologies, icon, description, is_published)
              VALUES (:id, :slug, :title, :technologies, :icon, :description, 1)'
         );

@@ -83,19 +83,19 @@ class ConsultantController extends Controller
     private function getState(PDO $pdo)
     {
         $users = $pdo->query("SELECT u.id, u.name, u.phone, u.source, u.status, u.created_at, u.updated_at,
-                (SELECT m.message FROM consultant_messages m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessage,
-                (SELECT m.id FROM consultant_messages m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageId,
-                (SELECT m.role FROM consultant_messages m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageRole,
-                (SELECT m.id FROM consultant_messages m WHERE m.user_id = u.id AND m.role = 'user' ORDER BY m.id DESC LIMIT 1) AS lastUserMessageId,
-                (SELECT r.viewed_message_id FROM consultant_message_reads r WHERE r.user_id = u.id AND r.reader_role = 'admin') AS viewedByAdminMessageId,
-                (SELECT r.read_message_id FROM consultant_message_reads r WHERE r.user_id = u.id AND r.reader_role = 'admin') AS readByAdminMessageId,
-                (SELECT r.viewed_message_id FROM consultant_message_reads r WHERE r.user_id = u.id AND r.reader_role = 'user') AS viewedByUserMessageId,
-                (SELECT r.read_message_id FROM consultant_message_reads r WHERE r.user_id = u.id AND r.reader_role = 'user') AS readByUserMessageId,
-                (SELECT t.role FROM consultant_typing t WHERE t.user_id = u.id AND t.role != 'admin' AND t.updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1) AS typingRole
-            FROM consultant_users u ORDER BY u.updated_at DESC LIMIT 200")->fetchAll();
+                (SELECT m.message FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessage,
+                (SELECT m.id FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageId,
+                (SELECT m.role FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageRole,
+                (SELECT m.id FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id AND m.role = 'user' ORDER BY m.id DESC LIMIT 1) AS lastUserMessageId,
+                (SELECT r.viewed_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'admin') AS viewedByAdminMessageId,
+                (SELECT r.read_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'admin') AS readByAdminMessageId,
+                (SELECT r.viewed_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'user') AS viewedByUserMessageId,
+                (SELECT r.read_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'user') AS readByUserMessageId,
+                (SELECT t.role FROM " . db_table('consultant_typing') . " t WHERE t.user_id = u.id AND t.role != 'admin' AND t.updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1) AS typingRole
+            FROM " . db_table('consultant_users') . " u ORDER BY u.updated_at DESC LIMIT 200")->fetchAll();
         $messageQuery = $pdo->query("SELECT m.id, m.user_id AS userId, m.role, m.message AS text, m.created_at AS createdAt
-            FROM consultant_messages m
-            JOIN consultant_users u ON u.id = m.user_id
+            FROM " . db_table('consultant_messages') . " m
+            JOIN " . db_table('consultant_users') . " u ON u.id = m.user_id
             ORDER BY u.updated_at DESC, m.id ASC");
         $messages = [];
         foreach ($messageQuery as $message) {
@@ -126,7 +126,7 @@ class ConsultantController extends Controller
         if ($readerRole === 'user' && !$this->validToken($pdo, $userId, $this->textValue($payload, 'token'))) {
             return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
         }
-        $query = $pdo->prepare('SELECT role FROM consultant_typing
+        $query = $pdo->prepare('SELECT role FROM ' . db_table('consultant_typing') . '
             WHERE user_id = ? AND role != ? AND updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1');
         $query->execute([$userId, $readerRole]);
         $typingRole = $query->fetchColumn();
@@ -157,7 +157,7 @@ class ConsultantController extends Controller
         if (isset($settings['enabled'])) {
             $settings['enabled'] = filter_var($settings['enabled'], FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
         }
-        $statement = $pdo->prepare('INSERT INTO consultant_settings (setting_key, setting_value) VALUES (?, ?)
+        $statement = $pdo->prepare('INSERT INTO ' . db_table('consultant_settings') . ' (setting_key, setting_value) VALUES (?, ?)
             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
         foreach ($settings as $key => $value) {
             if (!is_scalar($value)) {
@@ -172,7 +172,7 @@ class ConsultantController extends Controller
     {
         try {
             $pdo->beginTransaction();
-            $delete = $pdo->prepare("DELETE FROM consultant_users WHERE status = 'answered'");
+            $delete = $pdo->prepare("DELETE FROM " . db_table('consultant_users') . " WHERE status = 'answered'");
             $delete->execute();
             $deletedCount = $delete->rowCount();
             $pdo->commit();
@@ -192,10 +192,10 @@ class ConsultantController extends Controller
         if (!$this->validUserId($userId)) {
             return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
         }
-        $close = $pdo->prepare("UPDATE consultant_users SET status = 'closed', updated_at = ? WHERE id = ? AND status != 'closed'");
+        $close = $pdo->prepare("UPDATE " . db_table('consultant_users') . " SET status = 'closed', updated_at = ? WHERE id = ? AND status != 'closed'");
         $close->execute([gmdate('Y-m-d H:i:s'), $userId]);
         if ($close->rowCount() === 0) {
-            $exists = $pdo->prepare('SELECT status FROM consultant_users WHERE id = ?');
+            $exists = $pdo->prepare('SELECT status FROM ' . db_table('consultant_users') . ' WHERE id = ?');
             $exists->execute([$userId]);
             if ($exists->fetchColumn() === false) {
                 return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
@@ -219,7 +219,7 @@ class ConsultantController extends Controller
             return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
         }
         $messageRole = $readerRole === 'admin' ? 'user' : 'admin';
-        $query = $pdo->prepare('SELECT id FROM consultant_messages WHERE user_id = ? AND role = ? ORDER BY id DESC LIMIT 1');
+        $query = $pdo->prepare('SELECT id FROM ' . db_table('consultant_messages') . ' WHERE user_id = ? AND role = ? ORDER BY id DESC LIMIT 1');
         $query->execute([$userId, $messageRole]);
         $messageId = $query->fetchColumn();
         if ($messageId === false) {
@@ -228,7 +228,7 @@ class ConsultantController extends Controller
         $viewedValue = $level === 'viewed' ? $messageId : null;
         $readValue = $level === 'read' ? $messageId : null;
         // Сохраняем максимальный ID, чтобы более старая вкладка не откатила отметку о прочтении.
-        $statement = $pdo->prepare('INSERT INTO consultant_message_reads
+        $statement = $pdo->prepare('INSERT INTO ' . db_table('consultant_message_reads') . '
                 (user_id, reader_role, viewed_message_id, read_message_id, updated_at)
             VALUES (?, ?, ?, ?, ?)
             ON DUPLICATE KEY UPDATE
@@ -256,7 +256,7 @@ class ConsultantController extends Controller
             return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
         }
         if ($role === 'user') {
-            $query = $pdo->prepare('SELECT token_hash, status FROM consultant_users WHERE id = ?');
+            $query = $pdo->prepare('SELECT token_hash, status FROM ' . db_table('consultant_users') . ' WHERE id = ?');
             $query->execute([$userId]);
             $user = $query->fetch();
             if (!$user || !$this->matchesToken($user['token_hash'], $this->textValue($payload, 'token'))) {
@@ -267,11 +267,11 @@ class ConsultantController extends Controller
             }
         }
         if ($isTyping) {
-            $query = $pdo->prepare('INSERT INTO consultant_typing (user_id, role, updated_at) VALUES (?, ?, ?)
+            $query = $pdo->prepare('INSERT INTO ' . db_table('consultant_typing') . ' (user_id, role, updated_at) VALUES (?, ?, ?)
                 ON DUPLICATE KEY UPDATE updated_at = VALUES(updated_at)');
             $query->execute([$userId, $role, gmdate('Y-m-d H:i:s')]);
         } else {
-            $query = $pdo->prepare('DELETE FROM consultant_typing WHERE user_id = ? AND role = ?');
+            $query = $pdo->prepare('DELETE FROM ' . db_table('consultant_typing') . ' WHERE user_id = ? AND role = ?');
             $query->execute([$userId, $role]);
         }
         return $this->json(['success' => true]);
@@ -297,13 +297,13 @@ class ConsultantController extends Controller
             $now = gmdate('Y-m-d H:i:s');
             $question = $this->censor($question, $settings['censoredWords']);
             $pdo->beginTransaction();
-            $userInsert = $pdo->prepare('INSERT INTO consultant_users (id, token_hash, name, phone, source, status, created_at, updated_at)
+            $userInsert = $pdo->prepare('INSERT INTO ' . db_table('consultant_users') . ' (id, token_hash, name, phone, source, status, created_at, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, ?)');
             $userInsert->execute([
                 $id, hash('sha256', $token), $name, $phone, $this->normalizeText($payload['source'] ?? '', 500),
                 'new', $now, $now,
             ]);
-            $messageInsert = $pdo->prepare('INSERT INTO consultant_messages (user_id, role, message, created_at) VALUES (?, ?, ?, ?)');
+            $messageInsert = $pdo->prepare('INSERT INTO ' . db_table('consultant_messages') . ' (user_id, role, message, created_at) VALUES (?, ?, ?, ?)');
             $messageInsert->execute([$id, 'user', $question, $now]);
             $pdo->commit();
         } catch (\Throwable $error) {
@@ -329,7 +329,7 @@ class ConsultantController extends Controller
         if (!$this->validUserId($userId)) {
             return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
         }
-        $query = $pdo->prepare('SELECT id, token_hash, status FROM consultant_users WHERE id = ?');
+        $query = $pdo->prepare('SELECT id, token_hash, status FROM ' . db_table('consultant_users') . ' WHERE id = ?');
         $query->execute([$userId]);
         $user = $query->fetch();
         $token = $this->textValue($payload, 'token');
@@ -350,9 +350,9 @@ class ConsultantController extends Controller
         $now = gmdate('Y-m-d H:i:s');
         try {
             $pdo->beginTransaction();
-            $insert = $pdo->prepare('INSERT INTO consultant_messages (user_id, role, message, created_at) VALUES (?, ?, ?, ?)');
+            $insert = $pdo->prepare('INSERT INTO ' . db_table('consultant_messages') . ' (user_id, role, message, created_at) VALUES (?, ?, ?, ?)');
             $insert->execute([$userId, $role, $message, $now]);
-            $update = $pdo->prepare('UPDATE consultant_users SET updated_at = ?, status = ? WHERE id = ?');
+            $update = $pdo->prepare('UPDATE ' . db_table('consultant_users') . ' SET updated_at = ?, status = ? WHERE id = ?');
             $update->execute([$now, $role === 'admin' ? 'answered' : 'new', $userId]);
             $pdo->commit();
         } catch (\Throwable $error) {
@@ -372,14 +372,14 @@ class ConsultantController extends Controller
     private function getThread(PDO $pdo, $userId, $status)
     {
         $query = $pdo->prepare('SELECT id, role, message AS text, created_at AS createdAt
-            FROM consultant_messages WHERE user_id = ? ORDER BY id ASC');
+            FROM ' . db_table('consultant_messages') . ' WHERE user_id = ? ORDER BY id ASC');
         $query->execute([$userId]);
         $messages = $query->fetchAll();
         foreach ($messages as &$message) {
             $message['createdAt'] = $this->isoDate($message['createdAt']);
         }
         unset($message);
-        $query = $pdo->prepare('SELECT reader_role, viewed_message_id, read_message_id FROM consultant_message_reads WHERE user_id = ?');
+        $query = $pdo->prepare('SELECT reader_role, viewed_message_id, read_message_id FROM ' . db_table('consultant_message_reads') . ' WHERE user_id = ?');
         $query->execute([$userId]);
         $readStatus = ['admin' => ['viewed' => null, 'read' => null], 'user' => ['viewed' => null, 'read' => null]];
         foreach ($query->fetchAll() as $row) {
@@ -388,7 +388,7 @@ class ConsultantController extends Controller
                 'read' => $row['read_message_id'] === null ? null : (string) $row['read_message_id'],
             ];
         }
-        $query = $pdo->prepare("SELECT role FROM consultant_typing
+        $query = $pdo->prepare("SELECT role FROM " . db_table('consultant_typing') . "
             WHERE user_id = ? AND role = 'admin' AND updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1");
         $query->execute([$userId]);
         $typingRole = $query->fetchColumn();
@@ -404,7 +404,7 @@ class ConsultantController extends Controller
     private function settings(PDO $pdo)
     {
         $settings = $this->defaultSettings();
-        $rows = $pdo->query('SELECT setting_key, setting_value FROM consultant_settings')->fetchAll();
+        $rows = $pdo->query('SELECT setting_key, setting_value FROM ' . db_table('consultant_settings') . '')->fetchAll();
         foreach ($rows as $row) {
             if (!array_key_exists($row['setting_key'], $settings)) {
                 continue;
@@ -465,7 +465,7 @@ class ConsultantController extends Controller
 
     private function validToken(PDO $pdo, $userId, $token)
     {
-        $query = $pdo->prepare('SELECT token_hash FROM consultant_users WHERE id = ?');
+        $query = $pdo->prepare('SELECT token_hash FROM ' . db_table('consultant_users') . ' WHERE id = ?');
         $query->execute([$userId]);
         $hash = $query->fetchColumn();
         return $hash !== false && $this->matchesToken($hash, $token);

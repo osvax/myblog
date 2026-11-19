@@ -8,7 +8,7 @@ class AdminUser
     {
         $db = \App\Core\Database::connection();
 
-        $stmt = $db->prepare("SELECT * FROM users WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 

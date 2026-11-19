@@ -8,7 +8,7 @@ $db = \App\Core\Database::connection();
 echo "=== Creating landing_page_settings table ===\n";
 
 try {
-    $db->exec("DROP TABLE IF EXISTS landing_page_settings");
+    $db->exec("DROP TABLE IF EXISTS " . db_table('landing_page_settings') . "");
     echo "  Old table dropped\n";
 } catch (\Exception $e) {
     // Ignore
@@ -25,7 +25,7 @@ if ($sql) {
 
 // Verify table exists
 try {
-    $stmt = $db->query("SHOW COLUMNS FROM landing_page_settings");
+    $stmt = $db->query("SHOW COLUMNS FROM " . db_table('landing_page_settings') . "");
     $cols = $stmt->fetchAll();
     echo "  Columns: " . count($cols) . "\n";
 } catch (\Exception $e) {
@@ -100,7 +100,7 @@ $defaults = [
 ];
 
 $stmt = $db->prepare(
-    "INSERT INTO landing_page_settings (section, section_key, field_name, field_value, field_type, field_group, display_order, placeholder, options)
+    "INSERT INTO " . db_table('landing_page_settings') . " (section, section_key, field_name, field_value, field_type, field_group, display_order, placeholder, options)
      VALUES (:section, :section_key, :name, :value, :type, :group, :order, :placeholder, :options)
      ON DUPLICATE KEY UPDATE
          field_value = VALUES(field_value),

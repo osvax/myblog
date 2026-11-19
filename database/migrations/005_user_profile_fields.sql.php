@@ -18,10 +18,10 @@ $db = \App\Core\Database::connection();
 
 foreach ($columns as $name => $definition) {
     try {
-        $stmt = $db->query("SHOW COLUMNS FROM users LIKE '{$name}'");
+        $stmt = $db->query("SHOW COLUMNS FROM " . db_table('users') . " LIKE '{$name}'");
         $exists = $stmt->fetch();
         if (!$exists) {
-            $db->query("ALTER TABLE users ADD `{$name}` {$definition}");
+            $db->query("ALTER TABLE " . db_table('users') . " ADD `{$name}` {$definition}");
             echo "Добавлено поле: {$name}\n";
         } else {
             echo "Поле уже существует: {$name}\n";
@@ -39,10 +39,10 @@ $indexes = [
 
 foreach ($indexes as $indexName => $columnName) {
     try {
-        $stmt = $db->query("SHOW INDEX FROM users WHERE Key_name = '{$indexName}'");
+        $stmt = $db->query("SHOW INDEX FROM " . db_table('users') . " WHERE Key_name = '{$indexName}'");
         $exists = $stmt->fetch();
         if (!$exists) {
-            $db->query("ALTER TABLE users ADD INDEX {$indexName} ({$columnName})");
+            $db->query("ALTER TABLE " . db_table('users') . " ADD INDEX {$indexName} ({$columnName})");
             echo "Добавлен индекс: {$indexName}\n";
         }
     } catch (\Exception $e) {

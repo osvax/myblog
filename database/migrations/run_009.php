@@ -8,7 +8,7 @@ $db = \App\Core\Database::connection();
 echo "=== Creating landing_pages table ===\n";
 
 try {
-    $db->exec("DROP TABLE IF EXISTS landing_pages");
+    $db->exec("DROP TABLE IF EXISTS " . db_table('landing_pages') . "");
     echo "  Old table dropped\n";
 } catch (\Exception $e) {
     // Ignore
@@ -24,7 +24,7 @@ if ($sql) {
 }
 
 // Create default home page
-$stmt = $db->prepare("INSERT INTO landing_pages (slug, title, is_active, generated_at) VALUES ('home', 'Главная страница', 1, NOW()) ON DUPLICATE KEY UPDATE title = VALUES(title)");
+$stmt = $db->prepare("INSERT INTO " . db_table('landing_pages') . " (slug, title, is_active, generated_at) VALUES ('home', 'Главная страница', 1, NOW()) ON DUPLICATE KEY UPDATE title = VALUES(title)");
 $stmt->execute();
 
 echo "  Default home page created\n";

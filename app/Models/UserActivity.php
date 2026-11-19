@@ -20,7 +20,7 @@ class UserActivity
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "INSERT INTO user_activities (user_id, page_url, page_title, ip_address, user_agent, visited_at)
+            "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, visited_at)
              VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())"
         );
         return $stmt->execute([
@@ -43,7 +43,7 @@ class UserActivity
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE users SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id"
+            "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id"
         );
         return $stmt->execute([
             ':ip_address' => $ipAddress,
@@ -66,7 +66,7 @@ class UserActivity
 
         $stmt = $db->prepare(
             "SELECT id, page_url, page_title, ip_address, user_agent, visited_at
-             FROM user_activities
+             FROM " . db_table('user_activities') . "
              WHERE user_id = :user_id
              ORDER BY visited_at DESC
              LIMIT :limit OFFSET :offset"
@@ -87,7 +87,7 @@ class UserActivity
     public function getTotalCount(int $userId): int
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT COUNT(*) as count FROM user_activities WHERE user_id = :user_id");
+        $stmt = $db->prepare("SELECT COUNT(*) as count FROM " . db_table('user_activities') . " WHERE user_id = :user_id");
         $stmt->execute([':user_id' => $userId]);
         $result = $stmt->fetch();
         return (int) ($result['count'] ?? 0);
@@ -105,7 +105,7 @@ class UserActivity
         $db = Database::connection();
         $stmt = $db->prepare(
             "SELECT page_url, page_title, COUNT(*) as visits
-             FROM user_activities
+             FROM " . db_table('user_activities') . "
              WHERE user_id = :user_id
              GROUP BY page_url, page_title
              ORDER BY visits DESC

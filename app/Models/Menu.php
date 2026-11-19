@@ -19,7 +19,7 @@ class Menu
         return $db->query(
             'SELECT m.id, m.menu_name, m.title, m.css_class,
                     COUNT(i.id) AS items_count
-             FROM menus m LEFT JOIN menu_items i ON i.menu_id = m.id AND i.parent_id IS NULL
+             FROM ' . db_table('menus') . ' m LEFT JOIN ' . db_table('menu_items') . ' i ON i.menu_id = m.id AND i.parent_id IS NULL
              GROUP BY m.id ORDER BY m.id'
         )->fetchAll();
     }
@@ -27,7 +27,7 @@ class Menu
     public function menuByName(string $name): ?array
     {
         $db = Database::connection();
-        $stmt = $db->prepare('SELECT * FROM menus WHERE menu_name = :name LIMIT 1');
+        $stmt = $db->prepare('SELECT * FROM ' . db_table('menus') . ' WHERE menu_name = :name LIMIT 1');
         $stmt->execute(['name' => $name]);
         $row = $stmt->fetch();
         return $row ?: null;
@@ -39,7 +39,7 @@ class Menu
     public function items(int $menuId, bool $activeOnly = false): array
     {
         $db = Database::connection();
-        $sql = 'SELECT * FROM menu_items WHERE menu_id = :menu_id';
+        $sql = 'SELECT * FROM ' . db_table('menu_items') . ' WHERE menu_id = :menu_id';
         if ($activeOnly) {
             $sql .= ' AND is_active = 1';
         }
@@ -72,7 +72,7 @@ class Menu
     public function itemById(int $id): ?array
     {
         $db = Database::connection();
-        $stmt = $db->prepare('SELECT * FROM menu_items WHERE id = :id LIMIT 1');
+        $stmt = $db->prepare('SELECT * FROM ' . db_table('menu_items') . ' WHERE id = :id LIMIT 1');
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         return $row ?: null;
@@ -102,11 +102,11 @@ class Menu
         }
 
         if ($id <= 0) {
-            $orderStmt = $db->prepare('SELECT COALESCE(MAX(display_order), 0) + 1 FROM menu_items WHERE menu_id = :menu_id');
+            $orderStmt = $db->prepare('SELECT COALESCE(MAX(display_order), 0) + 1 FROM ' . db_table('menu_items') . ' WHERE menu_id = :menu_id');
             $orderStmt->execute(['menu_id' => $menuId]);
             $order = (int) $orderStmt->fetchColumn();
             $stmt = $db->prepare(
-                'INSERT INTO menu_items (menu_id, parent_id, title, url, icon, css_class, display_order, is_active)
+                'INSERT INTO ' . db_table('menu_items') . ' (menu_id, parent_id, title, url, icon, css_class, display_order, is_active)
                  VALUES (:menu_id, :parent_id, :title, :url, :icon, :css_class, :display_order, :is_active)'
             );
             $stmt->execute([
@@ -123,7 +123,7 @@ class Menu
         }
 
         $stmt = $db->prepare(
-            'UPDATE menu_items SET menu_id = :menu_id, parent_id = :parent_id, title = :title, url = :url,
+            'UPDATE ' . db_table('menu_items') . ' SET menu_id = :menu_id, parent_id = :parent_id, title = :title, url = :url,
                     icon = :icon, css_class = :css_class, is_active = :is_active
              WHERE id = :id'
         );
@@ -151,7 +151,7 @@ class Menu
         }
         $db = Database::connection();
         $stmt = $db->prepare(
-            'SELECT id, display_order FROM menu_items
+            'SELECT id, display_order FROM ' . db_table('menu_items') . '
              WHERE menu_id = :menu_id AND ' . ($item['parent_id'] === null ? 'parent_id IS NULL' : 'parent_id = :parent_id') . '
              ORDER BY display_order ASC, id ASC'
         );
@@ -174,7 +174,7 @@ class Menu
         if ($targetIndex < 0 || $targetIndex >= count($siblings)) {
             return ['success' => true];
         }
-        $update = $db->prepare('UPDATE menu_items SET display_order = :order WHERE id = :id');
+        $update = $db->prepare('UPDATE ' . db_table('menu_items') . ' SET display_order = :order WHERE id = :id');
         $update->execute(['order' => (int) $siblings[$targetIndex]['display_order'], 'id' => $id]);
         $update->execute(['order' => (int) $siblings[$index]['display_order'], 'id' => (int) $siblings[$targetIndex]['id']]);
         return ['success' => true];
@@ -183,7 +183,7 @@ class Menu
     public function toggleActive(int $id): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare('UPDATE menu_items SET is_active = 1 - is_active WHERE id = :id');
+        $stmt = $db->prepare('UPDATE ' . db_table('menu_items') . ' SET is_active = 1 - is_active WHERE id = :id');
         $stmt->execute(['id' => $id]);
         return ['success' => $stmt->rowCount() > 0];
     }
@@ -191,7 +191,7 @@ class Menu
     public function deleteItem(int $id): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare('DELETE FROM menu_items WHERE id = :id');
+        $stmt = $db->prepare('DELETE FROM ' . db_table('menu_items') . ' WHERE id = :id');
         $stmt->execute(['id' => $id]);
         return ['success' => $stmt->rowCount() > 0];
     }
@@ -199,12 +199,12 @@ class Menu
     public function createMenu(string $name, string $title, string $cssClass = ''): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare('SELECT id FROM menus WHERE menu_name = :name LIMIT 1');
+        $stmt = $db->prepare('SELECT id FROM ' . db_table('menus') . ' WHERE menu_name = :name LIMIT 1');
         $stmt->execute(['name' => $name]);
         if ($stmt->fetch()) {
             return ['success' => false, 'error' => 'Меню с таким идентификатором уже существует'];
         }
-        $stmt = $db->prepare('INSERT INTO menus (menu_name, title, css_class) VALUES (:name, :title, :css_class)');
+        $stmt = $db->prepare('INSERT INTO ' . db_table('menus') . ' (menu_name, title, css_class) VALUES (:name, :title, :css_class)');
         $stmt->execute(['name' => $name, 'title' => $title, 'css_class' => $cssClass]);
         return ['success' => true, 'id' => (int) $db->lastInsertId()];
     }
@@ -216,7 +216,7 @@ class Menu
         if (!$menu || $menu['menu_name'] === 'main') {
             return ['success' => false, 'error' => 'Главное меню удалить нельзя'];
         }
-        $stmt = $db->prepare('DELETE FROM menus WHERE id = :id');
+        $stmt = $db->prepare('DELETE FROM ' . db_table('menus') . ' WHERE id = :id');
         $stmt->execute(['id' => $menu['id']]);
         return ['success' => $stmt->rowCount() > 0];
     }

@@ -45,7 +45,7 @@ class VisitLogger
             // Обновляем last_visit и last_ip в users
             try {
                 $stmt = $db->prepare(
-                    "UPDATE users SET last_visit = NOW(), last_ip = :ip WHERE id = :id"
+                    "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip WHERE id = :id"
                 );
                 $stmt->execute([
                     ':ip' => $ipAddress,
@@ -58,7 +58,7 @@ class VisitLogger
             // Записываем активность
             try {
                 $stmt = $db->prepare(
-                    "INSERT INTO user_activities (user_id, page_url, page_title, ip_address, user_agent, visited_at)
+                    "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, visited_at)
                      VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())"
                 );
                 $stmt->execute([

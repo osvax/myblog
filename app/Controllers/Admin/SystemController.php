@@ -45,7 +45,7 @@ class SystemController extends Controller
         $db = \App\Core\Database::connection();
         $rows = $db->query(
             'SELECT ua.page_url, ua.page_title, ua.visited_at, COALESCE(u.name, ' . "'Пользователь'" . ') AS name
-             FROM user_activities ua LEFT JOIN users u ON u.id = ua.user_id
+             FROM ' . db_table('user_activities') . ' ua LEFT JOIN ' . db_table('users') . ' u ON u.id = ua.user_id
              ORDER BY ua.visited_at DESC, ua.id DESC LIMIT 8'
         )->fetchAll();
         return $this->json(['success' => true, 'activities' => $rows]);

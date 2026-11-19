@@ -159,7 +159,7 @@ class AdminProfileController extends Controller
         $newPasswordConfirm = isset($input['new_password_confirm']) && is_string($input['new_password_confirm']) ? $input['new_password_confirm'] : '';
 
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT password_hash FROM users WHERE id = :id LIMIT 1");
+        $stmt = $db->prepare("SELECT password_hash FROM " . db_table('users') . " WHERE id = :id LIMIT 1");
         $stmt->execute([':id' => $id]);
         $user = $stmt->fetch();
 
@@ -173,7 +173,7 @@ class AdminProfileController extends Controller
             return $this->json(['success' => false, 'error' => 'Новые пароли не совпадают'], 400);
         }
 
-        $stmt = $db->prepare("UPDATE users SET password_hash = :hash, updated_at = NOW() WHERE id = :id");
+        $stmt = $db->prepare("UPDATE " . db_table('users') . " SET password_hash = :hash, updated_at = NOW() WHERE id = :id");
         $stmt->execute([
             ':hash' => password_hash($newPassword, PASSWORD_DEFAULT),
             ':id' => $id,
@@ -240,7 +240,7 @@ class AdminProfileController extends Controller
 
         // Удаляем старый аватар
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT avatar_path FROM users WHERE id = :id");
+        $stmt = $db->prepare("SELECT avatar_path FROM " . db_table('users') . " WHERE id = :id");
         $stmt->execute([':id' => $id]);
         $user = $stmt->fetch();
         if (!empty($user['avatar_path']) && file_exists(APP_ROOT . '/public' . $user['avatar_path'])) {
@@ -249,7 +249,7 @@ class AdminProfileController extends Controller
 
         // Обновляем путь в БД
         $avatarPath = '/uploads/profile/' . $filename;
-        $stmt = $db->prepare("UPDATE users SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id");
+        $stmt = $db->prepare("UPDATE " . db_table('users') . " SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id");
         $stmt->execute([
             ':avatar_path' => $avatarPath,
             ':id' => $id,

@@ -126,7 +126,7 @@ class UsersController extends Controller
 
         // Email должен быть уникальным (кроме текущего пользователя)
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT id FROM users WHERE email = :email AND id != :id LIMIT 1");
+        $stmt = $db->prepare("SELECT id FROM " . db_table('users') . " WHERE email = :email AND id != :id LIMIT 1");
         $stmt->execute([':email' => $email, ':id' => $id]);
         if ($stmt->fetch()) {
             return $this->json(['success' => false, 'error' => 'Пользователь с таким email уже существует'], 400);
@@ -141,7 +141,7 @@ class UsersController extends Controller
         }
 
         $stmt = $db->prepare(
-            "UPDATE users SET name = :name, email = :email, role = :role, is_active = :is_active, updated_at = NOW()
+            "UPDATE " . db_table('users') . " SET name = :name, email = :email, role = :role, is_active = :is_active, updated_at = NOW()
              WHERE id = :id"
         );
         $stmt->execute([
@@ -183,7 +183,7 @@ class UsersController extends Controller
         }
 
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("DELETE FROM users WHERE id = :id");
+        $stmt = $db->prepare("DELETE FROM " . db_table('users') . " WHERE id = :id");
         $stmt->execute([':id' => $id]);
 
         return $this->json(['success' => true]);
@@ -233,7 +233,7 @@ class UsersController extends Controller
 
         // Роль задаётся при создании (дефолт БД — 'user')
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("UPDATE users SET role = :role, is_active = 1, updated_at = NOW() WHERE id = :id");
+        $stmt = $db->prepare("UPDATE " . db_table('users') . " SET role = :role, is_active = 1, updated_at = NOW() WHERE id = :id");
         $stmt->execute([':role' => $role, ':id' => $result['user_id']]);
 
         return $this->json(['success' => true, 'user_id' => $result['user_id']]);
@@ -297,7 +297,7 @@ class UsersController extends Controller
 
         // Удаляем старый аватар (только из каталога аватаров)
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT avatar_path FROM users WHERE id = :id");
+        $stmt = $db->prepare("SELECT avatar_path FROM " . db_table('users') . " WHERE id = :id");
         $stmt->execute([':id' => $id]);
         $user = $stmt->fetch();
         if (!empty($user['avatar_path'])
@@ -307,7 +307,7 @@ class UsersController extends Controller
         }
 
         $avatarPath = '/uploads/profile/' . $filename;
-        $stmt = $db->prepare("UPDATE users SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id");
+        $stmt = $db->prepare("UPDATE " . db_table('users') . " SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id");
         $stmt->execute([':avatar_path' => $avatarPath, ':id' => $id]);
 
         return $this->json(['success' => true, 'avatar_path' => $avatarPath]);
@@ -347,7 +347,7 @@ class UsersController extends Controller
         }
 
         $stmt = \App\Core\Database::connection()->prepare(
-            "UPDATE users SET password_hash = :password_hash, updated_at = NOW() WHERE id = :id"
+            "UPDATE " . db_table('users') . " SET password_hash = :password_hash, updated_at = NOW() WHERE id = :id"
         );
         $stmt->execute([
             ':password_hash' => password_hash($password, PASSWORD_DEFAULT),

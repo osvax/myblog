@@ -32,7 +32,7 @@ if (strlen($password) < 8) {
 $db = Database::connection();
 
 // Проверяем, не существует ли уже пользователь с таким email
-$stmt = $db->prepare("SELECT id FROM users WHERE email = :email LIMIT 1");
+$stmt = $db->prepare("SELECT id FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
 $stmt->execute([':email' => $email]);
 if ($stmt->fetch()) {
     echo "Ошибка: пользователь с email {$email} уже существует\n";
@@ -42,7 +42,7 @@ if ($stmt->fetch()) {
 // Создаём пользователя
 $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 $stmt = $db->prepare(
-    "INSERT INTO users (email, password_hash, name, role, is_active, created_at, updated_at)
+    "INSERT INTO " . db_table('users') . " (email, password_hash, name, role, is_active, created_at, updated_at)
      VALUES (:email, :password_hash, :name, 'admin', 1, NOW(), NOW())"
 );
 $stmt->execute([
