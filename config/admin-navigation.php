@@ -4,7 +4,10 @@
  * slug — это и ключ права, и имя страницы /admin/<slug>.html.
  */
 return [
-    ['type' => 'link', 'slug' => 'index', 'url' => '/admin/index.html', 'icon' => 'bi-speedometer2', 'label' => 'Дашборд'],
+    ['type' => 'group', 'id' => 'group-dashboard', 'icon' => 'bi-speedometer2', 'label' => 'Дашборд', 'items' => [
+        ['slug' => 'index', 'url' => '/admin/index.html', 'icon' => 'bi-speedometer2', 'label' => 'Дашборд'],
+        ['slug' => 'statistics', 'url' => '/admin/statistics.html', 'icon' => 'bi-graph-up', 'label' => 'Статистика'],
+    ]],
     ['type' => 'group', 'id' => 'group-content', 'icon' => 'bi-collection', 'label' => 'Контент', 'items' => [
         ['slug' => 'blog', 'url' => '/admin/blog.html', 'icon' => 'bi-journal-text', 'label' => 'Блог'],
         ['slug' => 'categories', 'url' => '/admin/categories.html', 'icon' => 'bi-tags', 'label' => 'Рубрики'],

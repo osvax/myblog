@@ -146,6 +146,10 @@ $defaultsIgnore = [
     // === calculator ===
     ['calculatorConfig', json_encode(calculator_default_config(), JSON_UNESCAPED_UNICODE), 'json', 'calculator', 1, 'Конфигурация калькулятора заказа'],
 
+    // === statistics (раздел «Статистика сайта»; управление — на самой странице статистики) ===
+    ['statisticsRetentionDays', '90', 'number', 'statistics', 1, 'Срок хранения посещений (дней), 0 — без ограничения'],
+    ['statisticsAutoClean', '1', 'checkbox', 'statistics', 2, 'Автоочистка записей по сроку хранения'],
+
     // === email (секреты — только пустой дефолт, значение пользователь вводит сам) ===
     ['smtpPassword', '', 'text', 'email', 5, 'Пароль приложения'],
 ];

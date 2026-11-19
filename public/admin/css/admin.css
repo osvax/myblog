@@ -1372,6 +1372,44 @@ body.templates-page .admin-content {
     height: auto;
 }
 
+/* Раздел «Статистика сайта»: контейнеры графиков */
+.statistics-chart {
+    width: 100%;
+    min-height: 240px;
+}
+
+.statistics-chart svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.statistics-donut {
+    width: 180px;
+    max-width: 100%;
+}
+
+.statistics-donut svg {
+    display: block;
+    width: 100%;
+    height: auto;
+}
+
+.stat-legend {
+    max-width: 280px;
+    margin-left: auto;
+    margin-right: auto;
+    text-align: left;
+}
+
+.stat-legend-swatch {
+    display: inline-block;
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex: none;
+}
+
 .dashboard-clock-card {
     background: linear-gradient(145deg, #ffffff 0%, var(--orange-light) 100%);
 }

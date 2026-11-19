@@ -114,6 +114,7 @@ function admin_api_required_section(string $path): string
         '#^/api/admin/categories#' => 'categories',
         '#^/api/admin/orders#' => 'orders',
         '#^/api/admin/messages#' => 'messages',
+        '#^/api/admin/statistics#' => 'statistics',
         '#^/api/admin/landing-page#' => 'landing-pages',
         '#^/api/admin/pages#' => 'landing-pages',
     ];

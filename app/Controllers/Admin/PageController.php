@@ -172,6 +172,13 @@ class PageController extends Controller
             } catch (\Exception $e) {
                 // Таблица может не существовать
             }
+
+            // Автоочистка старых записей статистики (не чаще раза в сутки)
+            try {
+                (new \App\Models\UserActivity())->autoClean();
+            } catch (\Exception $e) {
+                // Не ломаем запись посещения
+            }
         } catch (\Exception $e) {
             // Ничего не делаем при ошибке
         }

@@ -76,6 +76,9 @@ return function (Router $router) {
     $router->delete('/api/admin/messages/{id}', [$content, 'messages']);
     $router->get('/api/admin/system', [$system, 'info']);
     $router->get('/api/admin/dashboard/statistics', [$system, 'statistics']);
+    $router->get('/api/admin/statistics/overview', [$system, 'overview']);
+    $router->get('/api/admin/statistics/traffic', [$system, 'traffic']);
+    $router->post('/api/admin/statistics/clean', [$system, 'clean']);
     $router->get('/api/admin/files', [$files, 'handle']);
     $router->post('/api/admin/files', [$files, 'handle']);
     $router->post('/api/admin/media', [$media, 'upload']);

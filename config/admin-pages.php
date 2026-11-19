@@ -201,6 +201,14 @@ return array (
       1 => 'js/settings.js',
     ),
   ),
+  'statistics' =>
+  array (
+    'title' => 'Статистика сайта',
+    'scripts' =>
+    array (
+      0 => 'js/statistics.js',
+    ),
+  ),
   'custom-fields' =>
   array (
     'title' => 'Пользовательские поля',
