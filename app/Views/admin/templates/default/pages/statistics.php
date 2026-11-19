@@ -28,34 +28,27 @@
 
 <!-- Графики -->
 <div class="row g-4 mb-4">
-    <div class="col-12 col-xl-6">
+    <div class="col-12">
         <section class="card admin-card h-100">
             <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <h2 class="h5 fw-bold mb-0"><i class="bi bi-graph-up me-2"></i>Посещения по дням</h2>
-                <div class="d-flex flex-wrap gap-2">
-                    <div class="btn-group btn-group-sm" role="group" aria-label="Период, дней">
-                        <button type="button" class="btn btn-outline-secondary stat-period-btn" data-period="7">7 дней</button>
-                        <button type="button" class="btn btn-outline-secondary stat-period-btn" data-period="14">14 дней</button>
-                        <button type="button" class="btn btn-outline-secondary stat-period-btn active" data-period="30">30 дней</button>
+                <h2 class="h5 fw-bold mb-0"><i class="bi bi-graph-up me-2"></i>Посещения</h2>
+                <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Группировка">
+                        <button type="button" class="btn btn-outline-secondary stat-gran-btn active" data-gran="day">Дни</button>
+                        <button type="button" class="btn btn-outline-secondary stat-gran-btn" data-gran="week">Недели</button>
+                        <button type="button" class="btn btn-outline-secondary stat-gran-btn" data-gran="month">Месяцы</button>
+                        <button type="button" class="btn btn-outline-secondary stat-gran-btn" data-gran="year">Годы</button>
                     </div>
-                    <button type="button" class="btn btn-outline-secondary btn-sm" id="statDailyResetBtn" hidden title="Сбросить зум"><i class="bi bi-fullscreen"></i></button>
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Способ отображения">
+                        <button type="button" class="btn btn-outline-secondary stat-mode-btn active" data-mode="line" title="Линейный график"><i class="bi bi-graph-up"></i></button>
+                        <button type="button" class="btn btn-outline-secondary stat-mode-btn" data-mode="bar" title="Столбчатый график"><i class="bi bi-bar-chart"></i></button>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="statTimelineResetBtn" hidden title="Сбросить зум"><i class="bi bi-fullscreen"></i></button>
                 </div>
             </div>
             <div class="card-body">
-                <div id="statDailyChart" class="statistics-chart mt-3" role="img" aria-label="Посещения по дням"></div>
-                <p class="small text-muted mt-3 mb-0" id="statDailyChartEmpty" hidden>Посещений за выбранный период пока нет — график появится с первыми визитами.</p>
-            </div>
-        </section>
-    </div>
-    <div class="col-12 col-xl-6">
-        <section class="card admin-card h-100">
-            <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
-                <h2 class="h5 fw-bold mb-0"><i class="bi bi-calendar3 me-2"></i>Посещения по месяцам</h2>
-                <button type="button" class="btn btn-outline-secondary btn-sm" id="statMonthlyResetBtn" hidden title="Сбросить зум"><i class="bi bi-fullscreen"></i></button>
-            </div>
-            <div class="card-body">
-                <div id="statMonthlyChart" class="statistics-chart mt-3" role="img" aria-label="Посещения по месяцам"></div>
-                <p class="small text-muted mt-3 mb-0" id="statMonthlyChartEmpty" hidden>Посещений за выбранный период пока нет — график появится с первыми визитами.</p>
+                <div id="statTimelineChart" class="statistics-chart mt-3" role="img" aria-label="Посещения"></div>
+                <p class="small text-muted mt-3 mb-0" id="statTimelineChartEmpty" hidden>Посещений за выбранный период пока нет — график появится с первыми визитами.</p>
             </div>
         </section>
     </div>

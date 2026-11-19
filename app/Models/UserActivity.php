@@ -450,20 +450,19 @@ class UserActivity
     }
 
     /**
-     * Самая ранняя дата ('day', Y-m-d) или месяц ('month', Y-m) хранимых записей
-     * по включённым разделам. Пустая строка — записей нет.
+     * Минимальное значение группировочного выражения по включённым разделам.
+     * Пустая строка — записей нет.
      *
      * @param string[] $allowed Разделы из allowedSections()
-     * @param string $mode 'day' или 'month'
+     * @param string $expr SQL-выражение (например, "DATE_FORMAT(t0.visited_at, '%Y-%m-%d')")
      */
-    private function firstRangeValue(array $allowed, string $mode): string
+    private function firstRangeValue(array $allowed, string $expr): string
     {
         $db = Database::connection();
         $params = [];
         $condition = self::sectionConditionSql('t0', $allowed, $params);
-        $format = $mode === 'month' ? '%Y-%m' : '%Y-%m-%d';
         $stmt = $db->prepare(
-            "SELECT MIN(DATE_FORMAT(t0.visited_at, '{$format}')) FROM " . db_table('user_activities') . " t0"
+            "SELECT MIN(" . $expr . ") FROM " . db_table('user_activities') . " t0"
             . ($condition !== '' ? ' WHERE ' . $condition : '')
         );
         $stmt->execute($params);
@@ -476,7 +475,7 @@ class UserActivity
      * Учитываются только включённые в статистику разделы.
      *
      * @return array{total: int, lastClean: string, retentionDays: int, autoClean: bool,
-     *               statisticsSections: array, byDate: array, byMonth: array, byYear: array,
+     *               statisticsSections: array, byDate: array, byWeek: array, byMonth: array, byYear: array,
      *               byHour: array, byMinute: array, bySection: array, byBrowser: array}
      */
     public function overview(): array
@@ -494,8 +493,9 @@ class UserActivity
         $total = (int) $totalStmt->fetchColumn();
 
         // По дням: всё хранимое время (от самой ранней записи до сегодня; без данных — последние 30 дней)
+        $dayExpr = "DATE_FORMAT(t0.visited_at, '%Y-%m-%d')";
         $endTs = strtotime(date('Y-m-d'));
-        $firstDay = $this->firstRangeValue($allowed, 'day');
+        $firstDay = $this->firstRangeValue($allowed, $dayExpr);
         if ($firstDay === '' || strtotime($firstDay) > $endTs) {
             $firstDay = date('Y-m-d', strtotime('-29 days'));
         }
@@ -503,14 +503,32 @@ class UserActivity
         for ($ts = strtotime($firstDay); $ts <= $endTs; $ts = strtotime('+1 day', $ts)) {
             $byDate[date('Y-m-d', $ts)] = 0;
         }
-        foreach ($this->groupedCounts("DATE_FORMAT(t0.visited_at, '%Y-%m-%d')", 'd', null, $allowed) as $day => $count) {
+        foreach ($this->groupedCounts($dayExpr, 'd', null, $allowed) as $day => $count) {
             if (isset($byDate[$day])) {
                 $byDate[$day] = $count;
             }
         }
 
+        // По неделям: ключ — понедельник недели (без данных — последние 4 недели)
+        $weekExpr = "DATE_FORMAT(DATE_SUB(t0.visited_at, INTERVAL WEEKDAY(t0.visited_at) DAY), '%Y-%m-%d')";
+        $thisWeekMonday = strtotime(date('Y-m-d', strtotime('monday this week')));
+        $firstWeek = $this->firstRangeValue($allowed, $weekExpr);
+        if ($firstWeek === '' || strtotime($firstWeek) > $thisWeekMonday) {
+            $firstWeek = date('Y-m-d', strtotime('monday this week -3 weeks'));
+        }
+        $byWeek = [];
+        for ($ts = strtotime($firstWeek); $ts <= $thisWeekMonday; $ts = strtotime('+1 week', $ts)) {
+            $byWeek[date('Y-m-d', $ts)] = 0;
+        }
+        foreach ($this->groupedCounts($weekExpr, 'w', null, $allowed) as $week => $count) {
+            if (isset($byWeek[$week])) {
+                $byWeek[$week] = $count;
+            }
+        }
+
         // По месяцам: всё хранимое время (без данных — последние 12 месяцев)
-        $firstMonth = $this->firstRangeValue($allowed, 'month');
+        $monthExpr = "DATE_FORMAT(t0.visited_at, '%Y-%m')";
+        $firstMonth = $this->firstRangeValue($allowed, $monthExpr);
         if ($firstMonth === '' || strtotime($firstMonth . '-01') > strtotime(date('Y-m-01'))) {
             $firstMonth = date('Y-m', strtotime('first day of -11 months'));
         }
@@ -520,18 +538,27 @@ class UserActivity
             $byMonth[date('Y-m', strtotime($cursor))] = 0;
             $cursor = date('Y-m-01', strtotime('+1 month', strtotime($cursor)));
         }
-        foreach ($this->groupedCounts("DATE_FORMAT(t0.visited_at, '%Y-%m')", 'm', null, $allowed) as $month => $count) {
+        foreach ($this->groupedCounts($monthExpr, 'm', null, $allowed) as $month => $count) {
             if (isset($byMonth[$month])) {
                 $byMonth[$month] = $count;
             }
         }
 
-        // По годам — за всё хранимое время
-        $byYear = [];
-        foreach ($this->groupedCounts('CAST(YEAR(t0.visited_at) AS CHAR)', 'y', null, $allowed) as $year => $count) {
-            $byYear[] = ['y' => $year, 'c' => $count];
+        // По годам: всё хранимое время (без данных — текущий год)
+        $firstYear = $this->firstRangeValue($allowed, 'YEAR(t0.visited_at)');
+        if ($firstYear === '' || (int) $firstYear > (int) date('Y')) {
+            $firstYear = (string) date('Y');
         }
-        usort($byYear, static function ($a, $b) { return strcmp($a['y'], $b['y']); });
+        $byYear = [];
+        for ($year = (int) $firstYear; $year <= (int) date('Y'); $year++) {
+            $byYear[(string) $year] = 0;
+        }
+        foreach ($this->groupedCounts('YEAR(t0.visited_at)', 'y', null, $allowed) as $year => $count) {
+            $year = (string) $year;
+            if (isset($byYear[$year])) {
+                $byYear[$year] = $count;
+            }
+        }
 
         $byHour = [];
         for ($h = 0; $h < 24; $h++) {
@@ -576,6 +603,7 @@ class UserActivity
             'autoClean' => (string) $settings->get('statisticsAutoClean', '1') !== '0',
             'statisticsSections' => $allowed,
             'byDate' => $byDate,
+            'byWeek' => $byWeek,
             'byMonth' => $byMonth,
             'byYear' => $byYear,
             'byHour' => $byHour,
