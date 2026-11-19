@@ -167,6 +167,68 @@
             other: { icon: 'bi-globe2', label: 'Браузер' }
         };
 
+        // Фильтры и пагинация трафика: значения читаются из полей формы
+        var trafficPage = 1;
+        var trafficPages = 1;
+        var trafficFilterFields = {
+            date_from: document.getElementById('trafficDateFrom'),
+            date_to: document.getElementById('trafficDateTo'),
+            time_from: document.getElementById('trafficTimeFrom'),
+            time_to: document.getElementById('trafficTimeTo'),
+            browser: document.getElementById('trafficBrowser'),
+            section: document.getElementById('trafficSection')
+        };
+        var trafficPagination = {
+            box: document.getElementById('trafficPagination'),
+            info: document.getElementById('trafficPaginationInfo'),
+            prev: document.getElementById('trafficPrevPageBtn'),
+            next: document.getElementById('trafficNextPageBtn')
+        };
+
+        function trafficQueryString() {
+            var params = [];
+            Object.keys(trafficFilterFields).forEach(function (key) {
+                var value = trafficFilterFields[key].value;
+                if (value) {
+                    params.push(key + '=' + encodeURIComponent(value));
+                }
+            });
+            if (trafficPage > 1) {
+                params.push('page=' + trafficPage);
+            }
+            return '/api/admin/dashboard/statistics' + (params.length ? '?' + params.join('&') : '');
+        }
+
+        // Любое изменение фильтра — сброс на первую страницу
+        function applyTrafficFilter() {
+            trafficPage = 1;
+            loadStatistics();
+        }
+
+        function resetTrafficFilters() {
+            Object.keys(trafficFilterFields).forEach(function (key) {
+                trafficFilterFields[key].value = '';
+            });
+            trafficPage = 1;
+            loadStatistics();
+        }
+
+        function renderTrafficPagination(pagination) {
+            if (!trafficPagination.box || !pagination) return;
+            trafficPages = Math.max(1, parseInt(pagination.pages, 10) || 1);
+            if (trafficPage > trafficPages) {
+                trafficPage = trafficPages;
+            }
+            if (trafficPages <= 1) {
+                trafficPagination.box.hidden = true;
+                return;
+            }
+            trafficPagination.box.hidden = false;
+            trafficPagination.info.textContent = 'Стр. ' + trafficPage + ' из ' + trafficPages;
+            trafficPagination.prev.disabled = trafficPage <= 1;
+            trafficPagination.next.disabled = trafficPage >= trafficPages;
+        }
+
         function detectBrowser(userAgent) {
             var ua = String(userAgent || '');
             // Edge определяется первым — его UA также содержит Chrome
@@ -209,16 +271,35 @@
 
         // Онлайн/сегодня и таблица трафика: первичная загрузка и опрос раз в 30 секунд
         function loadStatistics() {
-            window.AdminApi.get('/api/admin/dashboard/statistics').then(function (data) {
+            window.AdminApi.get(trafficQueryString()).then(function (data) {
                 document.getElementById('dashboardOnlineCount').textContent = String(data.online);
                 document.getElementById('dashboardTodayCount').textContent = String(data.today);
                 renderTraffic(data.traffic || []);
+                renderTrafficPagination(data.pagination);
             }).catch(function (error) {
                 console.error('Не удалось обновить статистику посещений.', error);
                 document.getElementById('dashboardOnlineCount').textContent = '—';
                 document.getElementById('dashboardTodayCount').textContent = '—';
             });
         }
+
+        // ---------- Обработчики фильтров и пагинации трафика ----------
+        Object.keys(trafficFilterFields).forEach(function (key) {
+            trafficFilterFields[key].addEventListener('change', applyTrafficFilter);
+        });
+        document.getElementById('trafficResetBtn').addEventListener('click', resetTrafficFilters);
+        trafficPagination.prev.addEventListener('click', function () {
+            if (trafficPage > 1) {
+                trafficPage--;
+                loadStatistics();
+            }
+        });
+        trafficPagination.next.addEventListener('click', function () {
+            if (trafficPage < trafficPages) {
+                trafficPage++;
+                loadStatistics();
+            }
+        });
 
         updateClock();
         window.setInterval(updateClock, 1000);

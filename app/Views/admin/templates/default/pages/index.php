@@ -90,7 +90,55 @@
     <div class="card-header bg-white">
         <h2 class="h5 fw-bold mb-0"><i class="bi bi-activity me-2"></i>Трафик сайта</h2>
     </div>
-    <div class="card-body p-0">
+    <div class="card-body">
+        <!-- Фильтры -->
+        <div class="row g-2 mb-3 align-items-end">
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-bold mb-1" for="trafficDateFrom">Дата с</label>
+                <input type="date" class="form-control form-control-sm" id="trafficDateFrom">
+            </div>
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-bold mb-1" for="trafficDateTo">Дата по</label>
+                <input type="date" class="form-control form-control-sm" id="trafficDateTo">
+            </div>
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-bold mb-1" for="trafficTimeFrom">Время с</label>
+                <input type="time" class="form-control form-control-sm" id="trafficTimeFrom">
+            </div>
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-bold mb-1" for="trafficTimeTo">Время до</label>
+                <input type="time" class="form-control form-control-sm" id="trafficTimeTo">
+            </div>
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-bold mb-1" for="trafficBrowser">Браузер</label>
+                <select class="form-select form-select-sm" id="trafficBrowser">
+                    <option value="">Все</option>
+                    <option value="chrome">Chrome</option>
+                    <option value="edge">Edge</option>
+                    <option value="firefox">Firefox</option>
+                    <option value="safari">Safari</option>
+                    <option value="opera">Opera</option>
+                    <option value="other">Другой</option>
+                </select>
+            </div>
+            <div class="col-6 col-md-3 col-xl-2">
+                <label class="form-label small fw-bold mb-1" for="trafficSection">Раздел</label>
+                <select class="form-select form-select-sm" id="trafficSection">
+                    <option value="">Все</option>
+                    <option value="home">Главная</option>
+                    <option value="blog">Блог</option>
+                    <option value="portfolio">Портфолио</option>
+                    <option value="auth">Аккаунт</option>
+                    <option value="admin">Админ-панель</option>
+                    <option value="other">Другое</option>
+                </select>
+            </div>
+            <div class="col-12 col-xl-auto">
+                <button type="button" class="btn btn-outline-secondary btn-sm fw-bold" id="trafficResetBtn">
+                    <i class="bi bi-x-circle me-1"></i>Сбросить
+                </button>
+            </div>
+        </div>
         <div class="table-responsive">
             <table class="table table-hover align-middle mb-0">
                 <thead>
@@ -107,6 +155,16 @@
                     <tr><td colspan="6" class="text-center text-muted py-4">Загрузка…</td></tr>
                 </tbody>
             </table>
+        </div>
+        <!-- Пагинация -->
+        <div class="d-flex justify-content-center align-items-center gap-2 p-3 border-top" id="trafficPagination" hidden>
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="trafficPrevPageBtn">
+                <i class="bi bi-chevron-left"></i>
+            </button>
+            <span class="small text-muted" id="trafficPaginationInfo"></span>
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="trafficNextPageBtn">
+                <i class="bi bi-chevron-right"></i>
+            </button>
         </div>
     </div>
 </section>
