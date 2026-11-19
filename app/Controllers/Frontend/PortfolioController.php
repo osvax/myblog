@@ -54,6 +54,15 @@ class PortfolioController extends Controller
         $prev = $currentIndex > 0 ? $allProjects[$slugs[$currentIndex - 1]] : null;
         $next = $currentIndex !== false && $currentIndex < count($slugs) - 1 ? $allProjects[$slugs[$currentIndex + 1]] : null;
 
+        // Остальные опубликованные проекты для карточки «Другие проекты»
+        $otherProjects = [];
+        foreach ($allProjects as $otherSlug => $other) {
+            if ($otherSlug === $slug) {
+                continue;
+            }
+            $otherProjects[] = $other;
+        }
+
         // Для проектов, созданных в админке, отдельного шаблона может не быть —
         // используем универсальный dynamic-project.php
         $template = 'dynamic-project';
@@ -67,6 +76,7 @@ class PortfolioController extends Controller
             'description' => $project['description'],
             'activePage' => 'portfolio',
             'project' => $project,
+            'otherProjects' => $otherProjects,
             'prevProject' => $prev,
             'nextProject' => $next,
             'user' => $user,
