@@ -182,13 +182,18 @@
         var n = values.length;
         var slot = plotWidth / n;
         var barWidth = Math.min(slot * 0.62, 42);
+        var maxValue = Math.max.apply(null, values);
 
         values.forEach(function (value, i) {
             var x = pad.left + slot * i + (slot - barWidth) / 2;
             var barHeight = value / scale.max * plotHeight;
             var y = pad.top + plotHeight - barHeight;
+            // Цвет столбика — от красного (мало) к зелёному (много)
+            var ratio = maxValue > 0 ? value / maxValue : 0;
+            var hue = Math.round(ratio * 120);
             var bar = svgEl('rect', {
-                x: x, y: y, width: barWidth, height: Math.max(barHeight, 0), rx: 3, fill: '#ff8c1a'
+                x: x, y: y, width: barWidth, height: Math.max(barHeight, 0), rx: 3,
+                fill: 'hsl(' + hue + ', 72%, 45%)'
             });
             var title = svgEl('title', {});
             title.textContent = labels[i] + ': ' + fmt(value);
