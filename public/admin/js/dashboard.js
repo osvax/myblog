@@ -283,6 +283,30 @@
             });
         }
 
+        // «Посетители онлайн» — лёгкий опрос каждые 3 секунды (реальное время);
+        // пока вкладка скрыта — не запрашиваем
+        var onlinePollVisible = !document.hidden;
+        function loadOnlineCount() {
+            if (!onlinePollVisible) {
+                return;
+            }
+            window.AdminApi.get('/api/admin/dashboard/online').then(function (data) {
+                var el = document.getElementById('dashboardOnlineCount');
+                if (el) {
+                    el.textContent = String(data.online);
+                }
+            }).catch(function (error) {
+                // Сбой одного опроса не сбрасывает последнее значение
+                console.error('Не удалось обновить посетителей онлайн.', error);
+            });
+        }
+        document.addEventListener('visibilitychange', function () {
+            onlinePollVisible = !document.hidden;
+            if (onlinePollVisible) {
+                loadOnlineCount();
+            }
+        });
+
         // ---------- Обработчики фильтров и пагинации трафика ----------
         Object.keys(trafficFilterFields).forEach(function (key) {
             trafficFilterFields[key].addEventListener('change', applyTrafficFilter);
@@ -308,6 +332,8 @@
         loadOrderCounts();
         loadStatistics();
         window.setInterval(loadStatistics, 30000);
+        // Посетители онлайн — обновляем каждые 3 секунды
+        window.setInterval(loadOnlineCount, 3000);
         window.addEventListener('admin-orders-state-changed', loadOrderCounts);
         window.addEventListener('storage', function (event) {
             if (event.key === 'myblog.admin.orders.state.v1') loadOrderCounts();

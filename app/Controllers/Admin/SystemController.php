@@ -61,6 +61,22 @@ class SystemController extends Controller
     }
 
     /**
+     * «Посетители онлайн» для дашборда — лёгкий эндпоинт для опроса
+     * в реальном времени (каждые 3 секунды, без трафика/фильтров).
+     */
+    public function online($request)
+    {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'GET') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        return $this->json(['success' => true, 'online' => (new \App\Models\UserActivity())->onlineCount()]);
+    }
+
+    /**
      * Срез статистики для графиков раздела «Статистика сайта».
      */
     public function overview($request)

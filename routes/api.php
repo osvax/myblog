@@ -75,6 +75,7 @@ return function (Router $router) {
     $router->delete('/api/admin/messages/{id}', [$content, 'messages']);
     $router->get('/api/admin/system', [$system, 'info']);
     $router->get('/api/admin/dashboard/statistics', [$system, 'statistics']);
+    $router->get('/api/admin/dashboard/online', [$system, 'online']);
     $router->get('/api/admin/statistics/overview', [$system, 'overview']);
     $router->get('/api/admin/statistics/hourly', [$system, 'hourly']);
     $router->get('/api/admin/statistics/traffic', [$system, 'traffic']);
