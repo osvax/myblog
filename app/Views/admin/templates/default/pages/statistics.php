@@ -30,30 +30,43 @@
 <div class="row g-4 mb-4">
     <div class="col-12 col-xl-6">
         <section class="card admin-card h-100">
-            <div class="card-header bg-white">
+            <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <h2 class="h5 fw-bold mb-0"><i class="bi bi-graph-up me-2"></i>Посещения по дням</h2>
+                <div class="d-flex flex-wrap gap-2">
+                    <div class="btn-group btn-group-sm" role="group" aria-label="Период, дней">
+                        <button type="button" class="btn btn-outline-secondary stat-period-btn" data-period="7">7 дней</button>
+                        <button type="button" class="btn btn-outline-secondary stat-period-btn" data-period="14">14 дней</button>
+                        <button type="button" class="btn btn-outline-secondary stat-period-btn active" data-period="30">30 дней</button>
+                    </div>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="statDailyResetBtn" hidden title="Сбросить зум"><i class="bi bi-fullscreen"></i></button>
+                </div>
             </div>
             <div class="card-body">
-                <div id="statDailyChart" class="statistics-chart mt-3" role="img" aria-label="Посещения за последние 30 дней"></div>
-                <p class="small text-muted mt-3 mb-0" id="statDailyChartEmpty" hidden>Посещений за последние 30 дней пока нет — график появится с первыми визитами.</p>
+                <div id="statDailyChart" class="statistics-chart mt-3" role="img" aria-label="Посещения по дням"></div>
+                <p class="small text-muted mt-3 mb-0" id="statDailyChartEmpty" hidden>Посещений за выбранный период пока нет — график появится с первыми визитами.</p>
             </div>
         </section>
     </div>
     <div class="col-12 col-xl-6">
         <section class="card admin-card h-100">
-            <div class="card-header bg-white">
+            <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <h2 class="h5 fw-bold mb-0"><i class="bi bi-calendar3 me-2"></i>Посещения по месяцам</h2>
+                <button type="button" class="btn btn-outline-secondary btn-sm" id="statMonthlyResetBtn" hidden title="Сбросить зум"><i class="bi bi-fullscreen"></i></button>
             </div>
             <div class="card-body">
-                <div id="statMonthlyChart" class="statistics-chart mt-3" role="img" aria-label="Посещения за последние 12 месяцев"></div>
-                <p class="small text-muted mt-3 mb-0" id="statMonthlyChartEmpty" hidden>Посещений за последние 12 месяцев пока нет — график появится с первыми визитами.</p>
+                <div id="statMonthlyChart" class="statistics-chart mt-3" role="img" aria-label="Посещения по месяцам"></div>
+                <p class="small text-muted mt-3 mb-0" id="statMonthlyChartEmpty" hidden>Посещений за выбранный период пока нет — график появится с первыми визитами.</p>
             </div>
         </section>
     </div>
     <div class="col-12 col-xl-6">
         <section class="card admin-card h-100">
-            <div class="card-header bg-white">
-                <h2 class="h5 fw-bold mb-0"><i class="bi bi-clock-history me-2"></i>Активность по часам</h2>
+            <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
+                <h2 class="h5 fw-bold mb-0"><i class="bi bi-clock-history me-2"></i><span id="statHourlyTitle">Активность по часам</span></h2>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="statHourlyBackBtn" hidden><i class="bi bi-arrow-left me-1"></i>По часам</button>
+                    <button type="button" class="btn btn-outline-secondary btn-sm" id="statHourlyResetBtn" hidden title="Сбросить зум"><i class="bi bi-fullscreen"></i></button>
+                </div>
             </div>
             <div class="card-body">
                 <div id="statHourlyChart" class="statistics-chart mt-3" role="img" aria-label="Посещения по часам суток"></div>
@@ -165,6 +178,41 @@
             <button class="btn btn-outline-secondary btn-sm" type="button" id="statTrafficNextPageBtn">
                 <i class="bi bi-chevron-right"></i>
             </button>
+        </div>
+    </div>
+</section>
+
+<!-- Разделы статистики -->
+<section class="card admin-card mb-4">
+    <div class="card-header bg-white">
+        <h2 class="h5 fw-bold mb-0"><i class="bi bi-diagram-3 me-2"></i>Разделы статистики</h2>
+    </div>
+    <div class="card-body">
+        <div class="d-flex flex-wrap gap-4">
+            <div class="form-check">
+                <input class="form-check-input stat-section-check" type="checkbox" id="statSectionHome" value="home" checked>
+                <label class="form-check-label fw-bold" for="statSectionHome">Главная</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input stat-section-check" type="checkbox" id="statSectionBlog" value="blog" checked>
+                <label class="form-check-label fw-bold" for="statSectionBlog">Блог</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input stat-section-check" type="checkbox" id="statSectionPortfolio" value="portfolio" checked>
+                <label class="form-check-label fw-bold" for="statSectionPortfolio">Портфолио</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input stat-section-check" type="checkbox" id="statSectionAuth" value="auth" checked>
+                <label class="form-check-label fw-bold" for="statSectionAuth">Аккаунт</label>
+            </div>
+            <div class="form-check">
+                <input class="form-check-input stat-section-check" type="checkbox" id="statSectionOther" value="other" checked>
+                <label class="form-check-label fw-bold" for="statSectionOther">Другое</label>
+            </div>
+        </div>
+        <div class="d-flex flex-wrap align-items-center gap-2 mt-3">
+            <button type="button" class="btn btn-orange fw-bold" id="statSaveSectionsBtn"><i class="bi bi-save me-1"></i>Сохранить</button>
+            <span class="small text-muted">Отмеченные разделы записываются в статистику, остальные не учитываются в графиках, трафике и счётчиках.</span>
         </div>
     </div>
 </section>

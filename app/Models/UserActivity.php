@@ -7,6 +7,11 @@ use App\Core\Database;
 class UserActivity
 {
     /**
+     * Разделы сайта, используемые в статистике (sectionCaseSql / sectionOfUrl).
+     */
+    public const SECTIONS = ['home', 'blog', 'portfolio', 'auth', 'other'];
+
+    /**
      * Записать посещение страницы пользователем.
      *
      * @param int $userId
@@ -133,14 +138,16 @@ class UserActivity
     }
 
     /**
-     * Выражение CASE: раздел сайта по URL (слоги статей/проектов из публичного контента).
+     * Выражение CASE: раздел сайта по URL.
+     * Статьи — из БД (va_articles, уникальный индекс на slug) + статичный конфиг
+     * как фолбэк; проекты — по префиксу /project- и статичному конфиги.
      */
     public static function sectionCaseSql(string $alias = 't0'): string
     {
         $content = require APP_ROOT . '/config/public-content.php';
         $articleUrls = array_map(
             static function ($slug) { return "'" . $slug . ".html'"; },
-            array_keys(is_array($content) && isset($content['articles']) ? $content['articles'] : [])
+            array_map(static function ($slug) { return '/' . $slug; }, array_keys(is_array($content) && isset($content['articles']) ? $content['articles'] : []))
         );
         $projectUrls = array_map(
             static function ($slug) { return "'" . $slug . ".html'"; },
@@ -149,9 +156,13 @@ class UserActivity
         $articleIn = $articleUrls !== [] ? "{$alias}.page_url IN (" . implode(', ', $articleUrls) . ") OR " : '';
         $projectIn = $projectUrls !== [] ? "{$alias}.page_url IN (" . implode(', ', $projectUrls) . ") OR " : '';
 
+        // slug статьи = page_url без ведущего '/' и суффикса '.html' (односегментный URL)
+        $articleSlugExpr = "LEFT(SUBSTRING({$alias}.page_url, 2), CHAR_LENGTH({$alias}.page_url) - 6)";
+        $dbArticleExists = "({$alias}.page_url LIKE '/%.html' AND {$alias}.page_url NOT LIKE '/%/%' AND EXISTS (SELECT 1 FROM " . db_table('articles') . " a WHERE a.slug = {$articleSlugExpr}))";
+
         return "CASE
             WHEN {$alias}.page_url IN ('/', '/index.html', '/mvc', '/health') THEN 'home'
-            WHEN {$articleIn}{$alias}.page_url = '/blog.html' OR {$alias}.page_url LIKE '/category/%' THEN 'blog'
+            WHEN {$alias}.page_url = '/blog.html' OR {$alias}.page_url LIKE '/category/%' OR {$articleIn}{$dbArticleExists} THEN 'blog'
             WHEN {$projectIn}{$alias}.page_url IN ('/portfolio.html', '/messages.html', '/orders.html', '/settings.html') OR {$alias}.page_url LIKE '/project-%' THEN 'portfolio'
             WHEN {$alias}.page_url IN ('/login.html', '/register.html', '/forgot-password.html', '/profile.html', '/logout.html')
                  OR {$alias}.page_url LIKE '/reset-password%' OR {$alias}.page_url LIKE '/api/auth%' OR {$alias}.page_url LIKE '/api/profile%' THEN 'auth'
@@ -160,25 +171,201 @@ class UserActivity
     }
 
     /**
-     * Посетители онлайн (уникальные IP за последние 15 минут).
+     * Раздел сайта по URL (PHP-версия sectionCaseSql, для фильтрации при записи).
+     */
+    public static function sectionOfUrl(string $url): string
+    {
+        $path = (string) (parse_url($url, PHP_URL_PATH) ?: $url);
+        if ($path !== '/' && substr($path, -1) === '/') {
+            $path = rtrim($path, '/');
+        }
+
+        $content = require APP_ROOT . '/config/public-content.php';
+        $articleFiles = array_map(
+            static function ($slug) { return '/' . $slug . '.html'; },
+            array_keys(is_array($content) && isset($content['articles']) ? $content['articles'] : [])
+        );
+
+        if (in_array($path, ['/', '/index.html', '/mvc', '/health'], true)) {
+            return 'home';
+        }
+        if ($path === '/blog.html' || strpos($path, '/category/') === 0) {
+            return 'blog';
+        }
+
+        // Статья: slug из односегментного /{slug}.html — сначала БД, потом конфиг
+        $slug = '';
+        if (strlen($path) > 6 && substr($path, -5) === '.html' && strpos(substr($path, 1), '/') === false) {
+            $slug = substr($path, 1, -5);
+        }
+        if ($slug !== '') {
+            try {
+                $stmt = Database::connection()->prepare(
+                    "SELECT 1 FROM " . db_table('articles') . " WHERE slug = :slug LIMIT 1"
+                );
+                $stmt->execute([':slug' => $slug]);
+                if ($stmt->fetch()) {
+                    return 'blog';
+                }
+            } catch (\Exception $e) {
+                // Таблица может отсутствовать — продолжаем по конфиги
+            }
+            if (in_array($path, $articleFiles, true)) {
+                return 'blog';
+            }
+        }
+
+        if (in_array($path, ['/portfolio.html', '/messages.html', '/orders.html', '/settings.html'], true)
+            || strpos($path, '/project-') === 0) {
+            return 'portfolio';
+        }
+        if (in_array($path, ['/login.html', '/register.html', '/forgot-password.html', '/profile.html', '/logout.html'], true)
+            || strpos($path, '/reset-password') === 0 || strpos($path, '/api/auth') === 0 || strpos($path, '/api/profile') === 0) {
+            return 'auth';
+        }
+        return 'other';
+    }
+
+    /**
+     * Разделы, по которым ведётся статистика (site_settings.statisticsSections).
+     * Ключ отсутствует или значение невалидно — включены все разделы.
+     *
+     * @return string[]
+     */
+    public static function allowedSections(): array
+    {
+        try {
+            $raw = (string) (new SiteSettings())->get('statisticsSections', '');
+        } catch (\Exception $e) {
+            return self::SECTIONS;
+        }
+        if ($raw === '') {
+            return self::SECTIONS;
+        }
+        $decoded = json_decode($raw, true);
+        if (!is_array($decoded)) {
+            return self::SECTIONS;
+        }
+        return array_values(array_intersect(self::SECTIONS, $decoded));
+    }
+
+    /**
+     * SQL-условие «раздел входит в разрешённый список».
+     * Пустая строка — если включены все разделы.
+     *
+     * @param string $alias Алиас таблицы в запросе
+     * @param string[] $allowed Разделы из allowedSections()
+     * @param array $params Параметры запроса (дополняются)
+     */
+    private static function sectionConditionSql(string $alias, array $allowed, array &$params): string
+    {
+        if (count($allowed) === count(self::SECTIONS)) {
+            return '';
+        }
+        $placeholders = [];
+        foreach ($allowed as $index => $section) {
+            $name = ':stat_section_' . $index;
+            $placeholders[] = $name;
+            $params[$name] = $section;
+        }
+        return '(' . self::sectionCaseSql($alias) . ' IN (' . implode(', ', $placeholders) . '))';
+    }
+
+    /**
+     * SQL-условие «материализованная колонка section входит в разрешённый список»
+     * (для внешних запросов, где CASE уже вычислен во вложенном).
+     * Пустая строка — если включены все разделы.
+     *
+     * @param string $alias Алиас таблицы с колонкой section
+     * @param string[] $allowed Разделы из allowedSections()
+     * @param array $params Параметры запроса (дополняются)
+     */
+    private static function sectionInSql(string $alias, array $allowed, array &$params): string
+    {
+        if (count($allowed) === count(self::SECTIONS)) {
+            return '';
+        }
+        $placeholders = [];
+        foreach ($allowed as $index => $section) {
+            $name = ':stat_section_' . $index;
+            $placeholders[] = $name;
+            $params[$name] = $section;
+        }
+        return "{$alias}.section IN (" . implode(', ', $placeholders) . ')';
+    }
+
+    /**
+     * Счётчики по группам с фильтром включённых разделов.
+     *
+     * @param string $groupExpr Выражение группировки (алиас t0)
+     * @param string $keyAlias Алиас ключа группы
+     * @param string|null $extraWhere Дополнительное условие (алиас t0)
+     * @param string[] $allowed Разделы из allowedSections()
+     * @return array Ключ группы => количество
+     */
+    private function groupedCounts(string $groupExpr, string $keyAlias, ?string $extraWhere, array $allowed): array
+    {
+        $db = Database::connection();
+        $params = [];
+        $where = '1=1';
+        $condition = self::sectionConditionSql('t0', $allowed, $params);
+        if ($condition !== '') {
+            $where .= ' AND ' . $condition;
+        }
+        if ($extraWhere !== null && $extraWhere !== '') {
+            $where .= ' AND (' . $extraWhere . ')';
+        }
+
+        $stmt = $db->prepare(
+            "SELECT {$groupExpr} AS {$keyAlias}, COUNT(*) AS c
+             FROM " . db_table('user_activities') . " t0
+             WHERE {$where}
+             GROUP BY {$keyAlias}"
+        );
+        $stmt->execute($params);
+
+        $result = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $result[(string) $row[$keyAlias]] = (int) $row['c'];
+        }
+        return $result;
+    }
+
+    /**
+     * Посетители онлайн (уникальные IP за последние 15 минут),
+     * только по включённым в статистику разделам.
      */
     public function onlineCount(): int
     {
         $db = Database::connection();
-        return (int) $db->query(
-            'SELECT COUNT(DISTINCT ip_address) FROM ' . db_table('user_activities') . ' WHERE visited_at >= (NOW() - INTERVAL 15 MINUTE)'
-        )->fetchColumn();
+        $params = [];
+        $condition = self::sectionConditionSql('t0', self::allowedSections(), $params);
+        $sql = 'SELECT COUNT(DISTINCT t0.ip_address) FROM ' . db_table('user_activities') . ' t0'
+            . ' WHERE t0.visited_at >= (NOW() - INTERVAL 15 MINUTE)';
+        if ($condition !== '') {
+            $sql .= ' AND ' . $condition;
+        }
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
     }
 
     /**
-     * Посетители за сегодня (уникальные IP).
+     * Посетители за сегодня (уникальные IP), только по включённым разделам.
      */
     public function todayCount(): int
     {
         $db = Database::connection();
-        return (int) $db->query(
-            'SELECT COUNT(DISTINCT ip_address) FROM ' . db_table('user_activities') . ' WHERE visited_at >= CURDATE()'
-        )->fetchColumn();
+        $params = [];
+        $condition = self::sectionConditionSql('t0', self::allowedSections(), $params);
+        $sql = 'SELECT COUNT(DISTINCT t0.ip_address) FROM ' . db_table('user_activities') . ' t0'
+            . ' WHERE t0.visited_at >= CURDATE()';
+        if ($condition !== '') {
+            $sql .= ' AND ' . $condition;
+        }
+        $stmt = $db->prepare($sql);
+        $stmt->execute($params);
+        return (int) $stmt->fetchColumn();
     }
 
     /**
@@ -219,6 +406,11 @@ class UserActivity
             $where[] = 't.section = :section';
             $params[':section'] = $filters['section'];
         }
+        // Только включённые в статистику разделы (по колонке section из вложенного запроса)
+        $allowedIn = self::sectionInSql('t', self::allowedSections(), $params);
+        if ($allowedIn !== '') {
+            $where[] = $allowedIn;
+        }
         $whereSql = $where !== [] ? ' WHERE ' . implode(' AND ', $where) : '';
 
         $subQuery = "SELECT t0.id, t0.ip_address, t0.visited_at, t0.user_agent, t0.referrer, t0.page_url,
@@ -258,62 +450,121 @@ class UserActivity
     }
 
     /**
+     * Самая ранняя дата ('day', Y-m-d) или месяц ('month', Y-m) хранимых записей
+     * по включённым разделам. Пустая строка — записей нет.
+     *
+     * @param string[] $allowed Разделы из allowedSections()
+     * @param string $mode 'day' или 'month'
+     */
+    private function firstRangeValue(array $allowed, string $mode): string
+    {
+        $db = Database::connection();
+        $params = [];
+        $condition = self::sectionConditionSql('t0', $allowed, $params);
+        $format = $mode === 'month' ? '%Y-%m' : '%Y-%m-%d';
+        $stmt = $db->prepare(
+            "SELECT MIN(DATE_FORMAT(t0.visited_at, '{$format}')) FROM " . db_table('user_activities') . " t0"
+            . ($condition !== '' ? ' WHERE ' . $condition : '')
+        );
+        $stmt->execute($params);
+        $value = $stmt->fetchColumn();
+        return $value === null ? '' : (string) $value;
+    }
+
+    /**
      * Срез статистики для графиков раздела «Статистика сайта».
+     * Учитываются только включённые в статистику разделы.
      *
      * @return array{total: int, lastClean: string, retentionDays: int, autoClean: bool,
-     *               byDate: array, byMonth: array, byYear: array,
+     *               statisticsSections: array, byDate: array, byMonth: array, byYear: array,
      *               byHour: array, byMinute: array, bySection: array, byBrowser: array}
      */
     public function overview(): array
     {
         $db = Database::connection();
-        $t = db_table('user_activities');
+        $allowed = self::allowedSections();
 
-        $total = (int) $db->query("SELECT COUNT(*) FROM {$t}")->fetchColumn();
+        $totalParams = [];
+        $totalCondition = self::sectionConditionSql('t0', $allowed, $totalParams);
+        $totalStmt = $db->prepare(
+            "SELECT COUNT(*) FROM " . db_table('user_activities') . " t0"
+            . ($totalCondition !== '' ? ' WHERE ' . $totalCondition : '')
+        );
+        $totalStmt->execute($totalParams);
+        $total = (int) $totalStmt->fetchColumn();
 
-        // По датам: последние 30 дней (пустые дни — нули)
+        // По дням: всё хранимое время (от самой ранней записи до сегодня; без данных — последние 30 дней)
+        $endTs = strtotime(date('Y-m-d'));
+        $firstDay = $this->firstRangeValue($allowed, 'day');
+        if ($firstDay === '' || strtotime($firstDay) > $endTs) {
+            $firstDay = date('Y-m-d', strtotime('-29 days'));
+        }
         $byDate = [];
-        for ($i = 29; $i >= 0; $i--) {
-            $byDate[date('Y-m-d', strtotime("-{$i} days"))] = 0;
+        for ($ts = strtotime($firstDay); $ts <= $endTs; $ts = strtotime('+1 day', $ts)) {
+            $byDate[date('Y-m-d', $ts)] = 0;
         }
-        foreach ($db->query("SELECT DATE_FORMAT(visited_at, '%Y-%m-%d') AS d, COUNT(*) AS c FROM {$t} WHERE visited_at >= (CURDATE() - INTERVAL 29 DAY) GROUP BY d")->fetchAll() as $row) {
-            if (isset($byDate[$row['d']])) {
-                $byDate[$row['d']] = (int) $row['c'];
+        foreach ($this->groupedCounts("DATE_FORMAT(t0.visited_at, '%Y-%m-%d')", 'd', null, $allowed) as $day => $count) {
+            if (isset($byDate[$day])) {
+                $byDate[$day] = $count;
             }
         }
 
-        // По месяцам: последние 12 месяцев
+        // По месяцам: всё хранимое время (без данных — последние 12 месяцев)
+        $firstMonth = $this->firstRangeValue($allowed, 'month');
+        if ($firstMonth === '' || strtotime($firstMonth . '-01') > strtotime(date('Y-m-01'))) {
+            $firstMonth = date('Y-m', strtotime('first day of -11 months'));
+        }
         $byMonth = [];
-        for ($i = 11; $i >= 0; $i--) {
-            $byMonth[date('Y-m', strtotime("first day of -{$i} months"))] = 0;
+        $cursor = $firstMonth . '-01';
+        while (strtotime($cursor) <= strtotime(date('Y-m-01'))) {
+            $byMonth[date('Y-m', strtotime($cursor))] = 0;
+            $cursor = date('Y-m-01', strtotime('+1 month', strtotime($cursor)));
         }
-        foreach ($db->query("SELECT DATE_FORMAT(visited_at, '%Y-%m') AS m, COUNT(*) AS c FROM {$t} WHERE visited_at >= (DATE_SUB(CURDATE(), INTERVAL 11 MONTH) + INTERVAL 1 DAY) GROUP BY m")->fetchAll() as $row) {
-            if (isset($byMonth[$row['m']])) {
-                $byMonth[$row['m']] = (int) $row['c'];
+        foreach ($this->groupedCounts("DATE_FORMAT(t0.visited_at, '%Y-%m')", 'm', null, $allowed) as $month => $count) {
+            if (isset($byMonth[$month])) {
+                $byMonth[$month] = $count;
             }
         }
 
-        // По годам, часам и минутам — за всё хранимое время
-        $byYear = $db->query("SELECT CAST(YEAR(visited_at) AS CHAR) AS y, COUNT(*) AS c FROM {$t} GROUP BY y ORDER BY y")->fetchAll();
+        // По годам — за всё хранимое время
+        $byYear = [];
+        foreach ($this->groupedCounts('CAST(YEAR(t0.visited_at) AS CHAR)', 'y', null, $allowed) as $year => $count) {
+            $byYear[] = ['y' => $year, 'c' => $count];
+        }
+        usort($byYear, static function ($a, $b) { return strcmp($a['y'], $b['y']); });
 
         $byHour = [];
         for ($h = 0; $h < 24; $h++) {
             $byHour[str_pad((string) $h, 2, '0', STR_PAD_LEFT)] = 0;
         }
-        foreach ($db->query("SELECT LPAD(HOUR(visited_at), 2, '0') AS h, COUNT(*) AS c FROM {$t} GROUP BY h ORDER BY h")->fetchAll() as $row) {
-            $byHour[$row['h']] = (int) $row['c'];
+        foreach ($this->groupedCounts("LPAD(HOUR(t0.visited_at), 2, '0')", 'h', null, $allowed) as $hour => $count) {
+            if (isset($byHour[$hour])) {
+                $byHour[$hour] = $count;
+            }
         }
 
         $byMinute = [];
         for ($m = 0; $m < 60; $m++) {
             $byMinute[str_pad((string) $m, 2, '0', STR_PAD_LEFT)] = 0;
         }
-        foreach ($db->query("SELECT LPAD(MINUTE(visited_at), 2, '0') AS m, COUNT(*) AS c FROM {$t} GROUP BY m ORDER BY m")->fetchAll() as $row) {
-            $byMinute[$row['m']] = (int) $row['c'];
+        foreach ($this->groupedCounts("LPAD(MINUTE(t0.visited_at), 2, '0')", 'm', null, $allowed) as $minute => $count) {
+            if (isset($byMinute[$minute])) {
+                $byMinute[$minute] = $count;
+            }
         }
 
-        $bySection = $db->query("SELECT " . self::sectionCaseSql() . " AS section, COUNT(*) AS c FROM {$t} t0 GROUP BY section ORDER BY c DESC")->fetchAll();
-        $byBrowser = $db->query("SELECT " . self::browserCaseSql() . " AS browser, COUNT(*) AS c FROM {$t} t0 GROUP BY browser ORDER BY c DESC")->fetchAll();
+        // По разделам (только включённые) и браузерам
+        $bySection = [];
+        foreach ($this->groupedCounts(self::sectionCaseSql('t0'), 'section', null, $allowed) as $section => $count) {
+            $bySection[] = ['section' => $section, 'c' => $count];
+        }
+        usort($bySection, static function ($a, $b) { return $b['c'] <=> $a['c']; });
+
+        $byBrowser = [];
+        foreach ($this->groupedCounts(self::browserCaseSql('t0'), 'browser', null, $allowed) as $browser => $count) {
+            $byBrowser[] = ['browser' => $browser, 'c' => $count];
+        }
+        usort($byBrowser, static function ($a, $b) { return $b['c'] <=> $a['c']; });
 
         $settings = new SiteSettings();
         $lastClean = (string) $settings->get('statisticsLastCleanAt', '');
@@ -323,6 +574,7 @@ class UserActivity
             'lastClean' => $lastClean,
             'retentionDays' => (int) $settings->get('statisticsRetentionDays', 90),
             'autoClean' => (string) $settings->get('statisticsAutoClean', '1') !== '0',
+            'statisticsSections' => $allowed,
             'byDate' => $byDate,
             'byMonth' => $byMonth,
             'byYear' => $byYear,
@@ -331,6 +583,31 @@ class UserActivity
             'bySection' => $bySection,
             'byBrowser' => $byBrowser,
         ];
+    }
+
+    /**
+     * Посещения по минутам в пределах одного часа (drill-down для графика «по часам»).
+     *
+     * @param int $hour Час суток 0–23
+     * @return array Минута ('00'–'59') => количество посещений
+     */
+    public function hourDetail(int $hour): array
+    {
+        $hour = max(0, min(23, $hour));
+        $byMinute = [];
+        for ($m = 0; $m < 60; $m++) {
+            $byMinute[str_pad((string) $m, 2, '0', STR_PAD_LEFT)] = 0;
+        }
+        foreach ($this->groupedCounts(
+            "LPAD(MINUTE(t0.visited_at), 2, '0')", 'm',
+            'HOUR(t0.visited_at) = ' . $hour,
+            self::allowedSections()
+        ) as $minute => $count) {
+            if (isset($byMinute[$minute])) {
+                $byMinute[$minute] = $count;
+            }
+        }
+        return $byMinute;
     }
 
     /**

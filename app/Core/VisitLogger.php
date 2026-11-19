@@ -58,20 +58,23 @@ class VisitLogger
                 // Поле может не существовать
             }
 
-            // Записываем активность
+            // Записываем активность (только разделы, включённые в статистику)
             try {
-                $stmt = $db->prepare(
-                    "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, referrer, visited_at)
-                     VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, :referrer, NOW())"
-                );
-                $stmt->execute([
-                    ':user_id' => $userId,
-                    ':page_url' => $pageUrl,
-                    ':page_title' => $pageTitle,
-                    ':ip_address' => $ipAddress,
-                    ':user_agent' => $userAgent,
-                    ':referrer' => $referrer,
-                ]);
+                $section = \App\Models\UserActivity::sectionOfUrl($pageUrl);
+                if (in_array($section, \App\Models\UserActivity::allowedSections(), true)) {
+                    $stmt = $db->prepare(
+                        "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, referrer, visited_at)
+                         VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, :referrer, NOW())"
+                    );
+                    $stmt->execute([
+                        ':user_id' => $userId,
+                        ':page_url' => $pageUrl,
+                        ':page_title' => $pageTitle,
+                        ':ip_address' => $ipAddress,
+                        ':user_agent' => $userAgent,
+                        ':referrer' => $referrer,
+                    ]);
+                }
             } catch (\Exception $e) {
                 // Таблица может не существовать
             }

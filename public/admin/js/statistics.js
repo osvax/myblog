@@ -29,6 +29,41 @@
 
     var SVG_NS = 'http://www.w3.org/2000/svg';
 
+    // Единая геометрия временных графиков (viewBox)
+    var CHART = {
+        width: 560,
+        height: 240,
+        pad: { top: 14, right: 10, bottom: 30, left: 48 }
+    };
+
+    // ---------- Состояние графиков (данные целиком + текущий диапазон зума) ----------
+    var chartState = {
+        daily: { keys: [], values: [], start: 0, end: -1 },
+        monthly: { keys: [], values: [], start: 0, end: -1 },
+        hourly: { keys: [], values: [], start: 0, end: -1 },
+        minutes: { keys: [], values: [], start: 0, end: -1 }
+    };
+    var hourDrill = null; // 'HH' — час, развёрнутый по минутам
+
+    // Контейнеры зумируемых графиков: id → { state, rerender }.
+    // У «по часам» state переключается на уровень «по минутам» в renderHourlyChart()
+    var wheelZoomContainers = {
+        statDailyChart: { state: chartState.daily, rerender: renderDailyChart },
+        statMonthlyChart: { state: chartState.monthly, rerender: renderMonthlyChart },
+        statHourlyChart: { state: null, rerender: renderHourlyChart }
+    };
+
+    // Полный диапазон — от первого значения до последнего
+    function isDefaultRange(st) {
+        var n = st.keys.length;
+        return n > 0 && st.start === 0 && st.end === n - 1;
+    }
+
+    function setDefaultRange(st) {
+        st.start = 0;
+        st.end = st.keys.length - 1;
+    }
+
     // ---------- Утилиты ----------
     function fmt(value) {
         return Number(value || 0).toLocaleString('ru-RU');
@@ -99,10 +134,174 @@
         }
     }
 
+    // ---------- Зум графика: выделение участка мышью + клик по точке/столбику ----------
+    function attachBrush(svg, count, onZoom, onClickIndex) {
+        var plotLeft = CHART.pad.left;
+        var plotWidth = CHART.width - CHART.pad.left - CHART.pad.right;
+        var plotRight = plotLeft + plotWidth;
+        var dragging = false;
+        var startX = 0;
+        var selRect = null;
+
+        function viewX(evt) {
+            var box = svg.getBoundingClientRect();
+            if (box.width === 0) {
+                return plotLeft;
+            }
+            var x = (evt.clientX - box.left) / box.width * CHART.width;
+            return Math.max(plotLeft, Math.min(plotRight, x));
+        }
+
+        function indexAt(x) {
+            var idx = Math.floor((x - plotLeft) / (plotWidth / count));
+            return Math.max(0, Math.min(count - 1, idx));
+        }
+
+        svg.style.cursor = 'crosshair';
+        svg.addEventListener('mousedown', function (evt) {
+            if (evt.button !== 0) {
+                return;
+            }
+            evt.preventDefault();
+            dragging = true;
+            startX = viewX(evt);
+            selRect = svgEl('rect', {
+                x: startX, y: CHART.pad.top, width: 0,
+                height: CHART.height - CHART.pad.top - CHART.pad.bottom,
+                fill: 'rgba(255, 140, 26, .18)', stroke: '#ff8c1a', 'stroke-width': 1, 'stroke-dasharray': '4 3'
+            });
+            svg.appendChild(selRect);
+        });
+        svg.addEventListener('mousemove', function (evt) {
+            if (!dragging || !selRect) {
+                return;
+            }
+            var x = viewX(evt);
+            selRect.setAttribute('x', Math.min(startX, x));
+            selRect.setAttribute('width', Math.abs(x - startX));
+        });
+        svg.addEventListener('mouseup', function (evt) {
+            if (!dragging) {
+                return;
+            }
+            dragging = false;
+            var x = viewX(evt);
+            var dx = Math.abs(x - startX);
+            if (selRect) {
+                selRect.remove();
+                selRect = null;
+            }
+            if (dx < 6) {
+                // Короткое нажатие — клик по точке/столбику
+                if (onClickIndex) {
+                    onClickIndex(indexAt(x));
+                }
+                return;
+            }
+            var i1 = indexAt(Math.min(startX, x));
+            var i2 = indexAt(Math.max(startX, x));
+            if (i2 > i1) {
+                if (onZoom) {
+                    onZoom(i1, i2);
+                }
+            } else if (onClickIndex) {
+                onClickIndex(i1);
+            }
+        });
+        svg.addEventListener('mouseleave', function () {
+            if (!dragging) {
+                return;
+            }
+            dragging = false;
+            if (selRect) {
+                selRect.remove();
+                selRect = null;
+            }
+        });
+    }
+
+    // Колёсико мыши с зажатым Ctrl: масштабировать по ширине (крупность — мелкая),
+    // от 1 значения до всего массива; точка под курсором не сдвигается.
+    // Единый слушатель на document (не привязывается к перерисовке SVG):
+    // пока курсор над областью графика, страница не маштабируется и не скроллится
+    // (preventDefault), график не уезжает из вида
+    function bindWheelZoom() {
+        var plotLeft = CHART.pad.left;
+        var plotWidth = CHART.width - CHART.pad.left - CHART.pad.right;
+
+        document.addEventListener('wheel', function (evt) {
+            if (!evt.ctrlKey) {
+                return;
+            }
+            // Ищем контейнер графика под курсором (событие приходит из SVG или его элементов)
+            var node = evt.target;
+            var entry = null;
+            while (node && node.nodeType === 1) {
+                entry = wheelZoomContainers[node.id] || null;
+                if (entry) {
+                    break;
+                }
+                node = node.parentNode;
+            }
+            if (!entry) {
+                return;
+            }
+            evt.preventDefault();
+            var container = node;
+            var svg = container.querySelector('svg');
+            var state = entry.state;
+            if (!svg || !state || typeof entry.rerender !== 'function') {
+                return;
+            }
+            var total = state.keys.length;
+            var visible = state.end - state.start + 1;
+            if (total < 1 || visible < 1) {
+                return;
+            }
+
+            // >0 — приближение (меньше точек на экране), <0 — отдаление
+            var delta = Math.max(-300, Math.min(300, -evt.deltaY));
+            var factor = Math.pow(0.92, delta / 100);
+            var newVisible = Math.round(visible * factor);
+            newVisible = Math.max(1, Math.min(total, newVisible));
+            if (newVisible === visible) {
+                return;
+            }
+
+            var box = svg.getBoundingClientRect();
+            var x = box.width > 0 ? (evt.clientX - box.left) / box.width * CHART.width : CHART.width / 2;
+            var fraction = Math.max(0, Math.min(1, (x - plotLeft) / plotWidth));
+
+            var cursorIdx = state.start + fraction * (visible - 1);
+            var start = Math.round(cursorIdx - fraction * (newVisible - 1));
+            start = Math.max(0, Math.min(total - newVisible, start));
+            state.start = start;
+            state.end = start + newVisible - 1;
+            entry.rerender();
+        }, { passive: false });
+    }
+
     // ---------- График-область: по дням ----------
-    function renderAreaChart(containerId, emptyId, orderedKeys, values) {
-        var container = document.getElementById(containerId);
-        var emptyBox = document.getElementById(emptyId);
+    function renderDailyChart() {
+        var st = chartState.daily;
+        var container = document.getElementById('statDailyChart');
+        var emptyBox = document.getElementById('statDailyChartEmpty');
+        var n = st.keys.length;
+
+        document.getElementById('statDailyResetBtn').hidden = !isDefaultRange(st);
+        // Подсветка активной кнопки периода
+        document.querySelectorAll('.stat-period-btn').forEach(function (btn) {
+            var days = parseInt(btn.getAttribute('data-period'), 10) || 30;
+            btn.classList.toggle('active', n > 0 && st.end === n - 1 && st.start === Math.max(0, n - days));
+        });
+
+        if (n === 0) {
+            container.innerHTML = '';
+            return;
+        }
+
+        var keys = st.keys.slice(st.start, st.end + 1);
+        var values = st.values.slice(st.start, st.end + 1);
         var total = values.reduce(function (sum, v) { return sum + v; }, 0);
         emptyBox.hidden = total > 0;
         if (total === 0) {
@@ -110,57 +309,65 @@
             return;
         }
 
-        var width = 560;
-        var height = 240;
-        var pad = { top: 14, right: 10, bottom: 30, left: 48 };
-        var plotWidth = width - pad.left - pad.right;
-        var plotHeight = height - pad.top - pad.bottom;
+        var plotWidth = CHART.width - CHART.pad.left - CHART.pad.right;
+        var plotHeight = CHART.height - CHART.pad.top - CHART.pad.bottom;
         var scale = niceScale(Math.max.apply(null, values));
 
-        var svg = svgEl('svg', { viewBox: '0 0 ' + width + ' ' + height, 'aria-hidden': 'false' });
-        appendYGrid(svg, scale, pad, plotWidth, plotHeight);
+        var svg = svgEl('svg', { viewBox: '0 0 ' + CHART.width + ' ' + CHART.height, 'aria-hidden': 'false' });
+        appendYGrid(svg, scale, CHART.pad, plotWidth, plotHeight);
 
-        var n = values.length;
+        var m = values.length;
         var coords = values.map(function (value, i) {
             return {
-                x: pad.left + (n > 1 ? i * plotWidth / (n - 1) : plotWidth / 2),
-                y: pad.top + plotHeight - value / scale.max * plotHeight
+                x: CHART.pad.left + (m > 1 ? i * plotWidth / (m - 1) : plotWidth / 2),
+                y: CHART.pad.top + plotHeight - value / scale.max * plotHeight
             };
         });
 
         var line = coords.map(function (p, i) { return (i ? 'L' : 'M') + p.x + ',' + p.y; }).join(' ');
-        var area = line + ' L' + coords[n - 1].x + ',' + (pad.top + plotHeight) + ' L' + coords[0].x + ',' + (pad.top + plotHeight) + ' Z';
+        var area = line + ' L' + coords[m - 1].x + ',' + (CHART.pad.top + plotHeight) + ' L' + coords[0].x + ',' + (CHART.pad.top + plotHeight) + ' Z';
         svg.appendChild(svgEl('path', { d: area, fill: '#ff8c1a', 'fill-opacity': '.12' }));
         svg.appendChild(svgEl('path', {
             d: line, fill: 'none', stroke: '#ff8c1a', 'stroke-width': 2.5,
             'stroke-linecap': 'round', 'stroke-linejoin': 'round'
         }));
 
+        // Точки — серые (#606060)
         coords.forEach(function (p, i) {
-            var marker = svgEl('circle', { cx: p.x, cy: p.y, r: 2.5, fill: '#ff8c1a' });
+            var marker = svgEl('circle', { cx: p.x, cy: p.y, r: 3, fill: '#606060' });
             var title = svgEl('title', {});
-            title.textContent = orderedKeys[i] + ': ' + fmt(values[i]) + ' посещений';
+            title.textContent = keys[i] + ': ' + fmt(values[i]) + ' посещений';
             marker.appendChild(title);
             svg.appendChild(marker);
+        });
 
-            // Подписи X: каждый пятый день
-            if (i % 5 === 0 || i === n - 1) {
+        // Подписи X: не больше двенадцати
+        var stride = Math.max(1, Math.ceil(m / 12));
+        coords.forEach(function (p, i) {
+            if (i % stride === 0 || i === m - 1) {
                 var text = svgEl('text', {
-                    x: p.x, y: height - 8, 'text-anchor': 'middle', fill: '#6c757d', 'font-size': 11
+                    x: p.x, y: CHART.height - 8, 'text-anchor': 'middle', fill: '#6c757d', 'font-size': 11
                 });
-                text.textContent = dayShort(orderedKeys[i]);
+                text.textContent = dayShort(keys[i]);
                 svg.appendChild(text);
             }
         });
+
+        attachBrush(svg, m, function (i1, i2) {
+            st.start += i1;
+            st.end += i2;
+            renderDailyChart();
+        }, null);
 
         container.innerHTML = '';
         container.appendChild(svg);
     }
 
-    // ---------- Столбчатый график: по месяцам / по часам ----------
-    function renderBarChart(containerId, emptyId, labels, values, labelStride) {
+    // ---------- Столбчатый график: по месяцам / по часам / по минутам ----------
+    function renderBarChart(containerId, emptyId, labels, values, options) {
         var container = document.getElementById(containerId);
         var emptyBox = document.getElementById(emptyId);
+        options = options || {};
         var total = values.reduce(function (sum, v) { return sum + v; }, 0);
         emptyBox.hidden = total > 0;
         if (total === 0) {
@@ -168,25 +375,23 @@
             return;
         }
 
-        var width = 560;
-        var height = 240;
-        var pad = { top: 14, right: 10, bottom: 30, left: 48 };
-        var plotWidth = width - pad.left - pad.right;
-        var plotHeight = height - pad.top - pad.bottom;
+        var plotWidth = CHART.width - CHART.pad.left - CHART.pad.right;
+        var plotHeight = CHART.height - CHART.pad.top - CHART.pad.bottom;
         var scale = niceScale(Math.max.apply(null, values));
 
-        var svg = svgEl('svg', { viewBox: '0 0 ' + width + ' ' + height, 'aria-hidden': 'false' });
-        appendYGrid(svg, scale, pad, plotWidth, plotHeight);
+        var svg = svgEl('svg', { viewBox: '0 0 ' + CHART.width + ' ' + CHART.height, 'aria-hidden': 'false' });
+        appendYGrid(svg, scale, CHART.pad, plotWidth, plotHeight);
 
         var n = values.length;
         var slot = plotWidth / n;
         var barWidth = Math.min(slot * 0.62, 42);
         var maxValue = Math.max.apply(null, values);
+        var labelStride = Math.max(1, Math.ceil(n / 12));
 
         values.forEach(function (value, i) {
-            var x = pad.left + slot * i + (slot - barWidth) / 2;
+            var x = CHART.pad.left + slot * i + (slot - barWidth) / 2;
             var barHeight = value / scale.max * plotHeight;
-            var y = pad.top + plotHeight - barHeight;
+            var y = CHART.pad.top + plotHeight - barHeight;
             // Цвет столбика — от красного (мало) к зелёному (много)
             var ratio = maxValue > 0 ? value / maxValue : 0;
             var hue = Math.round(ratio * 120);
@@ -201,7 +406,7 @@
 
             if (i % labelStride === 0) {
                 var text = svgEl('text', {
-                    x: pad.left + slot * i + slot / 2, y: height - 8,
+                    x: CHART.pad.left + slot * i + slot / 2, y: CHART.height - 8,
                     'text-anchor': 'middle', fill: '#6c757d', 'font-size': 10
                 });
                 text.textContent = labels[i];
@@ -209,8 +414,109 @@
             }
         });
 
+        attachBrush(svg, n, options.onZoom || null, options.onClickIndex || null);
+
         container.innerHTML = '';
         container.appendChild(svg);
+    }
+
+    // ---------- График «по месяцам» ----------
+    function renderMonthlyChart() {
+        var st = chartState.monthly;
+        document.getElementById('statMonthlyResetBtn').hidden = !isDefaultRange(st);
+        if (st.keys.length === 0) {
+            return;
+        }
+        renderBarChart('statMonthlyChart', 'statMonthlyChartEmpty',
+            st.keys.slice(st.start, st.end + 1).map(monthShort),
+            st.values.slice(st.start, st.end + 1),
+            {
+                onZoom: function (i1, i2) {
+                    st.start += i1;
+                    st.end += i2;
+                    renderMonthlyChart();
+                }
+            });
+    }
+
+    // ---------- График «по часам» с drill-down по минутам ----------
+    function renderHourlyChart() {
+        var title = document.getElementById('statHourlyTitle');
+        var backBtn = document.getElementById('statHourlyBackBtn');
+        var resetBtn = document.getElementById('statHourlyResetBtn');
+        var emptyBox = document.getElementById('statHourlyChartEmpty');
+        var container = document.getElementById('statHourlyChart');
+
+        if (hourDrill === null) {
+            title.textContent = 'Активность по часам';
+            backBtn.hidden = true;
+            emptyBox.textContent = 'Данных по часам пока нет — диаграмма появится с первыми визитами.';
+            var st = chartState.hourly;
+            wheelZoomContainers.statHourlyChart.state = st;
+            resetBtn.hidden = !isDefaultRange(st);
+            if (st.keys.length === 0) {
+                container.innerHTML = '';
+                return;
+            }
+            renderBarChart('statHourlyChart', 'statHourlyChartEmpty',
+                st.keys.slice(st.start, st.end + 1).map(function (h) { return h + ':00'; }),
+                st.values.slice(st.start, st.end + 1),
+                {
+                    onZoom: function (i1, i2) {
+                        st.start += i1;
+                        st.end += i2;
+                        renderHourlyChart();
+                    },
+                    onClickIndex: function (i) {
+                        drillIntoHour(st.keys[st.start + i]);
+                    }
+                });
+        } else {
+            title.textContent = 'Активность в ' + hourDrill + ':00 (по минутам)';
+            backBtn.hidden = false;
+            emptyBox.textContent = 'Нет посещений в этом часе.';
+            var ms = chartState.minutes;
+            wheelZoomContainers.statHourlyChart.state = ms;
+            resetBtn.hidden = !isDefaultRange(ms);
+            if (ms.keys.length === 0) {
+                container.innerHTML = '';
+                emptyBox.hidden = false;
+                return;
+            }
+            renderBarChart('statHourlyChart', 'statHourlyChartEmpty',
+                ms.keys.slice(ms.start, ms.end + 1).map(function (m) { return hourDrill + ':' + m; }),
+                ms.values.slice(ms.start, ms.end + 1),
+                {
+                    onZoom: function (i1, i2) {
+                        ms.start += i1;
+                        ms.end += i2;
+                        renderHourlyChart();
+                    }
+                });
+        }
+    }
+
+    // Развернуть выбранный час по минутам
+    function drillIntoHour(hourKey) {
+        hourDrill = hourKey;
+        chartState.minutes.keys = [];
+        chartState.minutes.values = [];
+        chartState.minutes.start = 0;
+        chartState.minutes.end = -1;
+        renderHourlyChart();
+
+        window.AdminApi.get('/api/admin/statistics/hourly?hour=' + hourKey).then(function (data) {
+            var byMinute = data.byMinute || {};
+            var keys = Object.keys(byMinute).sort();
+            chartState.minutes.keys = keys;
+            chartState.minutes.values = keys.map(function (key) { return Number(byMinute[key]) || 0; });
+            chartState.minutes.start = 0;
+            chartState.minutes.end = keys.length - 1;
+            renderHourlyChart();
+        }).catch(function (error) {
+            console.error('Не удалось загрузить данные по минутам.', error);
+            notify('error', error.message || 'Не удалось загрузить данные по минутам');
+        });
     }
 
     // ---------- Кольцевая диаграмма с легендой ----------
@@ -290,29 +596,93 @@
         });
     }
 
+    // ---------- Разделы статистики ----------
+    var SECTION_CHECKS = {
+        home: document.getElementById('statSectionHome'),
+        blog: document.getElementById('statSectionBlog'),
+        portfolio: document.getElementById('statSectionPortfolio'),
+        auth: document.getElementById('statSectionAuth'),
+        other: document.getElementById('statSectionOther')
+    };
+
+    function setSections(allowed) {
+        Object.keys(SECTION_CHECKS).forEach(function (section) {
+            if (SECTION_CHECKS[section]) {
+                SECTION_CHECKS[section].checked = allowed.indexOf(section) !== -1;
+            }
+        });
+    }
+
+    function selectedSections() {
+        return Object.keys(SECTION_CHECKS).filter(function (section) {
+            return SECTION_CHECKS[section] && SECTION_CHECKS[section].checked;
+        });
+    }
+
+    function bindSectionControls() {
+        var saveBtn = document.getElementById('statSaveSectionsBtn');
+        if (!saveBtn) {
+            return;
+        }
+        saveBtn.addEventListener('click', function () {
+            var selected = selectedSections();
+            if (selected.length === 0) {
+                notify('warning', 'Включите хотя бы один раздел — иначе статистика не будет вестись');
+                return;
+            }
+            var button = this;
+            button.disabled = true;
+            window.AdminApi.save('/api/admin/settings', 'PUT', {
+                statisticsSections: JSON.stringify(selected)
+            }).then(function () {
+                notify('success', 'Разделы статистики сохранены');
+                loadOverview();
+                loadTraffic();
+            }).catch(function (error) {
+                notify('error', error.message || 'Не удалось сохранить разделы статистики');
+            }).then(function () {
+                button.disabled = false;
+            });
+        });
+    }
+
     // ---------- Сводка и графики ----------
     function renderOverview(data) {
-        var orderedDateKeys = Object.keys(data.byDate || {});
-        var dateValues = orderedDateKeys.map(function (key) { return data.byDate[key]; });
+        var dateKeys = Object.keys(data.byDate || {});
+        var dateValues = dateKeys.map(function (key) { return Number(data.byDate[key]) || 0; });
+
+        chartState.daily.keys = dateKeys;
+        chartState.daily.values = dateValues;
+        chartState.daily.start = 0;
+        chartState.daily.end = dateKeys.length - 1;
+
+        var monthKeys = Object.keys(data.byMonth || {});
+        chartState.monthly.keys = monthKeys;
+        chartState.monthly.values = monthKeys.map(function (key) { return Number(data.byMonth[key]) || 0; });
+        chartState.monthly.start = 0;
+        chartState.monthly.end = monthKeys.length - 1;
+
+        var hourKeys = Object.keys(data.byHour || {});
+        chartState.hourly.keys = hourKeys;
+        chartState.hourly.values = hourKeys.map(function (key) { return Number(data.byHour[key]) || 0; });
+        chartState.hourly.start = 0;
+        chartState.hourly.end = hourKeys.length - 1;
+
+        hourDrill = null;
+        chartState.minutes.keys = [];
+        chartState.minutes.values = [];
+        chartState.minutes.start = 0;
+        chartState.minutes.end = -1;
 
         document.getElementById('statTotalVisits').textContent = fmt(data.total);
-        document.getElementById('statTodayVisits').textContent = orderedDateKeys.length ? fmt(data.byDate[orderedDateKeys[orderedDateKeys.length - 1]]) : '0';
-        var last30 = dateValues.reduce(function (sum, v) { return sum + v; }, 0);
+        document.getElementById('statTodayVisits').textContent = dateKeys.length ? fmt(dateValues[dateValues.length - 1]) : '0';
+        var last30 = dateValues.slice(-30).reduce(function (sum, v) { return sum + v; }, 0);
         document.getElementById('statLast30Visits').textContent = fmt(last30);
         document.getElementById('statAvgPerDay').textContent = fmt(Math.round(last30 / 30));
 
-        var monthKeys = Object.keys(data.byMonth || {});
-        var hourKeys = Object.keys(data.byHour || {});
-
-        renderAreaChart('statDailyChart', 'statDailyChartEmpty', orderedDateKeys, dateValues);
-
-        renderBarChart('statMonthlyChart', 'statMonthlyChartEmpty',
-            monthKeys.map(monthShort),
-            monthKeys.map(function (key) { return data.byMonth[key]; }), 1);
-
-        renderBarChart('statHourlyChart', 'statHourlyChartEmpty',
-            hourKeys,
-            hourKeys.map(function (key) { return data.byHour[key]; }), 3);
+        renderDailyChart();
+        renderMonthlyChart();
+        renderHourlyChart();
 
         renderDonut('statSectionChart', 'statSectionLegend', 'statSectionChartEmpty',
             (data.bySection || []).map(function (row) {
@@ -326,9 +696,10 @@
         document.getElementById('statRecordsCount').textContent = fmt(data.total);
         document.getElementById('statLastClean').textContent = data.lastClean ? formatDateTime(data.lastClean) : 'ещё не было';
 
-        // Настройки хранения — из ответа overview
+        // Настройки — из ответа overview
         document.getElementById('statRetentionDays').value = String(data.retentionDays);
         document.getElementById('statAutoClean').checked = !!data.autoClean;
+        setSections(Array.isArray(data.statisticsSections) ? data.statisticsSections : []);
     }
 
     function loadOverview() {
@@ -499,7 +870,43 @@
             }
         });
 
+        // Периоды для графика «по дням»
+        document.querySelectorAll('.stat-period-btn').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                var days = parseInt(btn.getAttribute('data-period'), 10) || 30;
+                var n = chartState.daily.keys.length;
+                chartState.daily.start = Math.max(0, n - days);
+                chartState.daily.end = n - 1;
+                renderDailyChart();
+            });
+        });
+
+        // Сброс зума — возврат к виду по умолчанию
+        document.getElementById('statDailyResetBtn').addEventListener('click', function () {
+            setDefaultRange(chartState.daily);
+            renderDailyChart();
+        });
+        document.getElementById('statMonthlyResetBtn').addEventListener('click', function () {
+            setDefaultRange(chartState.monthly);
+            renderMonthlyChart();
+        });
+        document.getElementById('statHourlyResetBtn').addEventListener('click', function () {
+            var st = (hourDrill === null) ? chartState.hourly : chartState.minutes;
+            setDefaultRange(st);
+            renderHourlyChart();
+        });
+
+        // Ctrl+колесо над графиками — единый слушатель (не переподключается при рендере)
+        bindWheelZoom();
+
+        // Назад с минут к часам
+        document.getElementById('statHourlyBackBtn').addEventListener('click', function () {
+            hourDrill = null;
+            renderHourlyChart();
+        });
+
         bindRetentionControls();
+        bindSectionControls();
         loadOverview();
         loadTraffic();
     });

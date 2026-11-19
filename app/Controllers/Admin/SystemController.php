@@ -77,6 +77,28 @@ class SystemController extends Controller
     }
 
     /**
+     * Drill-down графика «Активность по часам»: посещения по минутам
+     * в пределах заданного часа (GET-параметр hour: 00–23).
+     */
+    public function hourly($request)
+    {
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        if ($request->method() !== 'GET') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $hour = trim((string) ($_GET['hour'] ?? ''));
+        if (preg_match('/^(?:[01]\d|2[0-3])$/', $hour) !== 1) {
+            return $this->json(['success' => false, 'error' => 'Не указан час (00–23)'], 400);
+        }
+
+        $byMinute = (new \App\Models\UserActivity())->hourDetail((int) $hour);
+        return $this->json(['success' => true, 'hour' => $hour, 'byMinute' => $byMinute]);
+    }
+
+    /**
      * Таблица «Трафик сайта» (раздел статистики) — те же фильтры и пагинация,
      * что и блок на дашборде.
      */
