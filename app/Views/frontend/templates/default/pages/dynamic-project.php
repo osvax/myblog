@@ -20,10 +20,18 @@
                         <div class="col-sm-4"><div class="feature-item p-3 text-center h-100"><h3 class="fw-bold text-orange mb-1"><?= htmlspecialchars($result['value'] ?? '', ENT_QUOTES, 'UTF-8') ?></h3><p class="fw-bold mb-0"><?= htmlspecialchars($result['label'] ?? '', ENT_QUOTES, 'UTF-8') ?></p></div></div>
                     <?php endforeach; ?></div>
                 <?php endif; ?>
+                <?php
+                    $projectGalleryMap = [];
+                    foreach ($project['gallery'] ?? [] as $entry) {
+                        if (is_array($entry) && isset($entry['path']) && is_string($entry['path'])) {
+                            $projectGalleryMap[$entry['path']] = $entry['description'] ?? '';
+                        }
+                    }
+                ?>
                 <?php if (!empty($project['screenshots'])): ?>
                     <h2 class="fw-bold mt-5 mb-3">Галерея проекта</h2>
                     <div class="row g-3"><?php foreach ($project['screenshots'] as $image): ?>
-                        <div class="col-md-6"><img src="/<?= htmlspecialchars(ltrim($image, '/'), ENT_QUOTES, 'UTF-8') ?>" class="img-fluid rounded" alt="<?= htmlspecialchars($project['title'], ENT_QUOTES, 'UTF-8') ?>"></div>
+                        <div class="col-md-6"><img src="/<?= htmlspecialchars(ltrim($image, '/'), ENT_QUOTES, 'UTF-8') ?>" class="img-fluid rounded" alt="<?= htmlspecialchars($project['title'], ENT_QUOTES, 'UTF-8') ?>"><?php if (!empty($projectGalleryMap[$image])): ?><p class="fw-bold text-muted mt-1 mb-0"><?= htmlspecialchars($projectGalleryMap[$image], ENT_QUOTES, 'UTF-8') ?></p><?php endif; ?></div>
                     <?php endforeach; ?></div>
                 <?php endif; ?>
             </div>
@@ -33,6 +41,7 @@
                     <?php foreach (['client' => 'Клиент', 'project_year' => 'Год', 'duration' => 'Сроки', 'stack' => 'Стек'] as $field => $label): ?>
                         <?php if (!empty($project[$field])): ?><p class="fw-bold mb-2"><strong><?= $label ?>:</strong> <?= htmlspecialchars((string) $project[$field], ENT_QUOTES, 'UTF-8') ?></p><?php endif; ?>
                     <?php endforeach; ?>
+                    <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-info-items.php'; ?>
                     <a href="/order.html" class="btn btn-orange fw-bold mt-2">Хочу похожий проект</a>
                 </div>
             </aside>

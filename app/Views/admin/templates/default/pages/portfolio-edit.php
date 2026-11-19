@@ -65,6 +65,13 @@
                                 <label class="form-label fw-bold" for="portfolioStack">Стек технологий</label>
                                 <textarea id="portfolioStack" class="form-control" rows="3" placeholder="HTML5, CSS3, JavaScript"></textarea>
                             </div>
+                            <div class="mt-4 pt-3 border-top">
+                                <h3 class="h6 fw-bold mb-2">Дополнительные поля</h3>
+                                <div id="portfolioInfoItems"></div>
+                                <button class="btn btn-outline-success btn-action mt-2" type="button" id="addPortfolioInfoItem" aria-label="Добавить поле" title="Добавить поле">
+                                    <i class="bi bi-plus-lg"></i>
+                                </button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -79,7 +86,7 @@
 
                 <div class="card admin-card p-4 mb-4">
                     <h2 class="h5 fw-bold mb-2">Скриншоты проекта</h2>
-                    <p class="form-text mb-3">Загрузите до 10 изображений JPEG, PNG или WebP (до 10 МБ каждое). Они сохраняются в отдельной папке проекта.</p>
+                    <p class="form-text mb-3">Загрузите до 10 изображений JPEG, PNG или WebP (до 10 МБ каждое). Файлы сохраняются в разделе «Портфолио» файлового менеджера, для каждого снимка можно указать описание.</p>
                     <div class="row g-3 mb-3" id="portfolioExistingImages"></div>
                     <label class="form-label fw-bold" for="portfolioScreenshots">Добавить изображения</label>
                     <input id="portfolioScreenshots" type="file" class="form-control" accept="image/jpeg,image/png,image/webp" multiple>
@@ -91,3 +98,29 @@
                     <button class="btn btn-orange fw-bold" type="submit"><i class="bi bi-save"></i> Сохранить проект</button>
                 </div>
             </form>
+
+            <!-- Модальное окно: файл для дополнительного поля (ТЗ / сертификат) -->
+            <div class="modal fade" id="portfolioFileInfoModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-lg modal-dialog-scrollable">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title fw-bold" id="portfolioFileInfoModalTitle">Файл</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="card admin-card p-3 mb-3">
+                                <label class="form-label fw-bold" for="portfolioFileInfoUpload">Загрузить файл</label>
+                                <input type="file" class="form-control" id="portfolioFileInfoUpload">
+                                <p class="form-text mt-2" id="portfolioFileInfoUploadHint"></p>
+                            </div>
+                            <h2 class="h6 fw-bold mb-2">Файлы раздела «Портфолио»</h2>
+                            <div class="row g-3" id="portfolioFileInfoList">
+                                <div class="col-12"><p class="text-muted fw-bold mb-0">Загрузка списка…</p></div>
+                            </div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-outline-dark fw-bold" data-bs-dismiss="modal">Отмена</button>
+                        </div>
+                    </div>
+                </div>
+            </div>

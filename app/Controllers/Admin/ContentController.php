@@ -354,10 +354,14 @@ class ContentController extends Controller
             return null;
         }
         foreach ($screenshots as $image) {
-            if (!is_string($image) ||
-                !preg_match('#^uploads/portfolio/[A-Za-z0-9_-]+/[a-f0-9]{32}\.(?:jpg|png|webp)$#', $image)) {
+            if (!is_string($image) || !preg_match(self::SCREENSHOT_PATH_REGEX, $image)) {
                 return null;
             }
+        }
+        $galleryItems = $this->galleryInput($data['gallery'] ?? []);
+        $infoItems = $this->projectInfoItemsInput($data['infoItems'] ?? []);
+        if ($galleryItems === null || $infoItems === null) {
+            return null;
         }
         $id = $id ?: ($data['id'] ?? bin2hex(random_bytes(16)));
         if (!is_string($id) || !preg_match('/^[a-f0-9-]{1,64}$/i', $id)) {
@@ -378,8 +382,95 @@ class ContentController extends Controller
             'stack' => is_string($data['stack'] ?? null) ? $data['stack'] : '',
             'results' => $results,
             'screenshots' => array_values($screenshots),
+            'gallery' => $galleryItems,
+            'infoItems' => $infoItems,
             'active' => !isset($data['active']) || $data['active'] !== false,
         ];
+    }
+
+    /**
+     * Допустимые пути снимков проекта: старая папка проекта (uploads/portfolio/{id}/хэш)
+     * и раздел «Портфолио» файлового менеджера с читаемым именем.
+     */
+    const SCREENSHOT_PATH_REGEX = '#^(?:uploads/portfolio/[A-Za-z0-9_-]+/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$#';
+
+    // Прикреплённые файлы дополнительных полей: ТЗ (documents) и сертификаты (images).
+    const DOC_FILE_PATH_REGEX = '#^uploads/documents/portfolio/[a-z0-9][a-z0-9-]*\.(?:doc|docx)$#';
+    const CERT_FILE_PATH_REGEX = '#^uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png)$#';
+
+    /**
+     * Снимки с описаниями: список {path, description}. Путь — как у screenshots.
+     *
+     * @return array<int, array{path: string, description: string}|null>
+     */
+    private function galleryInput($data)
+    {
+        if (!is_array($data) || count($data) > 50) {
+            return null;
+        }
+        $items = [];
+        foreach ($data as $entry) {
+            if (!is_array($entry)) {
+                return null;
+            }
+            $path = $entry['path'] ?? '';
+            $description = $entry['description'] ?? '';
+            if (!is_string($path) || !preg_match(self::SCREENSHOT_PATH_REGEX, $path) ||
+                !is_string($description) || mb_strlen($description) > 500) {
+                return null;
+            }
+            $items[] = ['path' => $path, 'description' => trim($description)];
+        }
+        return $items;
+    }
+
+    /**
+     * Дополнительные поля проекта: список {kind, name, value}.
+     * kind: link (ссылка), document (документ), certificate (сертификат).
+     *
+     * @return array<int, array{kind: string, name: string, value: string}>|null
+     */
+    private function projectInfoItemsInput($data)
+    {
+        $kinds = ['link', 'document', 'certificate'];
+        if (!is_array($data) || count($data) > 30) {
+            return null;
+        }
+        $items = [];
+        foreach ($data as $entry) {
+            if (!is_array($entry)) {
+                return null;
+            }
+            $kind = $entry['kind'] ?? '';
+            $name = $entry['name'] ?? '';
+            $value = $entry['value'] ?? '';
+            $filePath = $entry['file_path'] ?? '';
+            if (!in_array($kind, $kinds, true) || !is_string($name) || trim($name) === '' ||
+                mb_strlen($name) > 160 || !is_string($value) || mb_strlen($value) > 500 ||
+                !is_string($filePath) || mb_strlen($filePath) > 255) {
+                return null;
+            }
+            // ТЗ и сертификаты: прикреплённый файл только из раздела «Портфолио»
+            // файлового менеджера; пустой путь — вывод текстового значения.
+            if ($filePath !== '') {
+                if ($kind === 'document' && !preg_match(self::DOC_FILE_PATH_REGEX, $filePath)) {
+                    return null;
+                }
+                if ($kind === 'certificate' && !preg_match(self::CERT_FILE_PATH_REGEX, $filePath)) {
+                    return null;
+                }
+                if ($kind === 'link') {
+                    $filePath = '';
+                }
+            }
+            $items[] = [
+                'kind' => $kind,
+                'name' => trim($name),
+                'value' => trim($value),
+                'file_path' => $filePath,
+            ];
+        }
+        return $items;
     }
 
     /**
@@ -453,6 +544,8 @@ class ContentController extends Controller
             'stack' => $project['stack'] ?? '',
             'results' => $project['results'] ?? [],
             'screenshots' => $project['screenshots'] ?? [],
+            'gallery' => $project['gallery'] ?? [],
+            'infoItems' => $project['infoItems'] ?? [],
             'active' => false,
         ]);
         return $this->json(['success' => true, 'project' => $saved]);

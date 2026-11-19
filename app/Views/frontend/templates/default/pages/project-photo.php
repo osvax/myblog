@@ -72,6 +72,7 @@
                         <p class="fw-bold mb-2"><i class="bi bi-calendar3 text-orange"></i> <strong>Год:</strong> 2024</p>
                         <p class="fw-bold mb-2"><i class="bi bi-clock-history text-orange"></i> <strong>Сроки:</strong> 3 недели</p>
                         <p class="fw-bold mb-3"><i class="bi bi-tools text-orange"></i> <strong>Стек:</strong> HTML5, CSS3, Bootstrap 5, WebP, srcset</p>
+                        <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-info-items.php'; ?>
                         <a href="order.html" class="btn btn-orange fw-bold">Хочу похожий проект</a>
                     </div>
                     <div class="card border-0 shadow-sm p-4">
@@ -92,43 +93,7 @@
     <?php $waveColors = ['#ffffff', '#fff3e6']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= СКРИНШОТЫ ПРОЕКТА ================= -->
-    <section class="py-5 bg-orange-light">
-        <div class="container">
-            <h2 class="fw-bold mb-4 text-center">Скриншоты проекта</h2>
-            <div class="row g-4">
-                <div class="col-md-6">
-                    <div class="screenshot bg-orange-light rounded d-flex align-items-center justify-content-center flex-column p-4">
-                        <i class="bi bi-images display-4 text-orange mb-2"></i>
-                        <p class="fw-bold text-muted mb-0">Галерея работ — img/photo-gallery.webp</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="screenshot bg-orange-light rounded d-flex align-items-center justify-content-center flex-column p-4">
-                        <i class="bi bi-arrows-fullscreen display-4 text-orange mb-2"></i>
-                        <p class="fw-bold text-muted mb-0">Просмотр в лайтбоксе — img/photo-lightbox.webp</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="screenshot bg-orange-light rounded d-flex align-items-center justify-content-center flex-column p-4">
-                        <i class="bi bi-tags display-4 text-orange mb-2"></i>
-                        <p class="fw-bold text-muted mb-0">Тарифы на съёмку — img/photo-pricing.webp</p>
-                    </div>
-                </div>
-                <div class="col-md-6">
-                    <div class="screenshot bg-orange-light rounded d-flex align-items-center justify-content-center flex-column p-4">
-                        <i class="bi bi-envelope-paper display-4 text-orange mb-2"></i>
-                        <p class="fw-bold text-muted mb-0">Заявка на свободную дату — img/photo-order.webp</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="text-center mt-5">
-                <a href="portfolio.html" class="btn btn-outline-dark btn-lg fw-bold">
-                    <i class="bi bi-arrow-left"></i> Вернуться в портфолио
-                </a>
-            </div>
-        </div>
-    </section>
+    <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-screenshots.php'; ?>
 
     <!-- Волна: светло-оранжевый → тёмный -->
     <?php $waveColors = ['#fff3e6', '#353535']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>

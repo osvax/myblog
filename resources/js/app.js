@@ -13,6 +13,7 @@ import './navigation';
 import './consultant';
 import './lazy-images';
 import './scroll-animations';
+import './image-lightbox';
 
 // Global utilities
 const App = {

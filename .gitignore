@@ -50,6 +50,9 @@ var/cache/*
 !/public/uploads/images/
 /public/uploads/images/*
 !/public/uploads/images/.htaccess
+!/public/uploads/documents/
+/public/uploads/documents/*
+!/public/uploads/documents/.htaccess
 !/public/uploads/portfolio/
 /public/uploads/portfolio/*
 !/public/uploads/portfolio/.htaccess

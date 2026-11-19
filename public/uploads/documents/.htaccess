@@ -1,0 +1,13 @@
+# Запрет исполнения PHP в директории документов файлового менеджера
+<FilesMatch "\.(php|php2|php3|php4|php5|php6|php7|php8|phtml|phar)$">
+    Require all denied
+</FilesMatch>
+
+# Запрет просмотра директории
+Options -Indexes
+
+# Разрешаем публичное скачивание документов (ТЗ проектов портфолио);
+# остальные файлы (метаданные .meta.json) выдаются только через админ-API
+<FilesMatch "\.(doc|docx)$">
+    Require all granted
+</FilesMatch>

@@ -16,7 +16,7 @@
 
     function validScreenshotPath(path) {
         return typeof path === 'string' &&
-            /^uploads\/portfolio\/[A-Za-z0-9_-]+\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(path);
+            /^(?:uploads\/portfolio\/[A-Za-z0-9_-]+\/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads\/images\/portfolio\/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$/.test(path);
     }
 
     function render() {

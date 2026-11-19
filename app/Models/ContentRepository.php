@@ -199,13 +199,73 @@ class ContentRepository
             'screenshots_json' => json_encode($project['screenshots'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'is_published' => $project['active'] ? 1 : 0,
         ]);
+        // Снимки с описаниями и дополнительные поля — отдельные таблицы, заменяются полностью
+        $this->saveProjectGallery($project['id'], $project['gallery'] ?? []);
+        $this->saveProjectInfoItems($project['id'], $project['infoItems'] ?? []);
         return $this->projectById($project['id']);
+    }
+
+    /**
+     * Сохранить снимки проекта с описаниями (полная замена списка).
+     *
+     * @param array<int, array{path: string, description?: string}> $items
+     */
+    private function saveProjectGallery($projectId, array $items)
+    {
+        $delete = $this->db->prepare('DELETE FROM project_gallery WHERE project_id = :id');
+        $delete->execute(['id' => $projectId]);
+        if (!$items) {
+            return;
+        }
+        $insert = $this->db->prepare(
+            'INSERT INTO project_gallery (project_id, path, description, sort_order) VALUES (:id, :path, :description, :sort)'
+        );
+        foreach (array_values($items) as $index => $item) {
+            $insert->execute([
+                'id' => $projectId,
+                'path' => (string) $item['path'],
+                'description' => is_string($item['description'] ?? null) ? $item['description'] : '',
+                'sort' => $index,
+            ]);
+        }
+    }
+
+    /**
+     * Сохранить дополнительные поля проекта (полная замена списка).
+     *
+     * @param array<int, array{kind: string, name: string, value: string}> $items
+     */
+    private function saveProjectInfoItems($projectId, array $items)
+    {
+        $delete = $this->db->prepare('DELETE FROM project_info_items WHERE project_id = :id');
+        $delete->execute(['id' => $projectId]);
+        if (!$items) {
+            return;
+        }
+        $insert = $this->db->prepare(
+            'INSERT INTO project_info_items (project_id, kind, name, value, file_path, sort_order)
+             VALUES (:id, :kind, :name, :value, :filePath, :sort)'
+        );
+        foreach (array_values($items) as $index => $item) {
+            $insert->execute([
+                'id' => $projectId,
+                'kind' => (string) $item['kind'],
+                'name' => (string) $item['name'],
+                'value' => (string) ($item['value'] ?? ''),
+                'filePath' => (string) ($item['file_path'] ?? ''),
+                'sort' => $index,
+            ]);
+        }
     }
 
     public function deleteProject($id)
     {
         $statement = $this->db->prepare('DELETE FROM portfolio_projects WHERE id = :id');
         $statement->execute(['id' => $id]);
+        $galleryDelete = $this->db->prepare('DELETE FROM project_gallery WHERE project_id = :id');
+        $galleryDelete->execute(['id' => $id]);
+        $infoDelete = $this->db->prepare('DELETE FROM project_info_items WHERE project_id = :id');
+        $infoDelete->execute(['id' => $id]);
         return $statement->rowCount() > 0;
     }
 
@@ -466,7 +526,36 @@ class ContentRepository
         $row['results'] = json_decode($row['results_json'] ?? '[]', true) ?: [];
         $row['screenshots'] = json_decode($row['screenshots_json'] ?? '[]', true) ?: [];
         $row['year'] = $row['project_year'] ?? '';
+        // Снимки с описаниями и дополнительные поля (ссылки/документы/сертификаты)
+        $row['gallery'] = $this->projectGalleryItems((string) $row['id']);
+        $row['infoItems'] = $this->projectInfoItems((string) $row['id']);
         return $row;
+    }
+
+    /**
+     * Снимки проекта с описаниями (таблица project_gallery), в порядке сортировки.
+     * @return array<int, array{path: string, description: string}>
+     */
+    public function projectGalleryItems($projectId)
+    {
+        $statement = $this->db->prepare(
+            'SELECT path, description FROM project_gallery WHERE project_id = :id ORDER BY sort_order, id'
+        );
+        $statement->execute(['id' => $projectId]);
+        return $statement->fetchAll();
+    }
+
+    /**
+     * Дополнительные поля проекта (ссылки, документы, сертификаты), в порядке сортировки.
+     * @return array<int, array{kind: string, name: string, value: string}>
+     */
+    public function projectInfoItems($projectId)
+    {
+        $statement = $this->db->prepare(
+            'SELECT kind, name, value, file_path FROM project_info_items WHERE project_id = :id ORDER BY sort_order, id'
+        );
+        $statement->execute(['id' => $projectId]);
+        return $statement->fetchAll();
     }
 
     private function orderRow(array $row)

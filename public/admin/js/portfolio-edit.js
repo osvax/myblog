@@ -25,8 +25,11 @@
         screenshots: document.getElementById('portfolioScreenshots')
     };
     var resultsContainer = document.getElementById('portfolioResults');
+    var infoItemsContainer = document.getElementById('portfolioInfoItems');
     var existingImagesElement = document.getElementById('portfolioExistingImages');
     var newImagesPreview = document.getElementById('portfolioNewImagesPreview');
+    // Снимки проекта: [{path, description}] — пути в разделе «Портфолио»
+    // файлового менеджера или в старой папке проекта.
     var existingImages = [];
     var selectedFiles = [];
     var isEditing = Boolean(requestedId);
@@ -78,12 +81,21 @@
         bootstrap.Toast.getOrCreateInstance(toast, { delay: 4000 }).show();
     }
 
+    // Старая папка проекта (uploads/portfolio/{id}/хэш) и раздел «Портфолио»
+    // файлового менеджера с читаемым именем — согласовано с контроллером.
     function validScreenshotPath(path) {
         return typeof path === 'string' &&
-            /^uploads\/portfolio\/[A-Za-z0-9_-]+\/[a-f0-9]{32}\.(jpg|png|webp)$/.test(path);
+            /^(?:uploads\/portfolio\/[A-Za-z0-9_-]+\/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads\/images\/portfolio\/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$/.test(path);
     }
 
-    function addScreenshotPreview(container, source, alt, removableIndex) {
+    // Прикреплённые файлы дополнительных полей — согласовано с контроллером.
+    function validAttachmentPath(path, category) {
+        return typeof path === 'string' && (category === 'images'
+            ? /^uploads\/images\/portfolio\/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png)$/.test(path)
+            : /^uploads\/documents\/portfolio\/[a-z0-9][a-z0-9-]*\.(?:doc|docx)$/.test(path));
+    }
+
+    function addScreenshotCard(container, source, alt, description, removeHandler) {
         var column = document.createElement('div');
         column.className = 'col-6 col-md-4 col-xl-3';
         var card = document.createElement('div');
@@ -96,34 +108,48 @@
             card.classList.add('portfolio-edit-image-error');
         }, { once: true });
         card.appendChild(image);
-        if (removableIndex !== null) {
+        if (typeof removeHandler === 'function') {
             var remove = document.createElement('button');
             remove.type = 'button';
             remove.className = 'btn btn-sm btn-danger portfolio-edit-image-remove';
             remove.textContent = 'Убрать';
-            remove.setAttribute('aria-label', 'Убрать изображение ' + (removableIndex + 1));
-            remove.addEventListener('click', function () {
-                existingImages.splice(removableIndex, 1);
-                renderExistingImages();
-                updateScreenshotLimit();
-            });
+            remove.setAttribute('aria-label', 'Убрать изображение');
+            remove.addEventListener('click', removeHandler);
             card.appendChild(remove);
         }
         column.appendChild(card);
+        var descriptionInput = document.createElement('input');
+        descriptionInput.type = 'text';
+        descriptionInput.className = 'form-control form-control-sm mt-2 portfolio-screenshot-description';
+        descriptionInput.placeholder = 'Описание снимка';
+        descriptionInput.maxLength = 500;
+        descriptionInput.value = description || '';
+        column.appendChild(descriptionInput);
         container.appendChild(column);
+    }
+
+    function readScreenshotDescriptions(container) {
+        var inputs = container.querySelectorAll('input.portfolio-screenshot-description');
+        return Array.prototype.map.call(inputs, function (input) {
+            return input.value.trim();
+        });
     }
 
     function renderExistingImages() {
         existingImagesElement.textContent = '';
-        existingImages.forEach(function (path, index) {
-            addScreenshotPreview(existingImagesElement, '../' + path, 'Скриншот проекта ' + (index + 1), index);
+        existingImages.forEach(function (image, index) {
+            addScreenshotCard(existingImagesElement, '../' + image.path, 'Скриншот проекта ' + (index + 1), image.description, function () {
+                existingImages.splice(index, 1);
+                renderExistingImages();
+                updateScreenshotLimit();
+            });
         });
     }
 
     function renderNewImages() {
         newImagesPreview.textContent = '';
         selectedFiles.forEach(function (file) {
-            addScreenshotPreview(newImagesPreview, URL.createObjectURL(file), file.name, null);
+            addScreenshotCard(newImagesPreview, URL.createObjectURL(file), file.name, '', null);
         });
         updateScreenshotLimit();
     }
@@ -198,6 +224,276 @@
         });
     }
 
+    var infoItemKinds = {
+        link: 'Ссылка',
+        document: 'Документ',
+        certificate: 'Сертификат'
+    };
+
+    function addInfoItemRow(item) {
+        var kind = item && infoItemKinds[item.kind] ? item.kind : 'link';
+        var name = item && item.name ? item.name : '';
+        var value = item && item.value ? item.value : '';
+        var filePath = item && item.file_path ? item.file_path : '';
+        var fileName = filePath ? filePath.split('/').pop() : '';
+
+        var row = document.createElement('div');
+        row.className = 'row g-2 align-items-end mb-2';
+
+        var kindColumn = document.createElement('div');
+        kindColumn.className = 'col-6 col-md-3';
+        var kindLabel = document.createElement('label');
+        kindLabel.className = 'form-label fw-bold';
+        kindLabel.textContent = 'Тип';
+        var kindSelect = document.createElement('select');
+        kindSelect.className = 'form-select';
+        Object.keys(infoItemKinds).forEach(function (key) {
+            var option = document.createElement('option');
+            option.value = key;
+            option.textContent = infoItemKinds[key];
+            kindSelect.appendChild(option);
+        });
+        kindSelect.value = kind;
+        // При смене типа пересобираем строку, сохраняя название.
+        kindSelect.addEventListener('change', function () {
+            var keptName = row.querySelector('.info-name').value;
+            row.remove();
+            addInfoItemRow({ kind: kindSelect.value, name: keptName });
+            infoItemsContainer.lastElementChild.querySelector('.info-name').focus();
+        });
+        kindLabel.appendChild(kindSelect);
+        kindColumn.appendChild(kindLabel);
+
+        var nameColumn = document.createElement('div');
+        nameColumn.className = 'col-6 col-md-4';
+        var nameLabel = document.createElement('label');
+        nameLabel.className = 'form-label fw-bold';
+        nameLabel.textContent = 'Название';
+        var nameInput = document.createElement('input');
+        nameInput.type = 'text';
+        nameInput.className = 'form-control info-name';
+        nameInput.maxLength = 160;
+        nameInput.placeholder = 'Например: Ссылка на проект';
+        nameInput.value = name;
+        nameLabel.appendChild(nameInput);
+        nameColumn.appendChild(nameLabel);
+
+        if (kind === 'link') {
+            var valueColumn = document.createElement('div');
+            valueColumn.className = 'col-12 col-md-4';
+            var valueLabel = document.createElement('label');
+            valueLabel.className = 'form-label fw-bold';
+            valueLabel.textContent = 'Значение';
+            var valueInput = document.createElement('input');
+            valueInput.type = 'text';
+            valueInput.className = 'form-control info-value';
+            valueInput.maxLength = 500;
+            valueInput.placeholder = 'URL или текст';
+            valueInput.value = value;
+            valueLabel.appendChild(valueInput);
+            valueColumn.appendChild(valueLabel);
+            row.append(kindColumn, nameColumn, valueColumn);
+        } else {
+            // Документ / сертификат: прикрепление файла из раздела «Портфолио».
+            var attachColumn = document.createElement('div');
+            attachColumn.className = 'col-12 col-md-4';
+            var attachLabel = document.createElement('label');
+            attachLabel.className = 'form-label fw-bold';
+            attachLabel.textContent = 'Файл';
+            var attachBox = document.createElement('div');
+            attachBox.className = 'd-flex align-items-center gap-2';
+            var attachButton = document.createElement('button');
+            attachButton.type = 'button';
+            attachButton.className = 'btn btn-outline-dark btn-action';
+            attachButton.innerHTML = '<i class="bi bi-paperclip"></i>';
+            attachButton.setAttribute('aria-label', 'Прикрепить файл');
+            attachButton.title = 'Прикрепить файл';
+            attachButton.addEventListener('click', function () {
+                openFileInfoModal(row, kind, attachLabel.textContent);
+            });
+            var fileLabel = document.createElement('span');
+            fileLabel.className = 'form-text fw-bold mb-0 info-file-label text-truncate';
+            fileLabel.style.maxWidth = '11rem';
+            fileLabel.textContent = fileName || 'Файл не выбран';
+            var fileInput = document.createElement('input');
+            fileInput.type = 'hidden';
+            fileInput.className = 'info-file-path';
+            fileInput.value = filePath;
+            attachBox.append(attachButton, fileLabel);
+            attachLabel.appendChild(attachBox);
+            attachLabel.appendChild(fileInput);
+            attachColumn.appendChild(attachLabel);
+            row.append(kindColumn, nameColumn, attachColumn);
+        }
+
+        var removeColumn = document.createElement('div');
+        removeColumn.className = 'col-12 col-md-auto';
+        var removeButton = document.createElement('button');
+        removeButton.type = 'button';
+        removeButton.className = 'btn btn-outline-danger btn-action';
+        removeButton.setAttribute('aria-label', 'Удалить поле');
+        removeButton.title = 'Удалить поле';
+        removeButton.innerHTML = '<i class="bi bi-dash-lg"></i>';
+        removeButton.addEventListener('click', function () {
+            row.remove();
+        });
+        removeColumn.appendChild(removeButton);
+        row.appendChild(removeColumn);
+
+        infoItemsContainer.appendChild(row);
+    }
+
+    function readInfoItems() {
+        return Array.prototype.map.call(infoItemsContainer.children, function (row) {
+            var select = row.querySelector('select');
+            var nameInput = row.querySelector('.info-name');
+            var valueInput = row.querySelector('.info-value');
+            var fileInput = row.querySelector('.info-file-path');
+            var kind = select.value;
+            return {
+                kind: kind,
+                name: nameInput.value.trim(),
+                value: kind === 'link' ? valueInput.value.trim() : '',
+                file_path: kind === 'link' ? '' : fileInput.value.trim()
+            };
+        }).filter(function (item) {
+            return item.name;
+        });
+    }
+
+    // ---------- Файл для дополнительного поля (ТЗ / сертификат) ----------
+    var fileInfoModalElement = document.getElementById('portfolioFileInfoModal');
+    var fileInfoCategory = 'documents';
+    var fileInfoRow = null;
+    var fileInfoFiles = null;
+
+    function renderFileInfoList() {
+        var list = document.getElementById('portfolioFileInfoList');
+        if (!fileInfoFiles) {
+            list.textContent = '';
+            var loading = document.createElement('div');
+            loading.className = 'col-12';
+            loading.innerHTML = '<p class="text-muted fw-bold mb-0">Загрузка списка…</p>';
+            list.appendChild(loading);
+            window.AdminApi.get('/api/admin/files?action=list').then(function (result) {
+                fileInfoFiles = (result && Array.isArray(result.files)) ? result.files : [];
+                renderFileInfoList();
+            }).catch(function (error) {
+                list.textContent = '';
+                var failed = document.createElement('div');
+                failed.className = 'col-12';
+                failed.innerHTML = '<p class="text-danger fw-bold mb-0">Не удалось загрузить список файлов.</p>';
+                list.appendChild(failed);
+            });
+            return;
+        }
+        list.textContent = '';
+        var filtered = fileInfoFiles.filter(function (file) {
+            return file.section === 'portfolio' && file.category === fileInfoCategory;
+        });
+        if (!filtered.length) {
+            var empty = document.createElement('div');
+            empty.className = 'col-12';
+            empty.innerHTML = '<p class="text-muted fw-bold mb-0">В этом разделе файлов пока нет.</p>';
+            list.appendChild(empty);
+            return;
+        }
+        filtered.forEach(function (file) {
+            var column = document.createElement('div');
+            column.className = 'col-6 col-md-4';
+            var card = document.createElement('button');
+            card.type = 'button';
+            card.className = 'card admin-card p-2 text-start w-100 file-picker-card';
+            card.setAttribute('aria-label', 'Прикрепить файл ' + file.name);
+            if (fileInfoCategory === 'images') {
+                var thumb = document.createElement('img');
+                thumb.src = '../' + file.path;
+                thumb.alt = file.name;
+                thumb.className = 'img-fluid rounded mb-2';
+                thumb.style.maxHeight = '90px';
+                card.appendChild(thumb);
+            } else {
+                var icon = document.createElement('i');
+                icon.className = 'bi bi-file-earmark-word display-6 text-orange';
+                card.appendChild(icon);
+            }
+            var caption = document.createElement('span');
+            caption.className = 'fw-bold small text-truncate d-block';
+            caption.textContent = file.name;
+            card.appendChild(caption);
+            card.addEventListener('click', function () {
+                attachFileInfo('uploads/' + file.path, file.name);
+            });
+            column.appendChild(card);
+            list.appendChild(column);
+        });
+    }
+
+    function attachFileInfo(path, displayName) {
+        if (!fileInfoRow) {
+            return;
+        }
+        fileInfoRow.querySelector('.info-file-path').value = path;
+        fileInfoRow.querySelector('.info-file-label').textContent = displayName || path.split('/').pop();
+        bootstrap.Modal.getOrCreateInstance(fileInfoModalElement).hide();
+    }
+
+    function openFileInfoModal(row, kind, fieldName) {
+        fileInfoRow = row;
+        fileInfoCategory = kind === 'certificate' ? 'images' : 'documents';
+        var uploadInput = document.getElementById('portfolioFileInfoUpload');
+        uploadInput.value = '';
+        uploadInput.accept = fileInfoCategory === 'images' ? 'image/jpeg,image/png' : '.doc,.docx,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        document.getElementById('portfolioFileInfoUploadHint').textContent = fileInfoCategory === 'images'
+            ? 'JPG или PNG, до 10 МБ. Файл сохранится в разделе «Портфолио» файлового менеджера.'
+            : 'DOC или DOCX, до 10 МБ. Файл сохранится в разделе «Портфолио» файлового менеджера.';
+        document.getElementById('portfolioFileInfoModalTitle').textContent =
+            'Файл для поля «' + (row.querySelector('.info-name').value || fieldName) + '»';
+        renderFileInfoList();
+        bootstrap.Modal.getOrCreateInstance(fileInfoModalElement).show();
+    }
+
+    document.getElementById('portfolioFileInfoUpload').addEventListener('change', function () {
+        var file = this.files && this.files[0];
+        if (!file) {
+            return;
+        }
+        var input = this;
+        getCsrfToken().then(function (token) {
+            return uploadFileToManager(file, token, fileInfoCategory).then(function (result) {
+                attachFileInfo(result.path, result.name || file.name);
+                input.value = '';
+                // Обновляем кэш списка: новый файл должен попасть в список.
+                fileInfoFiles = null;
+                renderFileInfoList();
+            });
+        }).catch(function (error) {
+            console.error('Не удалось загрузить файл поля.', error);
+            notify('error', error.message || 'Не удалось загрузить файл.');
+            input.value = '';
+        });
+    });
+
+    function initialGallery(item) {
+        var fromGallery = Array.isArray(item.gallery) ? item.gallery : [];
+        var valid = fromGallery.filter(function (entry) {
+            return entry && typeof entry.path === 'string' && validScreenshotPath(entry.path);
+        });
+        if (valid.length) {
+            return valid.map(function (entry) {
+                return {
+                    path: entry.path,
+                    description: typeof entry.description === 'string' ? entry.description : ''
+                };
+            });
+        }
+        return (Array.isArray(item.screenshots) ? item.screenshots : [])
+            .filter(validScreenshotPath)
+            .map(function (path) {
+                return { path: path, description: '' };
+            });
+    }
+
     function fillForm(item) {
         fields.id.value = item.id;
         fields.title.value = item.title || '';
@@ -220,12 +516,40 @@
             addResultRow(result);
         });
 
-        existingImages = Array.isArray(item.screenshots) ? item.screenshots.filter(validScreenshotPath) : [];
+        infoItemsContainer.textContent = '';
+        (Array.isArray(item.infoItems) ? item.infoItems : []).forEach(function (infoItem) {
+            addInfoItemRow(infoItem);
+        });
+
+        existingImages = initialGallery(item);
         renderExistingImages();
         updateScreenshotLimit();
     }
 
-    function uploadScreenshots(files) {
+    // Загрузка одного файла в файловый менеджер (категория: images / documents).
+    function uploadFileToManager(file, token, category) {
+        var data = new FormData();
+        data.append('action', 'upload');
+        data.append('category', category || 'images');
+        data.append('section', 'portfolio');
+        data.append('file', file);
+        return fetch('../api/admin/files', {
+            method: 'POST',
+            credentials: 'same-origin',
+            headers: { 'X-CSRF-Token': token },
+            body: data
+        }).then(function (response) {
+            return response.json().then(function (result) {
+                if (!response.ok || !result.success || !result.file ||
+                    !validAttachmentPath('uploads/' + result.file.path, category || 'images')) {
+                    throw new Error(result.error || 'Не удалось загрузить файл.');
+                }
+                return { path: 'uploads/' + result.file.path, name: result.file.name };
+            });
+        });
+    }
+
+    function getCsrfToken() {
         return fetch('../api/auth/csrf', { credentials: 'same-origin' })
             .then(function (response) {
                 return response.json().then(function (data) {
@@ -234,30 +558,24 @@
                     }
                     return data.token;
                 });
-            })
-            .then(function (token) {
-                var data = new FormData();
-                data.append('scope', 'portfolio');
-                data.append('id', itemId);
-                files.forEach(function (file) {
-                    data.append('files[]', file);
-                });
-                return fetch('../api/admin/media', {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: { 'X-CSRF-Token': token },
-                    body: data
-                });
-            })
-            .then(function (response) {
-                return response.json().then(function (data) {
-                    if (!response.ok || !data.success || !Array.isArray(data.files) ||
-                        data.files.some(function (path) { return !validScreenshotPath(path); })) {
-                        throw new Error(data.error || 'Не удалось загрузить изображения портфолио.');
-                    }
-                    return data.files;
-                });
             });
+    }
+
+    // Последовательная загрузка выбранных снимков через файловый менеджер.
+    function uploadScreenshots(files) {
+        return getCsrfToken().then(function (token) {
+            var paths = [];
+            var next = function () {
+                if (paths.length >= files.length) {
+                    return Promise.resolve(paths);
+                }
+                return uploadFileToManager(files[paths.length], token, 'images').then(function (result) {
+                    paths.push(result.path);
+                    return next();
+                });
+            };
+            return next();
+        });
     }
 
     if (isEditing) {
@@ -282,6 +600,12 @@
         inputs[0].focus();
     });
 
+    document.getElementById('addPortfolioInfoItem').addEventListener('click', function () {
+        addInfoItemRow();
+        var inputs = infoItemsContainer.lastElementChild.querySelectorAll('input');
+        inputs[0].focus();
+    });
+
     fields.screenshots.addEventListener('change', function () {
         selectedFiles = Array.prototype.slice.call(fields.screenshots.files);
         fields.screenshots.setCustomValidity('');
@@ -301,6 +625,10 @@
             return;
         }
 
+        // Описания снимков считываем из формы до отправки.
+        var existingDescriptions = readScreenshotDescriptions(existingImagesElement);
+        var newDescriptions = readScreenshotDescriptions(newImagesPreview);
+
         var saved = {
             id: itemId,
             title: fields.title.value.trim(),
@@ -315,12 +643,19 @@
             duration: fields.duration.value.trim(),
             stack: fields.stack.value.trim(),
             results: readResults(),
-            screenshots: existingImages.slice(),
+            infoItems: readInfoItems(),
+            screenshots: existingImages.map(function (image) { return image.path; }),
+            gallery: existingImages.map(function (image, index) {
+                return { path: image.path, description: existingDescriptions[index] || '' };
+            }),
             active: true
         };
 
-        var persist = function (uploaded) {
-            saved.screenshots = existingImages.concat(uploaded || []);
+        var persist = function (uploaded, uploadedDescriptions) {
+            saved.screenshots = saved.screenshots.concat(uploaded || []);
+            (uploaded || []).forEach(function (path, index) {
+                saved.gallery.push({ path: path, description: uploadedDescriptions[index] || '' });
+            });
             return window.AdminApi.save(
                 '/api/admin/projects' + (isEditing ? '/' + encodeURIComponent(itemId) : ''),
                 isEditing ? 'PUT' : 'POST',
@@ -333,7 +668,7 @@
         var submitButton = form.querySelector('[type="submit"]');
         submitButton.disabled = true;
         if (!selectedFiles.length) {
-            persist([]).catch(function (error) {
+            persist([], []).catch(function (error) {
                 console.error('Не удалось сохранить проект портфолио.', error);
                 notify('error', error.message || 'Не удалось сохранить проект.');
             }).finally(function () { submitButton.disabled = false; });
@@ -341,7 +676,7 @@
         }
 
         uploadScreenshots(selectedFiles).then(function (uploaded) {
-            return persist(uploaded);
+            return persist(uploaded, newDescriptions);
         }).catch(function (error) {
             console.error('Не удалось загрузить изображения проекта.', error);
             notify('error', error.message || 'Не удалось загрузить изображения проекта.');
