@@ -24,7 +24,7 @@
                     field.value = data[field.name] === null ? '' : data[field.name];
                 }
             });
-            document.getElementById('clientPageTitle').textContent = data.clientName || 'Карточка клиента';
+            // Заголовок карточки (clientNameHeading) обновляется при вводе в поле ФИО
             document.getElementById('clientNameHeading').textContent = data.clientName || 'Данные клиента';
             document.getElementById('orderNumber').textContent = 'Заказ №' + order.id + ' · создан ' + formatDate(data.orderDate);
             document.getElementById('clientStatusBadge').textContent = data.status;
