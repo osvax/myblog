@@ -217,12 +217,21 @@ return array (
       0 => 'js/custom-fields.js',
     ),
   ),
-  'landing-pages' => 
+  'landing-pages' =>
   array (
     'title' => 'Управление страницами',
-    'scripts' => 
+    'styles' =>
     array (
-      0 => 'js/landing-pages.js',
+      0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
+    ),
+    'scripts' =>
+    array (
+      0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js',
+      1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js',
+      2 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js',
+      3 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js',
+      4 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js',
+      5 => 'js/landing-pages.js',
     ),
   ),
   'templates' =>

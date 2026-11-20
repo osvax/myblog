@@ -1,27 +1,108 @@
 (function () {
     'use strict';
 
-    document.addEventListener('DOMContentLoaded', function () {
-        var currentPages = [];
-        var currentPage = null;
+    // Заготовка нового тела: полный HTML-документ в стиле сайта.
+    // Плейсхолдеры {{menu:...}}, {{field:...}}, {{asset:...}}
+    // подставляются сервером при открытии страницы — см. render_static_page().
+    var PAGE_STARTER = [
+        '<!DOCTYPE html>',
+        '<html lang="ru">',
+        '<head>',
+        '    <meta charset="UTF-8">',
+        '    <meta name="viewport" content="width=device-width, initial-scale=1.0">',
+        '    <title>Заголовок страницы</title>',
+        '    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">',
+        '    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">',
+        '    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">',
+        '</head>',
+        '<body>',
+        '    <!-- Меню сайта (раздел «Меню»): замените main на имя своего меню -->',
+        '    <nav class="bg-white border-bottom py-3">',
+        '        <div class="container d-flex justify-content-end">',
+        '            {{menu:main}}',
+        '        </div>',
+        '    </nav>',
+        '',
+        '    <main class="py-5">',
+        '        <div class="container">',
+        '            <h1 class="fw-bold">Заголовок страницы</h1>',
+        '            <p>Текст страницы. Сюда можно вставить любой HTML: блоки, таблицы, изображения.</p>',
+        '            <!-- Пользовательское поле (раздел «Пользовательские поля»): {{field:...}} -->',
+        '            <!-- Общий CSS/JS (раздел «Шаблоны»): {{asset:css/style.css}} -->',
+        '        </div>',
+        '    </main>',
+        '',
+        '    <footer class="bg-dark text-white py-4">',
+        '        <div class="container text-center">',
+        '            <p class="mb-0">© ' + (new Date().getFullYear()) + '. Все права защищены.</p>',
+        '        </div>',
+        '    </footer>',
+        '',
+        '    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></' + 'script>',
+        '</body>',
+        '</html>'
+    ].join('\n');
 
-        // ---------- DOM элементы ----------
+    document.addEventListener('DOMContentLoaded', function () {
         var pagesTableBody = document.getElementById('pagesTableBody');
+        if (!pagesTableBody) return;
+
         var generateBtn = document.getElementById('generateBtn');
         var addPageBtn = document.getElementById('addPageBtn');
         var pageEditor = document.getElementById('pageEditor');
         var pageForm = document.getElementById('pageForm');
         var pageEditId = document.getElementById('pageEditId');
+        var pageSlug = document.getElementById('pageSlug');
+        var pageTitle = document.getElementById('pageTitle');
+        var pageActive = document.getElementById('pageActive');
         var pageEditorTitle = document.getElementById('pageEditorTitle');
         var closeEditor = document.getElementById('closeEditor');
         var cancelPageBtn = document.getElementById('cancelPageBtn');
-        var htmlEditor = document.getElementById('htmlEditor');
-        var pageHtmlContent = document.getElementById('pageHtmlContent');
-        var saveHtmlBtn = document.getElementById('saveHtmlBtn');
-        var closeHtmlEditor = document.getElementById('closeHtmlEditor');
+        var fillStarterBtn = document.getElementById('fillStarterBtn');
+        var pageHtmlBody = document.getElementById('pageHtmlBody');
+        var previewModal = document.getElementById('pagePreviewModal');
+        var previewFrame = document.getElementById('pagePreviewFrame');
+        var previewTitle = document.getElementById('pagePreviewTitle');
         var pagesError = document.getElementById('pagesError');
         var pagesSuccess = document.getElementById('pagesSuccess');
-        var openHtmlFromEditor = document.getElementById('openHtmlFromEditor');
+
+        var currentPages = [];
+
+        // Код-редактор тела (CodeMirror — подключён для страницы в admin-pages.php);
+        // без него — обычный textarea.
+        var bodyEditor = null;
+        if (window.CodeMirror && pageHtmlBody) {
+            bodyEditor = CodeMirror.fromTextArea(pageHtmlBody, {
+                mode: 'htmlmixed',
+                lineNumbers: true,
+                lineWrapping: false,
+                indentUnit: 4,
+                tabSize: 4,
+                indentWithTabs: false
+            });
+        }
+
+        function getBody() {
+            if (bodyEditor) return bodyEditor.getValue();
+            return pageHtmlBody ? pageHtmlBody.value : '';
+        }
+
+        function setBody(value) {
+            if (bodyEditor) {
+                bodyEditor.setValue(value);
+            } else if (pageHtmlBody) {
+                pageHtmlBody.value = value;
+            }
+        }
+
+        // Модалка предпросмотра (есть в шаблоне страницы)
+        var previewModalInstance = null;
+        if (previewModal && window.bootstrap && bootstrap.Modal) {
+            previewModalInstance = bootstrap.Modal.getOrCreateInstance(previewModal);
+            previewModal.addEventListener('hidden.bs.modal', function () {
+                previewFrame.src = 'about:blank';
+            });
+        }
 
         // ---------- Вспомогательные функции ----------
         function showError(msg) {
@@ -40,6 +121,10 @@
             var div = document.createElement('div');
             div.textContent = str;
             return div.innerHTML;
+        }
+
+        function findPageById(pageId) {
+            return currentPages.find(function (p) { return String(p.id) === String(pageId); });
         }
 
         // ---------- Загрузка страниц ----------
@@ -75,34 +160,36 @@
                         '</div>' +
                     '</td>' +
                     '<td class="text-end">' +
-                        '<button type="button" class="btn btn-outline-primary btn-sm page-edit-btn me-1" data-id="' + page.id + '" data-slug="' + escapeHtml(page.slug) + '" title="Редактировать"><i class="bi bi-pencil"></i></button> ' +
-                        '<button type="button" class="btn btn-outline-info btn-sm page-html-btn me-1" data-id="' + page.id + '" data-slug="' + escapeHtml(page.slug) + '" title="HTML"><i class="bi bi-code-slash"></i></button> ' +
-                        '<button type="button" class="btn btn-outline-danger btn-sm page-delete-btn" data-id="' + page.id + '" title="Удалить"><i class="bi bi-trash"></i></button>' +
+                        '<button type="button" class="btn btn-outline-primary btn-sm page-edit-btn me-1" data-id="' + page.id + '" title="Редактировать" aria-label="Редактировать страницу ' + escapeHtml(page.slug) + '"><i class="bi bi-pencil"></i></button> ' +
+                        '<button type="button" class="btn btn-outline-info btn-sm page-preview-btn me-1" data-id="' + page.id + '" title="Просмотр" aria-label="Просмотр страницы ' + escapeHtml(page.slug) + '"><i class="bi bi-eye"></i></button> ' +
+                        '<button type="button" class="btn btn-outline-danger btn-sm page-delete-btn" data-id="' + page.id + '" title="Удалить" aria-label="Удалить страницу ' + escapeHtml(page.slug) + '"><i class="bi bi-trash"></i></button>' +
                     '</td>' +
                     '</tr>';
             });
             pagesTableBody.innerHTML = html;
 
-            // Обработчики
+            // Обработчики: id берём из замыкания btn (this в колбэке find — не элемент)
             pagesTableBody.querySelectorAll('.page-edit-btn').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    var page = currentPages.find(function (p) { return p.id == this.dataset.id; });
-                    if (!page) return;
-                    openEditPage(page);
+                    var page = findPageById(btn.dataset.id);
+                    if (page) {
+                        openEditor(page);
+                    }
                 });
             });
 
-            pagesTableBody.querySelectorAll('.page-html-btn').forEach(function (btn) {
+            pagesTableBody.querySelectorAll('.page-preview-btn').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    var page = currentPages.find(function (p) { return p.id == this.dataset.id; });
-                    if (!page) return;
-                    openHtmlEditor(page);
+                    var page = findPageById(btn.dataset.id);
+                    if (page) {
+                        openPreview(page);
+                    }
                 });
             });
 
             pagesTableBody.querySelectorAll('.page-delete-btn').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    var page = currentPages.find(function (p) { return p.id == this.dataset.id; });
+                    var page = findPageById(btn.dataset.id);
                     if (!page || page.slug === 'home') {
                         showError('Нельзя удалить главную страницу');
                         return;
@@ -114,33 +201,52 @@
 
             pagesTableBody.querySelectorAll('.page-toggle').forEach(function (btn) {
                 btn.addEventListener('click', function () {
-                    togglePageActive(parseInt(this.dataset.id, 10));
+                    togglePageActive(parseInt(btn.dataset.id, 10));
                 });
             });
         }
 
-        // ---------- Открыть редактор страницы ----------
-        function openEditPage(page) {
-            pageEditId.value = page.id;
-            document.getElementById('pageSlug').value = page.slug;
-            document.getElementById('pageTitle').value = page.title;
-            document.getElementById('pageActive').checked = page.is_active == 1;
-            pageEditorTitle.textContent = 'Редактировать страницу';
+        // ---------- Редактор: создание и правка страницы с телом ----------
+        function openEditor(page) {
+            pageForm.classList.remove('was-validated');
+            if (page) {
+                // Режим правки: slug не меняется (запись привязана к id)
+                pageEditId.value = page.id;
+                pageSlug.value = page.slug;
+                pageSlug.readOnly = true;
+                pageTitle.value = page.title;
+                pageActive.checked = page.is_active == 1;
+                setBody(page.html_content || '');
+                pageEditorTitle.textContent = 'Редактировать страницу: ' + page.slug;
+            } else {
+                // Режим создания: тело открывается сразу с заготовкой
+                pageEditId.value = '';
+                pageSlug.value = '';
+                pageSlug.readOnly = false;
+                pageTitle.value = '';
+                pageActive.checked = true;
+                setBody(PAGE_STARTER);
+                pageEditorTitle.textContent = 'Добавить страницу';
+            }
             pageEditor.hidden = false;
             pageEditor.scrollIntoView({ behavior: 'smooth' });
         }
 
-        // ---------- Открыть HTML редактор ----------
-        function openHtmlEditor(page) {
-            currentPage = page;
-            window.AdminApi.get('/api/admin/pages/' + page.slug).then(function (data) {
-                if (!data.page) return;
-                pageHtmlContent.value = data.page.html_content || '';
-                htmlEditor.hidden = false;
-                htmlEditor.scrollIntoView({ behavior: 'smooth' });
-            }).catch(function (error) {
-                showError('Не удалось загрузить HTML: ' + error.message);
-            });
+        function closePageEditor() {
+            pageEditor.hidden = true;
+            pageEditId.value = '';
+            pageForm.classList.remove('was-validated');
+        }
+
+        // ---------- Живой предпросмотр ----------
+        function openPreview(page) {
+            if (!previewModalInstance) {
+                showError('Предпросмотр недоступен');
+                return;
+            }
+            previewTitle.textContent = page.title + ' (/ ' + page.slug + '.html)';
+            previewFrame.src = '/api/admin/pages/' + page.id + '/preview';
+            previewModalInstance.show();
         }
 
         // ---------- Удалить страницу ----------
@@ -162,7 +268,7 @@
             });
         }
 
-        // ---------- Сохранить страницу ----------
+        // ---------- Сохранить страницу (карточка + тело) ----------
         function savePage() {
             if (!pageForm.checkValidity()) {
                 pageForm.classList.add('was-validated');
@@ -171,9 +277,10 @@
             }
 
             var data = {
-                slug: document.getElementById('pageSlug').value.trim(),
-                title: document.getElementById('pageTitle').value.trim(),
-                is_active: document.getElementById('pageActive').checked ? 1 : 0
+                slug: pageSlug.value.trim().toLowerCase(),
+                title: pageTitle.value.trim(),
+                is_active: pageActive.checked ? 1 : 0,
+                html_content: getBody()
             };
 
             if (pageEditId.value) {
@@ -181,9 +288,7 @@
             }
 
             window.AdminApi.save('/api/admin/pages', 'POST', data).then(function () {
-                pageEditor.hidden = true;
-                pageEditId.value = '';
-                pageForm.classList.remove('was-validated');
+                closePageEditor();
                 loadPages();
                 showSuccess('Страница сохранена');
             }).catch(function (error) {
@@ -191,28 +296,7 @@
             });
         }
 
-        // ---------- Сохранить HTML ----------
-        function saveHtml() {
-            if (!currentPage) return;
-
-            var data = {
-                slug: currentPage.slug,
-                title: currentPage.title,
-                html_content: pageHtmlContent.value,
-                is_active: currentPage.is_active == 1 ? 1 : 0,
-                edit_id: currentPage.id
-            };
-
-            window.AdminApi.save('/api/admin/pages', 'POST', data).then(function () {
-                htmlEditor.hidden = true;
-                loadPages();
-                showSuccess('HTML сохранён');
-            }).catch(function (error) {
-                showError('Не удалось сохранить: ' + error.message);
-            });
-        }
-
-        // ---------- Сгенерировать из настроек ----------
+        // ---------- Сгенерировать из настроек (главная) ----------
         function generateFromSettings() {
             var homePage = currentPages.find(function (p) { return p.slug === 'home'; });
             if (!homePage) {
@@ -229,7 +313,7 @@
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = '<i class="bi bi-magic me-1"></i> Сгенерировать из настроек';
             }).catch(function (error) {
-                showError('Не удалось сгенерировать: ' + error.message);
+                showError('Не удалось сгенерировать: ' + error.message');
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = '<i class="bi bi-magic me-1"></i> Сгенерировать из настроек';
             });
@@ -237,44 +321,22 @@
 
         // ---------- Обработчики событий ----------
         addPageBtn.addEventListener('click', function () {
-            pageEditId.value = '';
-            document.getElementById('pageSlug').value = '';
-            document.getElementById('pageTitle').value = '';
-            document.getElementById('pageActive').checked = true;
-            pageEditorTitle.textContent = 'Добавить страницу';
-            pageForm.classList.remove('was-validated');
-            pageEditor.hidden = false;
-            pageEditor.scrollIntoView({ behavior: 'smooth' });
+            openEditor(null);
         });
 
-        closeEditor.addEventListener('click', function () {
-            pageEditor.hidden = true;
-            pageEditId.value = '';
-            pageForm.classList.remove('was-validated');
-        });
+        closeEditor.addEventListener('click', closePageEditor);
+        cancelPageBtn.addEventListener('click', closePageEditor);
 
-        cancelPageBtn.addEventListener('click', function () {
-            pageEditor.hidden = true;
-            pageEditId.value = '';
-            pageForm.classList.remove('was-validated');
-        });
-
-        openHtmlFromEditor.addEventListener('click', function () {
-            var page = currentPages.find(function (p) { return p.id == pageEditId.value; });
-            if (!page) return;
-            pageEditor.hidden = true;
-            openHtmlEditor(page);
+        fillStarterBtn.addEventListener('click', function () {
+            if (pageEditId.value && !confirm('Текущее тело страницы будет заменено заготовкой. Продолжить?')) {
+                return;
+            }
+            setBody(PAGE_STARTER);
         });
 
         pageForm.addEventListener('submit', function (e) {
             e.preventDefault();
             savePage();
-        });
-
-        saveHtmlBtn.addEventListener('click', saveHtml);
-
-        closeHtmlEditor.addEventListener('click', function () {
-            htmlEditor.hidden = true;
         });
 
         generateBtn.addEventListener('click', generateFromSettings);

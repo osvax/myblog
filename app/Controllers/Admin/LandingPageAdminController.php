@@ -176,4 +176,45 @@ class LandingPageAdminController extends Controller
             'page' => $page,
         ]);
     }
+
+    /**
+     * Живой предпросмотр страницы (кнопка «Просмотр» в разделе «Страницы»).
+     * Отрендеренное тело с раскрытыми плейсхолдерами отдаётся как HTML —
+     * независимо от флага активности, чтобы можно было посмотреть
+     * и неактивную страницу. Доступ — как у всего /api/admin/*
+     * (авторизация + право на раздел), проверяются до роутера.
+     */
+    public function preview($request, $parameters)
+    {
+        if ($request->method() !== 'GET') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+        if (!\admin_is_authenticated()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+
+        $pageId = isset($parameters['id']) ? (int) $parameters['id'] : 0;
+        if ($pageId <= 0) {
+            return $this->json(['success' => false, 'error' => 'Неверный ID страницы'], 400);
+        }
+
+        $page = (new LandingPage())->findById($pageId);
+        if (!$page) {
+            return $this->json(['success' => false, 'error' => 'Страница не найдена'], 404);
+        }
+
+        $html = trim((string) ($page['html_content'] ?? ''));
+        if ($html === '') {
+            $html = '<!DOCTYPE html><html lang="ru"><head><meta charset="UTF-8">'
+                . '<title>Пустая страница</title></head>'
+                . '<body style="font-family: sans-serif; padding: 3rem; text-align: center; color: #666;">'
+                . '<h2>Тело страницы пока пустое</h2>'
+                . '<p>Заполните его в разделе «Страницы» и сохраните.</p>'
+                . '</body></html>';
+        } else {
+            $html = render_static_page($html);
+        }
+
+        return new \App\Core\Response($html, 200, ['Content-Type' => 'text/html; charset=utf-8']);
+    }
 }

@@ -35,10 +35,10 @@
     </div>
 </section>
 
-<!-- Редактор страницы -->
+<!-- Редактор страницы: карточка + тело (заготовка) -->
 <div id="pageEditor" class="card admin-card" hidden>
     <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h2 class="h5 fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i><span id="pageEditorTitle">Редактировать страницу</span></h2>
+        <h2 class="h5 fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i><span id="pageEditorTitle">Добавить страницу</span></h2>
         <button class="btn btn-outline-secondary btn-sm" type="button" id="closeEditor">
             <i class="bi bi-x"></i> Закрыть
         </button>
@@ -47,29 +47,45 @@
         <form id="pageForm" novalidate>
             <input type="hidden" id="pageEditId" value="">
             <div class="row g-3">
-                <div class="col-md-6">
+                <div class="col-md-5">
                     <label class="form-label fw-bold" for="pageSlug">Slug (ключ)</label>
-                    <input class="form-control" id="pageSlug" name="slug" maxlength="100" placeholder="home" required>
-                    <div class="invalid-feedback">Укажите slug</div>
+                    <input class="form-control" id="pageSlug" name="slug" maxlength="100" pattern="[a-z0-9-]{1,100}" placeholder="about" required>
+                    <div class="invalid-feedback">Строчные латинские буквы, цифры и дефис</div>
                 </div>
-                <div class="col-md-6">
+                <div class="col-md-4">
                     <label class="form-label fw-bold" for="pageTitle">Заголовок</label>
-                    <input class="form-control" id="pageTitle" name="title" maxlength="254" placeholder="Главная страница" required>
+                    <input class="form-control" id="pageTitle" name="title" maxlength="254" placeholder="О проекте" required>
                     <div class="invalid-feedback">Укажите заголовок</div>
                 </div>
-                <div class="col-md-12">
-                    <div class="form-check form-switch mt-3">
+                <div class="col-md-3 d-flex align-items-end">
+                    <div class="form-check form-switch">
                         <input class="form-check-input" type="checkbox" id="pageActive" checked>
                         <label class="form-check-label fw-bold" for="pageActive">Активна</label>
                     </div>
                 </div>
             </div>
+
+            <label class="form-label fw-bold mt-4 d-flex justify-content-between" for="pageHtmlBody">
+                <span>Тело страницы (HTML)</span>
+                <button class="btn btn-link btn-sm p-0 align-items-center gap-1" type="button" id="fillStarterBtn" title="Вставить заготовку заново (текущее тело будет заменено)">
+                    <i class="bi bi-file-earmark-plus"></i> Вставить заготовку
+                </button>
+            </label>
+            <textarea id="pageHtmlBody" class="form-control font-monospace" rows="18"
+                      placeholder="<!DOCTYPE html>
+<html lang=&quot;ru&quot;>
+…"></textarea>
+            <p class="small text-muted mt-2 mb-0">
+                Можно вставить любой HTML. Плейсхолдеры подставляются при открытии страницы на сайте:
+                <code>{{field:ключ}}</code> — пользовательское поле (раздел «Пользовательские поля»),
+                <code>{{menu:имя}}</code> — меню (раздел «Меню»),
+                <code>{{asset:css/style.css}}</code> — общий CSS/JS (раздел «Шаблоны»).
+                Страница откроется посетителям по адресу <code>/slug.html</code>, если она активна.
+            </p>
+
             <div class="d-flex flex-wrap gap-2 mt-4">
                 <button class="btn btn-orange fw-bold" type="submit">
                     <i class="bi bi-save me-1"></i> Сохранить
-                </button>
-                <button class="btn btn-outline-info fw-bold" type="button" id="openHtmlFromEditor">
-                    <i class="bi bi-code-slash me-1"></i> Редактировать HTML
                 </button>
                 <button class="btn btn-outline-secondary fw-bold" type="button" id="cancelPageBtn">
                     Отмена
@@ -79,20 +95,20 @@
     </div>
 </div>
 
-<!-- Редактор HTML -->
-<div id="htmlEditor" class="card admin-card mt-4" hidden>
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
-        <h2 class="h5 fw-bold mb-0"><i class="bi bi-code-slash me-2"></i>HTML страницы</h2>
-        <div class="d-flex gap-2">
-            <button class="btn btn-orange btn-sm fw-bold" type="button" id="saveHtmlBtn">
-                <i class="bi bi-save me-1"></i> Сохранить HTML
-            </button>
-            <button class="btn btn-outline-secondary btn-sm" type="button" id="closeHtmlEditor">
-                <i class="bi bi-x"></i> Закрыть
-            </button>
+<!-- Живой предпросмотр страницы -->
+<div class="modal fade" id="pagePreviewModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="h5 fw-bold modal-title"><i class="bi bi-eye me-2"></i>Предпросмотр — <span id="pagePreviewTitle"></span></h2>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="pagePreviewFrame" class="w-100 border-0" style="height: 75vh; background: #fff;" title="Предпросмотр страницы"></iframe>
+            </div>
+            <div class="modal-footer py-2">
+                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
+            </div>
         </div>
-    </div>
-    <div class="card-body p-0">
-        <textarea id="pageHtmlContent" class="form-control font-monospace" rows="20" style="border: none; resize: none;"></textarea>
     </div>
 </div>

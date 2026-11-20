@@ -98,10 +98,11 @@ return function (Router $router) {
         if ($content->articleBySlug($slug) !== null) {
             return $blog->article($request, $slug);
         }
-        // Простые страницы и лендинги из раздела «Страницы» админки
+        // Простые страницы и лендинги из раздела «Страницы» админки:
+        // тело — произвольный HTML с плейсхолдерами, раскрываются при рендере
         $staticPage = (new \App\Models\LandingPage())->findActive($slug);
         if ($staticPage !== null && trim((string) ($staticPage['html_content'] ?? '')) !== '') {
-            return $staticPage['html_content'];
+            return render_static_page($staticPage['html_content']);
         }
         return $portfolio->project($request, $slug);
     });

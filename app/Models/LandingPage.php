@@ -3,7 +3,6 @@
 namespace App\Models;
 
 use App\Core\Database;
-use App\Core\Sanitizer;
 
 class LandingPage
 {
@@ -50,7 +49,27 @@ class LandingPage
     }
 
     /**
+     * Получить страницу по id.
+     *
+     * @param int $id
+     * @return array|null
+     */
+    public function findById(int $id): ?array
+    {
+        $db = Database::connection();
+        $stmt = $db->prepare("SELECT * FROM " . db_table('landing_pages') . " WHERE id = :id LIMIT 1");
+        $stmt->execute([':id' => $id]);
+        $result = $stmt->fetch();
+        return $result ?: null;
+    }
+
+    /**
      * Создать или обновить страницу.
+     *
+     * HTML тела хранится как есть: страницы пишет авторизованный админ
+     * (та же модель доверия, что и у раздела «Шаблоны»), а плейсхолдеры
+     * {{field:...}} / {{menu:...}} / {{asset:...}} раскрываются при
+     * рендере функцией render_static_page().
      *
      * @param string $slug
      * @param string $title
@@ -66,9 +85,6 @@ class LandingPage
         int $isActive = 1,
         int $editId = 0
     ): array {
-        // Санитизируем HTML контент перед сохранением (защита от XSS)
-        $htmlContent = Sanitizer::clean($htmlContent);
-
         $db = Database::connection();
 
         if ($editId > 0) {

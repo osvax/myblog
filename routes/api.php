@@ -145,6 +145,7 @@ return function (Router $router) {
     // ---------- Управление страницами ----------
     $router->get('/api/admin/pages', [$landingPageAdmin, 'index']);
     $router->get('/api/admin/pages/{slug}', [$landingPageAdmin, 'show']);
+    $router->get('/api/admin/pages/{id}/preview', [$landingPageAdmin, 'preview']);
     $router->post('/api/admin/pages', [$landingPageAdmin, 'create']);
     $router->post('/api/admin/pages/{slug}/generate', [$landingPageAdmin, 'generate']);
     $router->delete('/api/admin/pages/{id}', [$landingPageAdmin, 'delete']);
