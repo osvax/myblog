@@ -54,7 +54,7 @@ class PageController extends Controller
             'role-edit' => 'roles',
         ][$slug] ?? $slug;
         foreach ($navigation as &$entry) {
-            if ($entry['type'] === 'group') {
+            if (($entry['type'] ?? 'link') === 'group') {
                 $groupOpen = false;
                 foreach ($entry['items'] as &$item) {
                     $item['active'] = $item['slug'] === $activeSection;
