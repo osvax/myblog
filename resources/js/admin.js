@@ -378,47 +378,101 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
-    // ---------- Подтверждение удаления ----------
+    // ---------- Подтверждения: модальное окно вместо нативного confirm/prompt ----------
     const confirmation = document.createElement('div');
     confirmation.className = 'modal fade';
     confirmation.tabIndex = -1;
     confirmation.setAttribute('aria-hidden', 'true');
     confirmation.innerHTML =
         '<div class="modal-dialog modal-dialog-centered"><div class="modal-content">' +
-        '<div class="modal-header"><h2 class="modal-title fs-5">Подтверждение удаления</h2>' +
+        '<div class="modal-header"><h2 class="modal-title fs-5" data-confirm-title>Подтверждение</h2>' +
         '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>' +
-        '<div class="modal-body"><p class="mb-0">Вы уверены?</p></div>' +
-        '<div class="modal-footer"><button type="button" class="btn btn-secondary" data-confirm-no>Нет</button>' +
-        '<button type="button" class="btn btn-danger" data-confirm-yes>Да</button></div></div></div>';
+        '<div class="modal-body">' +
+        '<p class="mb-0" data-confirm-text></p>' +
+        '<div class="mt-3" data-confirm-input-wrap hidden>' +
+        '<label class="form-label small fw-bold mb-1" data-confirm-input-label></label>' +
+        '<input type="text" class="form-control" data-confirm-input>' +
+        '</div></div>' +
+        '<div class="modal-footer">' +
+        '<button type="button" class="btn btn-secondary" data-confirm-no>Отмена</button>' +
+        '<button type="button" class="btn btn-danger" data-confirm-yes>Подтвердить</button>' +
+        '</div></div></div>';
     document.body.appendChild(confirmation);
     const confirmationModal = bootstrap.Modal.getOrCreateInstance(confirmation);
+    const confirmTitle = confirmation.querySelector('[data-confirm-title]');
+    const confirmText = confirmation.querySelector('[data-confirm-text]');
+    const confirmInputWrap = confirmation.querySelector('[data-confirm-input-wrap]');
+    const confirmInputLabel = confirmation.querySelector('[data-confirm-input-label]');
+    const confirmInput = confirmation.querySelector('[data-confirm-input]');
+    const confirmYesBtn = confirmation.querySelector('[data-confirm-yes]');
+    const confirmNoBtn = confirmation.querySelector('[data-confirm-no]');
+    let confirmEnterHandler = null;
+
+    // Универсальное подтверждение: window.AdminConfirm.ask('Текст вопроса', {
+    //   title, confirmLabel, cancelLabel, danger: true/false, input: { label, placeholder }
+    // }) → Promise<{ ok: boolean, value: string }>
+    window.AdminConfirm = {
+        ask: function (message, options) {
+            options = options || {};
+            return new Promise(function (resolve) {
+                const answer = { ok: false, value: '' };
+                confirmTitle.textContent = options.title || 'Подтверждение';
+                confirmText.textContent = message || 'Вы уверены?';
+                confirmNoBtn.textContent = options.cancelLabel || 'Отмена';
+                confirmYesBtn.textContent = options.confirmLabel || 'Подтвердить';
+                confirmYesBtn.className = 'btn ' + (options.danger === false ? 'btn-primary' : 'btn-danger');
+                const withInput = !!options.input;
+                confirmInputWrap.hidden = !withInput;
+                confirmInput.value = '';
+                if (withInput) {
+                    confirmInputLabel.textContent = options.input.label || '';
+                    confirmInput.setAttribute('placeholder', options.input.placeholder || '');
+                }
+                if (confirmEnterHandler) {
+                    confirmInput.removeEventListener('keydown', confirmEnterHandler);
+                }
+                confirmEnterHandler = function (event) {
+                    if (event.key !== 'Enter') return;
+                    event.preventDefault();
+                    answer.ok = true;
+                    answer.value = confirmInput.value;
+                    confirmationModal.hide();
+                };
+                confirmInput.addEventListener('keydown', confirmEnterHandler);
+
+                function onHidden() {
+                    confirmation.removeEventListener('hidden.bs.modal', onHidden);
+                    confirmYesBtn.onclick = null;
+                    confirmNoBtn.onclick = null;
+                    resolve(answer);
+                }
+                confirmation.addEventListener('hidden.bs.modal', onHidden, { once: true });
+                confirmNoBtn.onclick = function () {
+                    answer.ok = false;
+                    confirmationModal.hide();
+                };
+                confirmYesBtn.onclick = function () {
+                    answer.ok = true;
+                    answer.value = confirmInput.value;
+                    confirmationModal.hide();
+                };
+                confirmationModal.show();
+                if (withInput) {
+                    window.setTimeout(function () { confirmInput.focus(); }, 150);
+                }
+            });
+        }
+    };
+
     const confirmedDeletes = new WeakSet();
 
     function askDeleteConfirmation(button) {
-        const question = confirmation.querySelector('.modal-body p');
         const label = (button.getAttribute('aria-label') || button.getAttribute('title') || button.textContent || '')
             .replace(/^\s*Удалить\s*/i, '').trim();
-        question.textContent = label ? 'Вы уверены? Удалить «' + label + '»?' : 'Вы уверены?';
-        return new Promise(function (resolve) {
-            let answer = false;
-            function finish() {
-                confirmation.removeEventListener('hidden.bs.modal', onHidden);
-                resolve(answer);
-            }
-            function onHidden() {
-                finish();
-            }
-            confirmation.addEventListener('hidden.bs.modal', onHidden, { once: true });
-            confirmation.querySelector('[data-confirm-no]').onclick = function () {
-                answer = false;
-                confirmationModal.hide();
-            };
-            confirmation.querySelector('[data-confirm-yes]').onclick = function () {
-                answer = true;
-                confirmationModal.hide();
-            };
-            confirmationModal.show();
-        });
+        return window.AdminConfirm.ask(
+            label ? 'Вы уверены? Удалить «' + label + '»?' : 'Вы уверены?',
+            { title: 'Подтверждение удаления', confirmLabel: 'Да', cancelLabel: 'Нет' }
+        ).then(function (result) { return result.ok; });
     }
 
     document.addEventListener('click', function (event) {

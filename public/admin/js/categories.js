@@ -86,7 +86,7 @@
                 return;
             }
             var remove = event.target.closest('[data-category-delete]');
-            if (!remove || !window.confirm('Удалить рубрику?')) return;
+            if (!remove) return;
             window.AdminApi.remove('/api/admin/categories/' + encodeURIComponent(remove.dataset.categoryDelete))
                 .then(load).then(function () {
                     window.AdminNotifications.show('success', 'Рубрика удалена');

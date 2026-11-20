@@ -411,14 +411,21 @@
             if (sourceMode) return;
             var command = button.dataset.editorCommand;
             if (command === 'createLink') {
-                var url = window.prompt('Введите адрес ссылки (http, https или mailto):');
-                if (!url) return;
-                url = url.trim();
-                if (!/^(https?:\/\/|mailto:)/i.test(url)) {
-                    showToast('Ссылка должна начинаться с http://, https:// или mailto:');
-                    return;
-                }
-                document.execCommand(command, false, url);
+                window.AdminConfirm.ask('Введите адрес ссылки (http, https или mailto):', {
+                    title: 'Вставка ссылки',
+                    confirmLabel: 'Вставить',
+                    danger: false,
+                    input: { label: 'Адрес ссылки', placeholder: 'https://example.com' }
+                }).then(function (result) {
+                    if (!result.ok) return;
+                    var url = result.value.trim();
+                    if (!url) return;
+                    if (!/^(https?:\/\/|mailto:)/i.test(url)) {
+                        showToast('Ссылка должна начинаться с http://, https:// или mailto:');
+                        return;
+                    }
+                    document.execCommand(command, false, url);
+                });
                 return;
             }
             document.execCommand(command, false, null);
@@ -434,24 +441,40 @@
     videoInsertButton.addEventListener('mousedown', function (event) { event.preventDefault(); });
     videoInsertButton.addEventListener('click', function () {
         saveActiveSelection();
-        var url = window.prompt('Введите ссылку на видео или ролик YouTube / Vimeo:');
-        if (!url) return;
-        try {
-            insertHtml(videoMarkup(url));
-        } catch (error) {
-            showToast(error.message);
-        }
+        window.AdminConfirm.ask('Введите ссылку на видео или ролик YouTube / Vimeo:', {
+            title: 'Вставка видео',
+            confirmLabel: 'Вставить',
+            danger: false,
+            input: { label: 'Ссылка на видео', placeholder: 'https://www.youtube.com/watch?v=…' }
+        }).then(function (result) {
+            if (!result.ok) return;
+            var url = result.value.trim();
+            if (!url) return;
+            try {
+                insertHtml(videoMarkup(url));
+            } catch (error) {
+                showToast(error.message);
+            }
+        });
     });
     audioInsertButton.addEventListener('mousedown', function (event) { event.preventDefault(); });
     audioInsertButton.addEventListener('click', function () {
         saveActiveSelection();
-        var url = window.prompt('Введите прямую ссылку на аудиофайл (MP3, OGG, WAV и другие форматы браузера):');
-        if (!url) return;
-        try {
-            insertHtml(audioMarkup(url));
-        } catch (error) {
-            showToast(error.message);
-        }
+        window.AdminConfirm.ask('Введите прямую ссылку на аудиофайл (MP3, OGG, WAV и другие форматы браузера):', {
+            title: 'Вставка аудио',
+            confirmLabel: 'Вставить',
+            danger: false,
+            input: { label: 'Ссылка на аудиофайл', placeholder: 'https://example.com/music.mp3' }
+        }).then(function (result) {
+            if (!result.ok) return;
+            var url = result.value.trim();
+            if (!url) return;
+            try {
+                insertHtml(audioMarkup(url));
+            } catch (error) {
+                showToast(error.message);
+            }
+        });
     });
     codeInsertButton.addEventListener('mousedown', function (event) { event.preventDefault(); });
     codeInsertButton.addEventListener('click', function () {

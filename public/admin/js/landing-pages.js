@@ -199,7 +199,6 @@
                         showError('Нельзя удалить главную страницу');
                         return;
                     }
-                    if (!confirm('Удалить страницу "' + page.title + '"?')) return;
                     deletePage(page.id);
                 });
             });
@@ -351,10 +350,14 @@
         cancelPageBtn.addEventListener('click', closePageEditor);
 
         fillStarterBtn.addEventListener('click', function () {
-            if (pageEditId.value && !confirm('Текущее тело страницы будет заменено заготовкой. Продолжить?')) {
+            if (!pageEditId.value) {
+                setBody(PAGE_STARTER);
                 return;
             }
-            setBody(PAGE_STARTER);
+            window.AdminConfirm.ask('Текущее тело страницы будет заменено заготовкой. Продолжить?', { title: 'Замена тела страницы', confirmLabel: 'Заменить', danger: false })
+                .then(function (result) {
+                    if (result.ok) setBody(PAGE_STARTER);
+                });
         });
 
         pageForm.addEventListener('submit', function (e) {

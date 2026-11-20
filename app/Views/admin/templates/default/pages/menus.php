@@ -3,7 +3,7 @@
         <label class="form-label fw-bold" for="menuSelect">Меню</label>
         <div class="input-group">
             <select class="form-select" id="menuSelect"></select>
-            <button class="btn btn-outline-danger" type="button" id="deleteMenuButton" title="Удалить меню"><i class="bi bi-trash"></i></button>
+            <button class="btn btn-outline-danger" type="button" id="deleteMenuButton" title="Удалить меню со всеми пунктами"><i class="bi bi-trash"></i></button>
         </div>
     </div>
     <div class="col-lg-4">

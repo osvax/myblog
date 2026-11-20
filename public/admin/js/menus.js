@@ -99,7 +99,7 @@
                 '<button type="button" class="btn btn-sm btn-outline-secondary" data-item-move="up" data-item-id="' + item.id + '" title="Выше" aria-label="Выше"><i class="bi bi-arrow-up"></i></button>' +
                 '<button type="button" class="btn btn-sm btn-outline-secondary" data-item-move="down" data-item-id="' + item.id + '" title="Ниже" aria-label="Ниже"><i class="bi bi-arrow-down"></i></button>' +
                 '<button type="button" class="btn btn-sm btn-outline-dark" data-item-edit="' + item.id + '" title="Редактировать" aria-label="Редактировать"><i class="bi bi-pencil"></i></button>' +
-                '<button type="button" class="btn btn-sm btn-outline-danger" data-item-delete="' + item.id + '" title="Удалить" aria-label="Удалить"><i class="bi bi-trash"></i></button>' +
+                '<button type="button" class="btn btn-sm btn-outline-danger" data-item-delete="' + item.id + '" title="Удалить" aria-label="Удалить пункт с подчинёнными"><i class="bi bi-trash"></i></button>' +
                 '</span></div>' +
                 '<div class="row g-2 mt-2" data-item-form="' + item.id + '" hidden>' +
                 '<div class="col-md-3"><label class="form-label small fw-bold">Название</label><input class="form-control form-control-sm" data-edit-title value="' + escapeHtml(item.title) + '" maxlength="160"></div>' +
@@ -276,7 +276,7 @@
             }
 
             var remove = event.target.closest('[data-item-delete]');
-            if (remove && window.confirm('Удалить пункт меню? Подчинённые пункты тоже удалятся.')) {
+            if (remove) {
                 window.AdminApi.remove('/api/admin/menus/' + Number(remove.dataset.itemDelete) + '/delete-item').then(loadItems)
                     .then(function () {
                         window.AdminNotifications.show(true, 'Пункт удалён');
@@ -329,7 +329,6 @@
                 showError('Главное меню удалить нельзя.');
                 return;
             }
-            if (!window.confirm('Удалить меню «' + menuSelect.value + '» со всеми пунктами?')) return;
             window.AdminApi.remove('/api/admin/menus/' + encodeURIComponent(menuSelect.value) + '/delete-menu')
                 .then(function () {
                     return loadMenus().then(loadItems);

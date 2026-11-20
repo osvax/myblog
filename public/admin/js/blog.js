@@ -223,7 +223,6 @@
     tableBody.addEventListener('click', function (event) {
         var button = event.target.closest('[data-article-delete]');
         if (!button) return;
-        if (!window.confirm('Удалить статью?')) return;
         window.AdminApi.remove('/api/admin/articles/' + encodeURIComponent(button.dataset.articleDelete))
             .then(function () {
                 showToast('Статья удалена.', 'success');

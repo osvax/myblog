@@ -258,22 +258,25 @@
         var clearBtn = document.getElementById('clearLogsBtn');
         if (clearBtn) {
             clearBtn.addEventListener('click', function () {
-                if (!window.confirm('Очистить весь журнал событий? Действие необратимо.')) return;
-                fetch('../api/auth/csrf', { credentials: 'same-origin' })
-                    .then(function (r) { return r.json(); })
-                    .then(function (csrf) {
-                        return fetch('../api/admin/settings/logs/clear', {
-                            method: 'POST', credentials: 'same-origin',
-                            headers: { 'X-CSRF-Token': csrf.token }
-                        });
-                    })
-                    .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d.success) throw new Error(d.error); return d; }); })
-                    .then(function (d) {
-                        window.AdminNotifications.show(true, 'Журнал очищен (удалено записей: ' + (d.deleted || 0) + ')');
-                        loadLogs();
-                    })
-                    .catch(function (error) {
-                        window.AdminNotifications.show(false, error.message || 'Не удалось очистить журнал.');
+                window.AdminConfirm.ask('Очистить весь журнал событий? Действие необратимо.', { title: 'Очистка журнала', confirmLabel: 'Очистить' })
+                    .then(function (result) {
+                        if (!result.ok) return;
+                        fetch('../api/auth/csrf', { credentials: 'same-origin' })
+                            .then(function (r) { return r.json(); })
+                            .then(function (csrf) {
+                                return fetch('../api/admin/settings/logs/clear', {
+                                    method: 'POST', credentials: 'same-origin',
+                                    headers: { 'X-CSRF-Token': csrf.token }
+                                });
+                            })
+                            .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d.success) throw new Error(d.error); return d; }); })
+                            .then(function (d) {
+                                window.AdminNotifications.show(true, 'Журнал очищен (удалено записей: ' + (d.deleted || 0) + ')');
+                                loadLogs();
+                            })
+                            .catch(function (error) {
+                                window.AdminNotifications.show(false, error.message || 'Не удалось очистить журнал.');
+                            });
                     });
             });
         }

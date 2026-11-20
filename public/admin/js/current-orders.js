@@ -95,7 +95,7 @@
 
         body.addEventListener('click', function (event) {
             var button = event.target.closest('[data-order-delete]');
-            if (!button || !window.confirm('Удалить заказ?')) return;
+            if (!button) return;
             window.AdminApi.remove('/api/admin/orders/' + encodeURIComponent(button.dataset.orderDelete))
                 .then(function () {
                     orders = orders.filter(function (order) { return String(order.id) !== button.dataset.orderDelete; });

@@ -179,7 +179,7 @@
             }
 
             var button = event.target.closest('[data-message-delete]');
-            if (!button || !window.confirm('Удалить обращение?')) return;
+            if (!button) return;
             window.AdminApi.remove('/api/admin/messages/' + encodeURIComponent(button.dataset.messageDelete))
                 .then(function () {
                     return loadMessages();

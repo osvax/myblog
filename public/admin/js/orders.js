@@ -512,7 +512,6 @@
         tableBody.addEventListener('click', function (event) {
             var button = event.target.closest('[data-order-delete]');
             if (!button) return;
-            if (!window.confirm('Удалить заказ?')) return;
             window.AdminApi.remove('/api/admin/orders/' + encodeURIComponent(button.dataset.orderDelete))
                 .then(function () {
                     orders = orders.filter(function (item) {

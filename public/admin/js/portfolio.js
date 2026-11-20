@@ -100,7 +100,7 @@
 
     grid.addEventListener('click', function (event) {
         var button = event.target.closest('[data-portfolio-delete]');
-        if (!button || !window.confirm('Удалить проект из портфолио?')) return;
+        if (!button) return;
         window.AdminApi.remove('/api/admin/projects/' + encodeURIComponent(button.dataset.portfolioDelete))
             .then(function () {
                 notify('success', 'Работа удалена.');

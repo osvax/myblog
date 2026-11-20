@@ -136,12 +136,16 @@
     });
 
     deleteBtn.addEventListener('click', function () {
-        if (!role || !window.confirm('Удалить роль «' + role.name + '»?')) return;
-        window.AdminApi.remove('/api/admin/roles/' + roleId).then(function () {
-            window.location.href = 'roles.html';
-        }).catch(function (error) {
-            showError(error.message || 'Не удалось удалить роль');
-        });
+        if (!role) return;
+        window.AdminConfirm.ask('Удалить роль «' + role.name + '»?', { title: 'Удаление роли' })
+            .then(function (result) {
+                if (!result.ok) return;
+                window.AdminApi.remove('/api/admin/roles/' + roleId).then(function () {
+                    window.location.href = 'roles.html';
+                }).catch(function (error) {
+                    showError(error.message || 'Не удалось удалить роль');
+                });
+            });
     });
 
     load();

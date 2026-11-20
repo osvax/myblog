@@ -67,13 +67,74 @@ document.querySelectorAll('form.needs-validation').forEach(form => {
   }, false);
 });
 
-// Confirm delete actions
+// Confirm actions (data-confirm) — Bootstrap-модалка вместо нативного confirm()
+let confirmModalEl = null;
+
+function buildConfirmModal() {
+  if (confirmModalEl) return confirmModalEl;
+  confirmModalEl = document.createElement('div');
+  confirmModalEl.className = 'modal fade';
+  confirmModalEl.setAttribute('tabindex', '-1');
+  confirmModalEl.setAttribute('aria-hidden', 'true');
+  confirmModalEl.innerHTML =
+    '<div class="modal-dialog modal-dialog-centered">' +
+    '<div class="modal-content">' +
+    '<div class="modal-header"><h5 class="modal-title">Подтверждение</h5>' +
+    '<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button></div>' +
+    '<div class="modal-body"><p class="mb-0" data-confirm-text></p></div>' +
+    '<div class="modal-footer">' +
+    '<button type="button" class="btn btn-secondary" data-confirm-no>Отмена</button>' +
+    '<button type="button" class="btn btn-danger" data-confirm-yes>Подтвердить</button>' +
+    '</div></div></div>';
+  document.body.appendChild(confirmModalEl);
+  return confirmModalEl;
+}
+
+function askConfirmModal(message) {
+  return new Promise((resolve) => {
+    // Глобальный bootstrap — из CDN-бандла; без него просто не блокируем действие
+    if (!window.bootstrap || !window.bootstrap.Modal) {
+      resolve(true);
+      return;
+    }
+    const el = buildConfirmModal();
+    const answer = { ok: false };
+    let settled = false;
+    const onHidden = function() {
+      el.removeEventListener('hidden.bs.modal', onHidden);
+      if (!settled) {
+        settled = true;
+        resolve(answer.ok);
+      }
+    };
+    el.querySelector('[data-confirm-text]').textContent = message || 'Вы уверены?';
+    el.querySelector('[data-confirm-no]').onclick = function() {
+      answer.ok = false;
+      window.bootstrap.Modal.getInstance(el).hide();
+    };
+    el.querySelector('[data-confirm-yes]').onclick = function() {
+      answer.ok = true;
+      window.bootstrap.Modal.getInstance(el).hide();
+    };
+    el.addEventListener('hidden.bs.modal', onHidden);
+    window.bootstrap.Modal.getOrCreateInstance(el).show();
+  });
+}
+
+// Повторный клик после подтверждения (WeakSet — защита от бесконечного цикла)
+const confirmedElements = new WeakSet();
+
 document.querySelectorAll('[data-confirm]').forEach(el => {
   el.addEventListener('click', e => {
+    if (confirmedElements.has(el)) return; // повторное срабатывание — пропускаем
+    e.preventDefault();
+    e.stopImmediatePropagation();
     const message = el.dataset.confirm || 'Вы уверены?';
-    if (!confirm(message)) {
-      e.preventDefault();
-    }
+    askConfirmModal(message).then(ok => {
+      if (!ok) return;
+      confirmedElements.add(el);
+      el.click();
+    });
   });
 });
 

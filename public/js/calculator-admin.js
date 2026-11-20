@@ -285,11 +285,14 @@
             window.AdminNotifications.show('info', 'Функция добавлена. Сохраните настройки, чтобы применить изменение.');
         });
         document.getElementById('resetCalculator').addEventListener('click', function () {
-            if (!window.confirm('Вернуть стандартные настройки калькулятора?')) return;
-            // Стандартные значения берём из calculator-config.js и сохраняем в базу
-            window.CalculatorConfig.reset();
-            config = window.CalculatorConfig.load();
-            persist('Стандартные настройки восстановлены и сохранены в базу');
+            window.AdminConfirm.ask('Вернуть стандартные настройки калькулятора?', { title: 'Сброс настроек', confirmLabel: 'Сбросить' })
+                .then(function (result) {
+                    if (!result.ok) return;
+                    // Стандартные значения берём из calculator-config.js и сохраняем в базу
+                    window.CalculatorConfig.reset();
+                    config = window.CalculatorConfig.load();
+                    persist('Стандартные настройки восстановлены и сохранены в базу');
+                });
         });
 
         render();

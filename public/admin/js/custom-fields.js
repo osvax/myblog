@@ -180,7 +180,7 @@
                 '</td>' +
                 '<td class="text-end text-nowrap">' +
                     '<button type="button" class="btn btn-outline-primary btn-sm field-edit-btn me-1" data-id="' + field.id + '" title="Редактировать"><i class="bi bi-pencil"></i></button> ' +
-                    '<button type="button" class="btn btn-outline-danger btn-sm field-delete-btn" data-id="' + field.id + '" title="Удалить"><i class="bi bi-trash"></i></button>' +
+                    '<button type="button" class="btn btn-outline-danger btn-sm field-delete-btn" data-id="' + field.id + '" title="Удалить" aria-label="Удалить поле «' + escapeHtml(field.label) + '»"><i class="bi bi-trash"></i></button>' +
                 '</td>' +
                 '</tr>';
         });
@@ -195,7 +195,6 @@
 
         tableBody.querySelectorAll('.field-delete-btn').forEach(function (btn) {
             btn.addEventListener('click', function () {
-                if (!window.confirm('Удалить поле?')) return;
                 window.AdminApi.remove('/api/admin/custom-fields/' + btn.dataset.id).then(function () {
                     loadFields();
                     window.AdminNotifications.show(true, 'Поле удалено');

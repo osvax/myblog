@@ -472,55 +472,56 @@
         if (!button) return;
 
         button.addEventListener('click', function () {
-            if (button.disabled || !window.confirm('Удалить все чаты, на которые уже ответил консультант, вместе с историей переписки? Это действие нельзя отменить.')) {
-                return;
-            }
-
-            button.disabled = true;
-            fetch('../api/auth/csrf', { credentials: 'same-origin' }).then(function (response) {
-                if (!response.ok) throw new Error('Не удалось проверить права администратора.');
-                return response.json();
-            }).then(function (csrf) {
-                if (!csrf.success || !csrf.token) throw new Error('Не удалось проверить права администратора.');
-                return fetch(endpoint, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'X-CSRF-Token': csrf.token
-                    },
-                    body: JSON.stringify({ action: 'deleteAnswered' })
-                }).then(function (response) {
-                    return response.json().then(function (data) {
-                        if (!response.ok || !data.success) {
-                            throw new Error(data.message || 'Не удалось удалить отвеченные чаты.');
+            if (button.disabled) return;
+            window.AdminConfirm.ask('Удалить все чаты, на которые уже ответил консультант, вместе с историей переписки? Это действие нельзя отменить.', { title: 'Удаление чатов', confirmLabel: 'Удалить' })
+                .then(function (result) {
+                    if (!result.ok) return;
+                    button.disabled = true;
+                    fetch('../api/auth/csrf', { credentials: 'same-origin' }).then(function (response) {
+                        if (!response.ok) throw new Error('Не удалось проверить права администратора.');
+                        return response.json();
+                    }).then(function (csrf) {
+                        if (!csrf.success || !csrf.token) throw new Error('Не удалось проверить права администратора.');
+                        return fetch(endpoint, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json; charset=utf-8',
+                                'X-CSRF-Token': csrf.token
+                            },
+                            body: JSON.stringify({ action: 'deleteAnswered' })
+                        }).then(function (response) {
+                            return response.json().then(function (data) {
+                                if (!response.ok || !data.success) {
+                                    throw new Error(data.message || 'Не удалось удалить отвеченные чаты.');
+                                }
+                                return data;
+                            });
+                        });
+                    }).then(function (result) {
+                        try {
+                            var readState = JSON.parse(localStorage.getItem(readStateKey) || '{}');
+                            usersCache.forEach(function (user) {
+                                if (user.status === 'answered') delete readState[user.id];
+                            });
+                            localStorage.setItem(readStateKey, JSON.stringify(readState));
+                        } catch (error) {
+                            console.error('Не удалось обновить состояние прочитанных обращений.', error);
                         }
-                        return data;
+                        currentUserId = null;
+                        if (window.AdminNotifications) {
+                            window.AdminNotifications.show(true, 'Удалено чатов: ' + result.deletedCount);
+                        }
+                        loadState();
+                    }).catch(function (error) {
+                        button.disabled = false;
+                        if (window.AdminNotifications) {
+                            window.AdminNotifications.show(false, error.message || 'Не удалось удалить отвеченные чаты.');
+                        } else {
+                            console.error(error);
+                        }
                     });
                 });
-            }).then(function (result) {
-                try {
-                    var readState = JSON.parse(localStorage.getItem(readStateKey) || '{}');
-                    usersCache.forEach(function (user) {
-                        if (user.status === 'answered') delete readState[user.id];
-                    });
-                    localStorage.setItem(readStateKey, JSON.stringify(readState));
-                } catch (error) {
-                    console.error('Не удалось обновить состояние прочитанных обращений.', error);
-                }
-                currentUserId = null;
-                if (window.AdminNotifications) {
-                    window.AdminNotifications.show(true, 'Удалено чатов: ' + result.deletedCount);
-                }
-                loadState();
-            }).catch(function (error) {
-                button.disabled = false;
-                if (window.AdminNotifications) {
-                    window.AdminNotifications.show(false, error.message || 'Не удалось удалить отвеченные чаты.');
-                } else {
-                    console.error(error);
-                }
-            });
         });
     }
 
@@ -528,48 +529,48 @@
         var button = document.getElementById('consultantCloseThread');
         if (!button) return;
         button.addEventListener('click', function () {
-            if (!currentUserId || button.disabled ||
-                !window.confirm('Закрыть этот чат? История сохранится, но отправлять новые сообщения будет нельзя.')) {
-                return;
-            }
-
+            if (!currentUserId || button.disabled) return;
             var userId = currentUserId;
-            button.disabled = true;
-            fetch('../api/auth/csrf', { credentials: 'same-origin' }).then(function (response) {
-                if (!response.ok) throw new Error('Не удалось проверить права администратора.');
-                return response.json();
-            }).then(function (csrf) {
-                if (!csrf.success || !csrf.token) throw new Error('Не удалось проверить права администратора.');
-                return fetch(endpoint, {
-                    method: 'POST',
-                    credentials: 'same-origin',
-                    headers: {
-                        'Content-Type': 'application/json; charset=utf-8',
-                        'X-CSRF-Token': csrf.token
-                    },
-                    body: JSON.stringify({ action: 'closeThread', userId: userId })
+            window.AdminConfirm.ask('Закрыть этот чат? История сохранится, но отправлять новые сообщения будет нельзя.', { title: 'Закрытие чата', confirmLabel: 'Закрыть' })
+                .then(function (result) {
+                    if (!result.ok) return;
+                    button.disabled = true;
+                    fetch('../api/auth/csrf', { credentials: 'same-origin' }).then(function (response) {
+                        if (!response.ok) throw new Error('Не удалось проверить права администратора.');
+                        return response.json();
+                    }).then(function (csrf) {
+                        if (!csrf.success || !csrf.token) throw new Error('Не удалось проверить права администратора.');
+                        return fetch(endpoint, {
+                            method: 'POST',
+                            credentials: 'same-origin',
+                            headers: {
+                                'Content-Type': 'application/json; charset=utf-8',
+                                'X-CSRF-Token': csrf.token
+                            },
+                            body: JSON.stringify({ action: 'closeThread', userId: userId })
+                        });
+                    }).then(function (response) {
+                        return response.json().then(function (data) {
+                            if (!response.ok || !data.success) {
+                                throw new Error(data.message || 'Не удалось закрыть чат.');
+                            }
+                            return data;
+                        });
+                    }).then(function () {
+                        setTypingState(false);
+                        var input = document.getElementById('consultantReplyInput');
+                        if (input) input.value = '';
+                        activeUserView = 'archive';
+                        loadState();
+                    }).catch(function (error) {
+                        button.disabled = false;
+                        if (window.AdminNotifications) {
+                            window.AdminNotifications.show(false, error.message || 'Не удалось закрыть чат.');
+                        } else {
+                            console.error(error);
+                        }
+                    });
                 });
-            }).then(function (response) {
-                return response.json().then(function (data) {
-                    if (!response.ok || !data.success) {
-                        throw new Error(data.message || 'Не удалось закрыть чат.');
-                    }
-                    return data;
-                });
-            }).then(function () {
-                setTypingState(false);
-                var input = document.getElementById('consultantReplyInput');
-                if (input) input.value = '';
-                activeUserView = 'archive';
-                loadState();
-            }).catch(function (error) {
-                button.disabled = false;
-                if (window.AdminNotifications) {
-                    window.AdminNotifications.show(false, error.message || 'Не удалось закрыть чат.');
-                } else {
-                    console.error(error);
-                }
-            });
         });
     }
 
