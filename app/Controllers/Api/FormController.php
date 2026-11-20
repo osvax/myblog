@@ -352,9 +352,10 @@ class FormController extends Controller
         }
 
         // Копия отправителю — только если адрес отличается от адреса
-        // администратора, иначе на одну почту придут два одинаковых письма
+        // администратора, иначе на одну почту придут два одинаковых письма.
+        // Тема — та же, что и в письме администратору (из макета в настройках).
         if ($copyToSender && strcasecmp($safeEmail, $recipient) !== 0) {
-            $copySubject = 'Копия вашего сообщения — ' . $subject;
+            $copySubject = $subject;
             $copyBody = "Это копия вашего сообщения, отправленного через форму на сайте.\n\n" . $body;
             $copyHtmlBody = '<p>Это копия вашего сообщения, отправленного через форму на сайте.</p>' . $htmlBody;
             \App\Core\Mailer::send($copySubject, $copyBody, $safeEmail, $safeName, $copyHtmlBody);

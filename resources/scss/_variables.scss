@@ -3,12 +3,17 @@
 // ============================================================
 
 // Цвета
+// $orange/$orange-dark/$dark — статичные: их обрабатывает Bootstrap на этапе
+// компиляции (to-rgb, tint-color, $theme-colors["dark"]), var() туда передать нельзя.
+// Живые значения темы (--theme-*) подключаются через var() прямо в свойствах
+// ($orange-light, $text-main) и блоком «Оформление» в app.scss; лейаут подставляет
+// --theme-* из site_settings.
 $orange: #ff8c1a;
 $orange-dark: #e67a0d;
-$orange-light: #fff3e6;
+$orange-light: var(--theme-primary-light, #fff3e6);
 $dark: #353535;
 $dark-darker: #242424;
-$text-main: #353535;
+$text-main: var(--theme-text, #353535);
 $text-muted: #666;
 $text-light: #9aa0a8;
 $white: #ffffff;
@@ -19,15 +24,18 @@ $shadow-color: rgba(53, 53, 53, 0.08);
 $shadow-color-strong: rgba(53, 53, 53, 0.15);
 
 // Bootstrap overrides
+// $primary/$body-color/$headings-color — статичные: Bootstrap передаёт их
+// в to-rgb()/tint-color() на этапе компиляции. Живой цвет текста накладывается
+// правилом body { color: var(--theme-text, …) } в app.scss.
 $primary: $orange;
 $primary-dark: $orange-dark;
 $body-bg: $white;
-$body-color: $text-main;
+$body-color: #353535;
 $font-family-base: 'Montserrat', 'Segoe UI', Arial, sans-serif;
 $font-weight-normal: 700; // полужирный по дизайну
 $font-weight-bold: 800;
 $headings-font-weight: 800;
-$headings-color: $dark;
+$headings-color: #353535;
 
 // Border radius
 $border-radius-sm: 0.5rem;

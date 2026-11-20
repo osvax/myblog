@@ -706,6 +706,12 @@ Email: {email}
                                         <label class="form-check-label fw-bold" for="portfolioShowClient">Показывать клиента</label>
                                     </div>
                                 </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-3">
+                                        <input class="form-check-input" type="checkbox" checked id="portfolioShowExtraFields">
+                                        <label class="form-check-label fw-bold" for="portfolioShowExtraFields">Показывать дополнительные поля</label>
+                                    </div>
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
@@ -733,6 +739,26 @@ Email: {email}
                                     <label for="themeText" class="form-label fw-bold">Цвет текста</label>
                                     <input type="color" id="themeText" class="form-control form-control-color w-100 py-1" value="#353535">
                                 </div>
+                            </div>
+                            <hr class="my-4">
+                            <h6 class="fw-bold text-dark mb-3">Размеры</h6>
+                            <div class="row g-3">
+                                <div class="col-md-4">
+                                    <label for="themeFontSize" class="form-label fw-bold">Размер текста, px (12–24)</label>
+                                    <input type="number" id="themeFontSize" class="form-control" value="16" min="12" max="24" step="1">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="themeNavSize" class="form-label fw-bold">Размер меню, px (10–24)</label>
+                                    <input type="number" id="themeNavSize" class="form-control" value="16" min="10" max="24" step="1">
+                                </div>
+                                <div class="col-md-4">
+                                    <label for="themeHeadingScale" class="form-label fw-bold">Размер заголовков, % (60–200)</label>
+                                    <input type="number" id="themeHeadingScale" class="form-control" value="100" min="60" max="200" step="5">
+                                </div>
+                            </div>
+                            <hr class="my-4">
+                            <h6 class="fw-bold text-dark mb-3">Шрифт</h6>
+                            <div class="row g-3">
                                 <div class="col-md-6">
                                     <label for="themeFontFamily" class="form-label fw-bold">Название шрифта</label>
                                     <input type="text" id="themeFontFamily" class="form-control" list="fontFamilyList" placeholder="Например, Open Sans (пусто — стандартный Montserrat)" autocomplete="off">

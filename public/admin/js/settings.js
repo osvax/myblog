@@ -7,13 +7,19 @@
 
         // ---------- Остальная часть настроек ----------
 
+        // Чекбоксы: значение в БД хранится как '1'/'0' (строки). Boolean('0') === true,
+        // поэтому проверяем явно, чтобы «0» не считался включённым.
+        var isCheckOn = function (value) {
+            return value === true || value === 1 || value === '1';
+        };
+
         // Загружаем актуальные настройки из базы данных;
         // localStorage используется только как запасной источник значений
         var applySettings = function (settings) {
             Array.from(form.elements).forEach(function (field) {
                 if (!field.id || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
                 if (field.type === 'checkbox') {
-                    field.checked = Boolean(settings[field.id]);
+                    field.checked = isCheckOn(settings[field.id]);
                 } else if (field.type === 'datetime-local') {
                     // В базе время хранится как «YYYY-MM-DD HH:MM», input ждёт «T»-разделитель
                     var v = String(settings[field.id] == null ? '' : settings[field.id]);
@@ -85,7 +91,7 @@
             Object.keys(values).forEach(function (id) {
                 var field = document.getElementById(id);
                 if (!field || values[id] === undefined || values[id] === null) return;
-                if (field.type === 'checkbox') field.checked = Boolean(values[id]);
+                if (field.type === 'checkbox') field.checked = isCheckOn(values[id]);
                 else field.value = values[id];
             });
         }).catch(function (error) { console.error(error.message || 'Не удалось загрузить настройки консультанта.'); });

@@ -102,6 +102,8 @@ class PortfolioController extends Controller
             'nextProject' => $next,
             // Сайдбар страницы проекта (Настройки → Портфолио)
             'projectPageSidebar' => (string) ((new \App\Models\SiteSettings())->get('projectPageSidebar', 'right') ?: 'right'),
+            // Доп. поля в карточке «Информация о проекте» (Настройки → Портфолио)
+            'showPortfolioExtraFields' => (bool) (new \App\Models\SiteSettings())->get('portfolioShowExtraFields', true),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -127,6 +129,8 @@ class PortfolioController extends Controller
             'otherProjects' => [],
             // Сайдбар страницы проекта (Настройки → Портфолио)
             'projectPageSidebar' => (string) ((new \App\Models\SiteSettings())->get('projectPageSidebar', 'right') ?: 'right'),
+            // Доп. поля в карточке «Информация о проекте» (Настройки → Портфолио)
+            'showPortfolioExtraFields' => (bool) (new \App\Models\SiteSettings())->get('portfolioShowExtraFields', true),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

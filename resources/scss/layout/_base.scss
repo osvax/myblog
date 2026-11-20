@@ -109,13 +109,13 @@ button:not(:disabled) {
 
 // Focus styles for accessibility
 :focus-visible {
-  outline: 3px solid rgba($primary, 0.35);
+  outline: 3px solid color-mix(in srgb, var(--theme-primary, #ff8c1a) 35%, transparent);
   outline-offset: 2px;
 }
 
 // Selection
 ::selection {
-  background-color: rgba($primary, 0.2);
+  background-color: color-mix(in srgb, var(--theme-primary, #ff8c1a) 20%, transparent);
   color: $dark;
 }
 

@@ -104,7 +104,7 @@
     outline: 0;
     border-color: $primary;
     background: $white;
-    box-shadow: 0 0 0 0.2rem rgba($primary, 0.14);
+    box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-primary, #ff8c1a) 14%, transparent);
   }
 }
 

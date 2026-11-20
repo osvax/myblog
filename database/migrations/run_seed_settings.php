@@ -136,6 +136,7 @@ $defaults = [
     ['portfolioShowTags', '1', 'checkbox', 'portfolio', 3, 'Показывать технологии'],
     ['portfolioShowDate', '1', 'checkbox', 'portfolio', 4, 'Показывать год'],
     ['portfolioShowClient', '1', 'checkbox', 'portfolio', 5, 'Показывать клиента'],
+    ['portfolioShowExtraFields', '1', 'checkbox', 'portfolio', 6, 'Показывать дополнительные поля'],
 ];
 
 // Ключи, которые добавляются только при отсутствии в БД (INSERT IGNORE):
@@ -156,6 +157,9 @@ $defaultsIgnore = [
     ['themeFontFamily', '', 'text', 'appearance', 10, 'Название шрифта'],
     ['themeFontUrl', '', 'text', 'appearance', 11, 'Ссылка на шрифт (CDN)'],
     ['themeFontFile', '', 'text', 'appearance', 12, 'Файл загруженного шрифта'],
+    ['themeFontSize', '16', 'number', 'appearance', 13, 'Размер текста (px)'],
+    ['themeNavSize', '16', 'number', 'appearance', 14, 'Размер меню (px)'],
+    ['themeHeadingScale', '100', 'number', 'appearance', 15, 'Размер заголовков (%)'],
 
     // === calculator ===
     ['calculatorConfig', json_encode(calculator_default_config(), JSON_UNESCAPED_UNICODE), 'json', 'calculator', 1, 'Конфигурация калькулятора заказа'],

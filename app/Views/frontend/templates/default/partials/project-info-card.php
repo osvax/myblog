@@ -19,6 +19,8 @@
             <?= htmlspecialchars($projectInfoRow['value'], ENT_QUOTES, 'UTF-8') ?>
         </p>
     <?php endforeach; ?>
+    <?php if (!empty($showPortfolioExtraFields)): ?>
     <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-info-items.php'; ?>
+    <?php endif; ?>
     <a href="order.html" class="btn btn-orange fw-bold">Хочу похожий проект</a>
 </div>

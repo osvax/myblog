@@ -63,12 +63,38 @@
   --theme-block-bg: #ffffff;
   --theme-sidebar-bg: #ffffff;
   --theme-text: #353535;
+  --theme-font-size: 16px;
+  --theme-nav-size: 1rem;
+  --theme-heading-scale: 1;
+}
+
+// Базовый размер текста: масштабирует всё, что задано в rem (текст, меню, отступы)
+html {
+  font-size: var(--theme-font-size, 16px);
 }
 
 body {
   background-color: var(--theme-bg, #ffffff);
-  color: var(--theme-text, $text-main);
+  color: var(--theme-text, #353535);
 }
+
+// Размер меню (Настройки → Оформление)
+.navbar .navbar-nav .nav-link {
+  font-size: var(--theme-nav-size, 1rem);
+}
+
+.navbar-brand {
+  font-size: calc(var(--theme-nav-size, 1rem) * 1.25);
+}
+
+// Размер заголовков (Настройки → Оформление): масштаб поверх стандартных
+// размеров Bootstrap (в т. ч. адаптивных clamp)
+h1, .h1 { font-size: calc(clamp(1.625rem, 4.1875vw, 2.5rem) * var(--theme-heading-scale, 1)); }
+h2, .h2 { font-size: calc(clamp(1.45rem, 2.575vw + 1.005rem, 2rem) * var(--theme-heading-scale, 1)); }
+h3, .h3 { font-size: calc(clamp(1.275rem, 1.825vw + 0.86rem, 1.75rem) * var(--theme-heading-scale, 1)); }
+h4, .h4 { font-size: calc((1.325rem + 0.45vw) * var(--theme-heading-scale, 1)); }
+h5, .h5 { font-size: calc(1.25rem * var(--theme-heading-scale, 1)); }
+h6, .h6 { font-size: calc(1rem * var(--theme-heading-scale, 1)); }
 
 // Основной цвет: навбар, кнопки, ссылки, бейджи, иконки
 .bg-orange {
@@ -76,7 +102,7 @@ body {
 }
 
 .bg-orange-light {
-  background-color: var(--theme-primary-light, $orange-light) !important;
+  background-color: var(--theme-primary-light, #fff3e6) !important;
 }
 
 .text-orange {

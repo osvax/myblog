@@ -54,6 +54,9 @@
             --theme-block-bg: <?= $themeBlockBg ?? '#ffffff' ?>;
             --theme-sidebar-bg: <?= $themeSidebarBg ?? '#ffffff' ?>;
             --theme-text: <?= $themeText ?? '#353535' ?>;
+            --theme-font-size: <?= (int) ($themeFontSize ?? 16) ?>px;
+            --theme-nav-size: <?= (int) ($themeNavSize ?? 16) ?>px;
+            --theme-heading-scale: <?= (float) ($themeHeadingScale ?? 1) ?>;
         }
         <?php if ($themeFontFamily !== ''): ?>
         body, button, input, select, textarea {

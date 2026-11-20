@@ -18,7 +18,7 @@
     }
 
     &:focus {
-      box-shadow: 0 0 0 0.2rem rgba($primary, 0.25);
+      box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-primary, #ff8c1a) 25%, transparent);
       z-index: 3;
     }
   }

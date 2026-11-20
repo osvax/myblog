@@ -122,6 +122,15 @@ class View
         $data['themeSidebarBg'] = $color('themeSidebarBg', '#ffffff');
         $data['themeText'] = $color('themeText', '#353535');
 
+        // Размеры: базовый текст (px), меню (px), заголовки (масштаб от 100%)
+        $num = static function (string $key, int $default, int $min, int $max) use ($all): int {
+            $value = (int) round((float) ($all[$key] ?? $default));
+            return max($min, min($max, $value));
+        };
+        $data['themeFontSize'] = $num('themeFontSize', 16, 12, 24);
+        $data['themeNavSize'] = $num('themeNavSize', 16, 10, 24);
+        $data['themeHeadingScale'] = $num('themeHeadingScale', 100, 60, 200) / 100;
+
         // Шрифт: имя семейства + источник (CDN-ссылка или файл из /uploads/fonts/)
         $data['themeFontFamily'] = trim((string) ($all['themeFontFamily'] ?? ''));
         $data['themeFontUrl'] = trim((string) ($all['themeFontUrl'] ?? ''));
