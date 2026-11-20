@@ -58,14 +58,15 @@ class Mailer
     }
 
     /**
-     * Построить DSN для Symfony Mailer
+     * Построить DSN для Symfony Mailer.
+     * Поддерживаются только схемы smtp:// (STARTTLS подхватывается
+     * автоматически, если сервер его поддерживает) и smtps:// (имплицитный TLS).
+     * Префиксы «smtp+tls»/«smtp+ssl» библиотекой не поддерживаются.
      */
     private static function buildDsn(array $config): string
     {
-        $scheme = 'smtp';
-        if (!empty($config['encryption'])) {
-            $scheme .= '+' . $config['encryption'];
-        }
+        $encryption = strtolower(trim((string) $config['encryption']));
+        $scheme = ($encryption === 'ssl') ? 'smtps' : 'smtp';
 
         $dsn = $scheme . '://';
 
@@ -78,6 +79,11 @@ class Mailer
         }
 
         $dsn .= $config['host'] . ':' . $config['port'];
+
+        if ($encryption === 'none') {
+            // Полностью без шифрования: отключаем автоматический STARTTLS
+            $dsn .= '?auto_tls=0';
+        }
 
         return $dsn;
     }
@@ -149,6 +155,8 @@ class Mailer
             return true;
         } catch (\Throwable $e) {
             error_log('Mailer error: ' . $e->getMessage());
+            // Фиксируем в журнале событий: без этого письмо «теряется» молча
+            \App\Core\Logger::write('errors', 'Не удалось отправить письмо на ' . $toEmail . ': ' . $e->getMessage());
             return false;
         }
     }

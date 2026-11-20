@@ -21,48 +21,20 @@ if (trim($blockedIps) !== '') {
 }
 
 // ---------- Режим обслуживания ----------
-// Сайт закрыт (siteStatus=maintenance): посетители, чей IP нет в списке
-// maintenanceAllowedIps, перенаправляются на заглушку /maintenance.html.
+// Сайт закрыт ТОЛЬКО полем «Режим сайта» (siteStatus=maintenance).
+// Время «от — до» не закрывает и не открывает сайт — оно используется
+// только для обратного отсчёта на заглушке /maintenance.html.
+// Посетители, чей IP нет в maintenanceAllowedIps, перенаправляются
+// на заглушку (с параметром ?next — страница, которую они открывали).
 // Админка, API авторизации и статические файлы работают всегда.
-//
-// Режим «от — до» (maintenanceStart/maintenanceEnd):
-//  - сайт закрывается автоматически, когда время входит в интервал;
-//  - открывается автоматически, когда время прошло.
 try {
     $maintenanceSettings = $gateSettings ?? new \App\Models\SiteSettings();
     $siteStatus = (string) $maintenanceSettings->get('siteStatus', 'online');
     // Пустое значение (могло остаться из формы админки) трактуем как online
     $siteStatus = ($siteStatus === 'maintenance') ? 'maintenance' : 'online';
-    $maintStart = trim((string) $maintenanceSettings->get('maintenanceStart', ''));
-    $maintEnd = trim((string) $maintenanceSettings->get('maintenanceEnd', ''));
 } catch (\Throwable $maintenanceError) {
     $siteStatus = 'online';
-    $maintStart = '';
-    $maintEnd = '';
     $maintenanceSettings = null;
-}
-
-$nowTs = time();
-$maintenanceStartTs = $maintStart !== '' ? (int) strtotime(str_replace('T', ' ', $maintStart)) : 0;
-$maintenanceEndTs = $maintEnd !== '' ? (int) strtotime(str_replace('T', ' ', $maintEnd)) : 0;
-
-// Авто-закрытие по интервалу «от — до»
-if ($siteStatus === 'online' && $maintenanceStartTs > 0 && $maintenanceEndTs > $maintenanceStartTs &&
-    $nowTs >= $maintenanceStartTs && $nowTs < $maintenanceEndTs) {
-    $siteStatus = 'maintenance';
-}
-
-// Авто-открытие: время обслуживания вышло
-if ($siteStatus === 'maintenance' && $maintenanceEndTs > 0 && $nowTs >= $maintenanceEndTs) {
-    $siteStatus = 'online';
-    if ($maintenanceSettings !== null) {
-        try {
-            (new \App\Models\SiteSettings())->saveAllWithType(['siteStatus' => 'online']);
-            \App\Core\Logger::write('security', 'Сайт автоматически открыт: время обслуживания (до ' . $maintEnd . ') вышло');
-        } catch (\Throwable $autoOpenError) {
-            // Не критично: сайт будет открыт на этот запрос
-        }
-    }
 }
 
 if ($siteStatus === 'maintenance') {
@@ -79,7 +51,9 @@ if ($siteStatus === 'maintenance') {
         $allowedIps = array_filter(array_map('trim', preg_split('/[\s,;]+/u', (string) $maintenanceSettings->get('maintenanceAllowedIps', '')) ?: []));
         $visitorIp = \App\Core\Logger::clientIp();
         if (!in_array($visitorIp, $allowedIps, true)) {
-            header('Location: /maintenance.html', true, 302);
+            // Помним исходный URL, чтобы после открытия сайта вернуть на него
+            $originalUrl = (string) ($_SERVER['REQUEST_URI'] ?? '/');
+            header('Location: /maintenance.html?next=' . rawurlencode($originalUrl), true, 302);
             exit;
         }
     }

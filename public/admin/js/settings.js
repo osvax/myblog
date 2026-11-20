@@ -153,7 +153,7 @@
                                 });
                             });
                     })
-                    .then(function (r) { return r.json().then(function (d) { if (!r.ok) throw new Error(d.error || 'Ошибка тестовой отправки'); return d; }); })
+                    .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Тестовая отправка не удалась'); return d; }); })
                     .then(function (d) {
                         if (statusEl) statusEl.textContent = d.message || 'Готово';
                         window.AdminNotifications.show(true, d.message || 'Тестовое письмо отправлено');

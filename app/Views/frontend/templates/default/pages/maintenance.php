@@ -73,8 +73,14 @@
         function tick() {
             var diff = endTs - Date.now();
             if (diff <= 0) {
-                // Сайт должен быть открыт — уходим на главную
-                window.location.replace('/');
+                // Заданное время вышло — останавливаем отсчёт на нуле.
+                // Открытие сайта выполняется полем «Режим сайта» в админке,
+                // после открытия заглушка сама перенаправит на сайт.
+                d.textContent = '0';
+                h.textContent = '00';
+                m.textContent = '00';
+                s.textContent = '00';
+                clearInterval(timer);
                 return;
             }
             var total = Math.floor(diff / 1000);
@@ -85,7 +91,7 @@
         }
 
         tick();
-        setInterval(tick, 1000);
+        var timer = setInterval(tick, 1000);
     })();
     </script>
     <?php endif; ?>
