@@ -23,29 +23,26 @@
             date.dateTime = now.toISOString();
         }
 
-        // График продаж строится из реальных заказов базы данных
+        // График продаж строится из реальных заказов базы данных:
+        // по годам — от самого первого года с продажами до текущего
         function renderSalesChart(orders) {
-            var monthNames = [];
-            var monthKeys = [];
-            var currentMonth = new Date();
-            for (var monthOffset = 5; monthOffset >= 0; monthOffset--) {
-                var monthDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth() - monthOffset, 1);
-                monthNames.push(monthDate.toLocaleDateString('ru-RU', { month: 'short' }).replace('.', ''));
-                monthKeys.push(monthDate.getFullYear() + '-' + String(monthDate.getMonth() + 1).padStart(2, '0'));
-            }
+            var orderList = orders || [];
+            var currentYear = new Date().getFullYear();
+            var firstYear = null;
+            var yearTotals = {};
 
-            // Суммируем бюджеты заказов по месяцам
-            var totals = {};
-            monthKeys.forEach(function (key) { totals[key] = 0; });
-            (orders || []).forEach(function (order) {
-                var key = String(order.orderDate || order.order_date || '').substring(0, 7);
-                if (Object.prototype.hasOwnProperty.call(totals, key)) {
-                    totals[key] += Number(order.budget) || 0;
-                }
+            orderList.forEach(function (order) {
+                var year = parseInt(String(order.orderDate || order.order_date || order.createdAt || '').substring(0, 4), 10);
+                if (isNaN(year)) return;
+                if (firstYear === null || year < firstYear) firstYear = year;
+                yearTotals[year] = (yearTotals[year] || 0) + (Number(order.budget) || 0);
             });
-            var points = monthKeys.map(function (key, index) {
-                return { label: monthNames[index], value: Math.round(totals[key]) };
-            });
+
+            var startYear = firstYear === null ? currentYear : Math.min(firstYear, currentYear);
+            var points = [];
+            for (var year = startYear; year <= currentYear; year++) {
+                points.push({ label: String(year), value: Math.round(yearTotals[year] || 0) });
+            }
 
             var totalRevenue = points.reduce(function (sum, point) { return sum + point.value; }, 0);
             var emptyBox = document.getElementById('salesChartEmpty');
@@ -67,7 +64,8 @@
             var plotHeight = height - padding.top - padding.bottom;
             var coordinates = points.map(function (point, index) {
                 return {
-                    x: padding.left + index * plotWidth / (points.length - 1),
+                    x: points.length === 1 ? padding.left + plotWidth / 2 :
+                        padding.left + index * plotWidth / (points.length - 1),
                     y: padding.top + plotHeight - point.value / max * plotHeight,
                     point: point
                 };
@@ -95,7 +93,7 @@
             }).join('');
 
             chart.innerHTML = '<svg viewBox="0 0 ' + width + ' ' + height +
-                '" role="img" aria-label="Выручка по заказам за последние шесть месяцев">' +
+                '" role="img" aria-label="Выручка по заказам по годам">' +
                 grid.join('') + '<path d="' + area + '" fill="#ff8c1a" fill-opacity=".12"></path>' +
                 '<path d="' + line + '" fill="none" stroke="#ff8c1a" stroke-width="3" ' +
                 'stroke-linecap="round" stroke-linejoin="round"></path>' + markers + '</svg>';

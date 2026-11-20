@@ -55,12 +55,12 @@
     <div class="col-xl-6">
         <section class="card admin-card h-100">
             <div class="card-header bg-white d-flex justify-content-between align-items-center gap-2">
-                <h2 class="h5 fw-bold mb-0">Продажи по месяцам</h2>
+                <h2 class="h5 fw-bold mb-0">Продажи по годам</h2>
                 <a href="orders.html" class="btn btn-sm btn-orange fw-bold">Все заказы</a>
             </div>
             <div class="card-body">
-                <div id="salesChart" class="sales-chart mt-3" role="img" aria-label="Выручка по заказам за последние шесть месяцев"></div>
-                <p class="small text-muted mt-3 mb-0" id="salesChartEmpty" hidden>Заказов за последние полгода ещё нет — график появится с первыми продажами.</p>
+                <div id="salesChart" class="sales-chart mt-3" role="img" aria-label="Выручка по заказам по годам"></div>
+                <p class="small text-muted mt-3 mb-0" id="salesChartEmpty" hidden>Продаж пока нет — график появится с первыми заказами.</p>
             </div>
         </section>
     </div>
