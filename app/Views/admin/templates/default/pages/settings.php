@@ -380,14 +380,6 @@ Email: {email}
                                     </select>
                                     <div class="small text-muted mt-1">Посетители вне IP-списка видят заглушку; админка и вход доступны всегда.</div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="twoFactorMethod" class="form-label fw-bold">Двухфакторная аутентификация</label>
-                                    <select id="twoFactorMethod" class="form-select">
-                                        <option value="off" selected>Выключена</option>
-                                        <option value="authenticator">Приложение-аутентификатор (TOTP)</option>
-                                        <option value="sms">SMS-код</option>
-                                    </select>
-                                </div>
                                 <div class="col-12">
                                     <label for="maintenanceMessage" class="form-label fw-bold">Сообщение на время обслуживания</label>
                                     <textarea id="maintenanceMessage" class="form-control" rows="2" maxlength="300">Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!</textarea>
@@ -396,18 +388,6 @@ Email: {email}
                                     <label for="maintenanceAllowedIps" class="form-label fw-bold">IP-адреса с доступом при обслуживании</label>
                                     <textarea id="maintenanceAllowedIps" class="form-control font-monospace" rows="2" placeholder="127.0.0.1&#10;::1"></textarea>
                                     <div class="small text-muted mt-1">По одному IP на строку (или через запятую). Эти посетители видят обычный сайт в режиме обслуживания.</div>
-                                </div>
-                                <div class="col-12">
-                                    <label for="adminIpAllowlist" class="form-label fw-bold">Разрешённые IP для входа в админку</label>
-                                     <textarea id="adminIpAllowlist" class="form-control font-monospace" rows="4"></textarea>
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="securityContactEmail" class="form-label fw-bold">Email для уведомлений о безопасности</label>
-                                    <input type="email" id="securityContactEmail" class="form-control" placeholder="security@example.com">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="twoFactorPhone" class="form-label fw-bold">Телефон для SMS-кодов</label>
-                                    <input type="tel" id="twoFactorPhone" class="form-control" placeholder="+7 900 000-00-00">
                                 </div>
                                 <div class="col-md-6">
                                     <label for="maxLoginAttempts" class="form-label fw-bold">Попытки входа до блокировки</label>
@@ -424,18 +404,6 @@ Email: {email}
                                 <div class="col-md-6">
                                     <label for="adminSessionHours" class="form-label fw-bold">Срок сессии админки (часы)</label>
                                     <input type="number" id="adminSessionHours" class="form-control" min="1" max="168" value="8">
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-4">
-                                        <input class="form-check-input" type="checkbox" id="loginCaptcha">
-                                        <label class="form-check-label fw-bold" for="loginCaptcha">Проверка CAPTCHA при входе</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-2">
-                                        <input class="form-check-input" type="checkbox" id="securityLoginAlerts" checked>
-                                        <label class="form-check-label fw-bold" for="securityLoginAlerts">Уведомлять о новых входах</label>
-                                    </div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
@@ -523,12 +491,6 @@ Email: {email}
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="articleFeaturedEnabled">
-                                        <label class="form-check-label fw-bold" for="articleFeaturedEnabled">Показывать избранные статьи</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
                                         <input class="form-check-input" type="checkbox" checked id="articleTagsEnabled">
                                         <label class="form-check-label fw-bold" for="articleTagsEnabled">Показывать теги</label>
                                     </div>
@@ -578,43 +540,19 @@ Email: {email}
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mt-3">
                                         <input class="form-check-input" type="checkbox" checked id="portfolioShowTags">
-                                        <label class="form-check-label fw-bold" for="portfolioShowTags">Показывать теги</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="portfolioShowCategories">
-                                        <label class="form-check-label fw-bold" for="portfolioShowCategories">Показывать рубрики</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="portfolioShowViews">
-                                        <label class="form-check-label fw-bold" for="portfolioShowViews">Показывать счётчик просмотров</label>
+                                        <label class="form-check-label fw-bold" for="portfolioShowTags">Показывать технологии</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mt-3">
                                         <input class="form-check-input" type="checkbox" checked id="portfolioShowDate">
-                                        <label class="form-check-label fw-bold" for="portfolioShowDate">Показывать дату</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="portfolioFeaturedEnabled">
-                                        <label class="form-check-label fw-bold" for="portfolioFeaturedEnabled">Показывать избранные работы</label>
+                                        <label class="form-check-label fw-bold" for="portfolioShowDate">Показывать год</label>
                                     </div>
                                 </div>
                                 <div class="col-md-6">
                                     <div class="form-check form-switch mt-3">
                                         <input class="form-check-input" type="checkbox" checked id="portfolioShowClient">
                                         <label class="form-check-label fw-bold" for="portfolioShowClient">Показывать клиента</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="portfolioShowLink">
-                                        <label class="form-check-label fw-bold" for="portfolioShowLink">Показывать ссылку на проект</label>
                                     </div>
                                 </div>
                             </div>

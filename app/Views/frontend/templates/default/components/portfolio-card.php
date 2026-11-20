@@ -8,8 +8,22 @@
             break;
         }
     }
+    // Год и клиент — из настроек (Настройки → Портфолио)
+    $cardMeta = [];
+    if (!empty($showPortfolioDate)) {
+        $cardYear = !empty($project['project_year']) ? (string) $project['project_year'] : '';
+        if ($cardYear === '' && !empty($project['created_at'])) {
+            $cardYear = date('Y', strtotime((string) $project['created_at']));
+        }
+        if ($cardYear !== '') {
+            $cardMeta[] = $cardYear;
+        }
+    }
+    if (!empty($showPortfolioClient) && !empty($project['client'])) {
+        $cardMeta[] = (string) $project['client'];
+    }
 ?>
-<div class="col-md-6 col-lg-4">
+<div class="<?= !empty($portfolioMasonry) ? 'work-masonry-item' : 'col-md-6 col-lg-4' ?>">
     <a href="/<?= htmlspecialchars($projectSlug, ENT_QUOTES, 'UTF-8') ?>.html" class="text-decoration-none">
         <div class="card h-100 border-0 shadow-sm work-card overflow-hidden">
             <?php if ($projectCover): ?>
@@ -23,7 +37,12 @@
             <?php endif; ?>
             <div class="card-footer bg-white border-0">
                 <h2 class="h5 fw-bold mb-1 text-orange"><?= htmlspecialchars($project['title'], ENT_QUOTES, 'UTF-8') ?></h2>
+                <?php if (!empty($showPortfolioTags)): ?>
                 <small class="fw-bold text-muted"><?= htmlspecialchars($project['technologies'] ?? $project['description'], ENT_QUOTES, 'UTF-8') ?> <i class="bi bi-arrow-right"></i></small>
+                <?php endif; ?>
+                <?php if (!empty($cardMeta)): ?>
+                <small class="fw-bold text-muted d-block mt-1"><?= htmlspecialchars(implode(' · ', $cardMeta), ENT_QUOTES, 'UTF-8') ?></small>
+                <?php endif; ?>
             </div>
         </div>
     </a>

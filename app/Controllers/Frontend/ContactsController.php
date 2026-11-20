@@ -14,7 +14,7 @@ class ContactsController extends Controller
         $contacts = (new \App\Models\SiteSettings())->all();
 
         return $this->page('frontend', 'contacts', [
-            'title' => 'Контакты — Мой Блог',
+            'title' => 'Контакты',
             'description' => 'Контактная информация и форма обратной связи.',
             'activePage' => 'contacts',
             'includeFormsScript' => true,

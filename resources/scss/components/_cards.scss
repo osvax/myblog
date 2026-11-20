@@ -110,3 +110,25 @@
     box-shadow: 0 0.5rem 1rem rgba(53, 53, 53, 0.2);
   }
 }
+
+// Мозаика портфолио (Настройки → Портфолио → «Тип отображения» = «Мозаика»):
+// CSS-колонки вместо сетки Bootstrap
+.masonry-grid {
+  column-count: 3;
+  column-gap: 1.5rem;
+
+  @media (max-width: 991.98px) {
+    column-count: 2;
+  }
+
+  @media (max-width: 575.98px) {
+    column-count: 1;
+  }
+
+  .work-masonry-item {
+    display: block;
+    width: 100%;
+    margin-bottom: 1.5rem;
+    break-inside: avoid;
+  }
+}

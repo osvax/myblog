@@ -18,13 +18,25 @@ class PortfolioController extends Controller
             $projects[$project['slug']] = $project;
         }
 
+        // Работ на странице (Настройки → Портфолио)
+        $perPage = max(1, min(100, (int) ($settings['portfolioPerPage'] ?? 12)));
+        $total = count($projects);
+        $pages = max(1, (int) ceil($total / $perPage));
+        $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
+        $pageProjects = array_slice($projects, ($page - 1) * $perPage, $perPage, true);
+
         return $this->page('frontend', 'portfolio', [
-            'title' => 'Портфолио — МойБлог',
+            'title' => 'Портфолио',
             'description' => 'Мои проекты: вёрстка, дизайн, разработка.',
             'activePage' => 'portfolio',
-            'projects' => $projects,
+            'projects' => $pageProjects,
+            'pagination' => ['total' => $total, 'pages' => $pages, 'current' => $page],
             'portfolioHeading' => (string) ($settings['portfolioTitle'] ?? '') ?: 'Портфолио',
             'portfolioHeadingLead' => (string) ($settings['portfolioLead'] ?? '') ?: 'Мои лучшие работы и проекты',
+            'portfolioLayout' => (string) ($settings['portfolioLayout'] ?? 'grid') === 'masonry' ? 'masonry' : 'grid',
+            'showPortfolioTags' => (bool) ($settings['portfolioShowTags'] ?? true),
+            'showPortfolioDate' => (bool) ($settings['portfolioShowDate'] ?? true),
+            'showPortfolioClient' => (bool) ($settings['portfolioShowClient'] ?? true),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -72,7 +84,7 @@ class PortfolioController extends Controller
         }
 
         return $this->page('frontend', $template, [
-            'title' => $project['title'] . ' — МойБлог',
+            'title' => $project['title'],
             'description' => $project['description'],
             'activePage' => 'portfolio',
             'project' => $project,
@@ -97,7 +109,7 @@ class PortfolioController extends Controller
         $project['results'] = $this->parseResults($project['results_json'] ?? null);
 
         return $this->page('frontend', $slug, [
-            'title' => $project['title'] . ' — МойБлог',
+            'title' => $project['title'],
             'description' => $project['description'],
             'activePage' => 'portfolio',
             'project' => $project,
@@ -119,7 +131,7 @@ class PortfolioController extends Controller
         $article['body'] = $this->prepareArticleBody($article['body_html'] ?? '');
 
         return $this->page('frontend', $slug, [
-            'title' => $article['title'] . ' — МойБлог',
+            'title' => $article['title'],
             'description' => $article['description'],
             'activePage' => 'blog',
             'article' => $article,
@@ -137,7 +149,7 @@ class PortfolioController extends Controller
         }
 
         return $this->page('frontend', $pageSlug, [
-            'title' => ucfirst($pageSlug) . ' — МойБлог',
+            'title' => ucfirst($pageSlug),
             'activePage' => $pageSlug,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',

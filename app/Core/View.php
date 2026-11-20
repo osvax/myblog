@@ -26,23 +26,29 @@ class View
         }
 
         $base = $area . '/templates/' . $theme;
-        // Название сайта и текст подвала — из настроек; контроллеры могут переопределить
+        // Название сайта, SEO-настройки и текст подвала — из настроек; контроллеры могут переопределить
         if ($area === 'frontend') {
             try {
                 $siteSettings = new \App\Models\SiteSettings();
                 $data['siteName'] = $data['siteName'] ?? ((string) $siteSettings->get('siteName', '') ?: 'МойБлог');
                 $data['footerText'] = $data['footerText'] ?? ((string) $siteSettings->get('footerText', '') ?: '© {year} МойБлог. Все права защищены.');
+                $data['siteTitle'] = $data['siteTitle'] ?? trim((string) $siteSettings->get('siteTitle', ''));
+                $data['siteDescription'] = $data['siteDescription'] ?? trim((string) $siteSettings->get('siteDescription', ''));
+                $data['siteLanguage'] = $data['siteLanguage'] ?? trim((string) $siteSettings->get('siteLanguage', ''));
+                $data['siteKeywords'] = $data['siteKeywords'] ?? trim((string) $siteSettings->get('keywords', ''));
             } catch (\Throwable $error) {
                 $data['siteName'] = $data['siteName'] ?? 'МойБлог';
                 $data['footerText'] = $data['footerText'] ?? '© {year} МойБлог. Все права защищены.';
             }
         }
-        
+
         // Vite manifest for production asset loading
         $data['viteManifest'] = \vite_manifest();
-        
+
         $data['content'] = self::capture($base . '/pages/' . $page, $data);
-        $data['title'] = $data['title'] ?? ($area === 'admin' ? 'Администрирование' : 'МойБлог');
+        // Заголовок вкладки: страница передаёт свою часть, лейаут прибивает siteTitle
+        $data['title'] = $data['title'] ?? ($area === 'admin' ? 'Администрирование' : (trim((string) ($data['siteTitle'] ?? '')) !== '' ? $data['siteTitle'] : 'МойБлог'));
+        $data['description'] = $data['description'] ?? (trim((string) ($data['siteDescription'] ?? '')) !== '' ? $data['siteDescription'] : 'Личный блог о веб-разработке и дизайне.');
         return self::render($base . '/layout', $data);
     }
 

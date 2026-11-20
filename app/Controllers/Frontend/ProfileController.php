@@ -18,7 +18,7 @@ class ProfileController extends Controller
         $full = (new User())->findById((int) $user['id']);
 
         return $this->page('frontend', 'profile', [
-            'title' => 'Профиль — МойБлог',
+            'title' => 'Профиль',
             'activePage' => 'profile',
             'user' => $user,
             'totpEnabled' => $full !== null && !empty($full['totp_enabled']),

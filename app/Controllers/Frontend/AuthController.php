@@ -15,7 +15,7 @@ class AuthController extends Controller
         $user = current_user();
 
         return $this->page('frontend', 'login', [
-            'title' => 'Вход — МойБлог',
+            'title' => 'Вход',
             'pageTitle' => 'Вход в аккаунт',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
@@ -62,7 +62,7 @@ class AuthController extends Controller
         $user = current_user();
 
         return $this->page('frontend', 'register', [
-            'title' => 'Регистрация — МойБлог',
+            'title' => 'Регистрация',
             'pageTitle' => 'Создать аккаунт',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
@@ -78,7 +78,7 @@ class AuthController extends Controller
         $user = current_user();
 
         return $this->page('frontend', 'forgot-password', [
-            'title' => 'Восстановление пароля — МойБлог',
+            'title' => 'Восстановление пароля',
             'pageTitle' => 'Восстановить пароль',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
@@ -99,7 +99,7 @@ class AuthController extends Controller
         $user = current_user();
 
         return $this->page('frontend', 'reset-password', [
-            'title' => 'Сброс пароля — МойБлог',
+            'title' => 'Сброс пароля',
             'pageTitle' => 'Новый пароль',
             'token' => $token,
             'user' => $user,
@@ -117,9 +117,11 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
 
-        // Rate limiting
-        $maxLoginAttempts = (int) ($_ENV['RATE_LIMIT_LOGIN'] ?? 5);
-        if ($error = $this->checkRateLimit('auth:login', $maxLoginAttempts, 15)) {
+        // Rate limiting: лимит попыток и время блокировки — из настроек (Настройки → Безопасность)
+        $securitySettings = new \App\Models\SiteSettings();
+        $maxLoginAttempts = max(1, (int) $securitySettings->get('maxLoginAttempts', (int) ($_ENV['RATE_LIMIT_LOGIN'] ?? 5) ?: 5));
+        $lockoutMinutes = max(1, (int) $securitySettings->get('lockoutMinutes', 15));
+        if ($error = $this->checkRateLimit('auth:login', $maxLoginAttempts, $lockoutMinutes)) {
             return $this->json($error, 429);
         }
 
@@ -340,6 +342,20 @@ class AuthController extends Controller
         $result = (new User())->create($email, $passwordHash, $name);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => $result['error']], 400);
+        }
+
+        // Флаг «Уведомлять о новых пользователях» (Настройки → Уведомления)
+        $notifySettings = new \App\Models\SiteSettings();
+        if ((bool) $notifySettings->get('notifyUsers', false)) {
+            $adminEmail = trim((string) $notifySettings->get('adminEmail', ''));
+            if (filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
+                \App\Core\Mailer::send(
+                    'Новый пользователь на сайте',
+                    "Имя: {$name}\nEmail: {$email}",
+                    $adminEmail,
+                    'Admin'
+                );
+            }
         }
 
         return $this->json(['success' => true]);

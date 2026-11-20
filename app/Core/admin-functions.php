@@ -26,7 +26,18 @@ function admin_is_authenticated()
         return false;
     }
 
-    if (time() - (int) $_SESSION['admin_authenticated_at'] > 28800) {
+    // Срок сессии (часы) — из настроек сайта (Настройки → Безопасность)
+    $sessionHours = 8;
+    try {
+        $sessionHours = (int) (new \App\Models\SiteSettings())->get('adminSessionHours', 8);
+    } catch (\Throwable $error) {
+        // БД недоступна — оставляем 8 часов
+    }
+    if ($sessionHours < 1) {
+        $sessionHours = 8;
+    }
+
+    if (time() - (int) $_SESSION['admin_authenticated_at'] > $sessionHours * 3600) {
         $_SESSION = [];
         session_destroy();
         return false;

@@ -1,10 +1,18 @@
 <!doctype html>
-<html lang="ru">
+<html lang="<?php $layoutLang = stripos((string) ($siteLanguage ?? ''), 'english') !== false ? 'en' : 'ru'; echo htmlspecialchars($layoutLang, ENT_QUOTES, 'UTF-8'); ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?= htmlspecialchars($title ?? 'МойБлог', ENT_QUOTES, 'UTF-8') ?></title>
+    <?php
+    // Заголовок вкладки: «Страница — Заголовок вкладки (SEO)» из настроек сайта
+    $layoutSiteTitle = trim((string) ($siteTitle ?? ''));
+    $layoutFullTitle = $layoutSiteTitle !== '' ? $title . ' — ' . $layoutSiteTitle : $title;
+    ?>
+    <title><?= htmlspecialchars($layoutFullTitle, ENT_QUOTES, 'UTF-8') ?></title>
     <meta name="description" content="<?= htmlspecialchars($description ?? 'Личный блог о веб-разработке и дизайне.', ENT_QUOTES, 'UTF-8') ?>">
+    <?php if (trim((string) ($siteKeywords ?? '')) !== ''): ?>
+    <meta name="keywords" content="<?= htmlspecialchars(trim((string) $siteKeywords), ENT_QUOTES, 'UTF-8') ?>">
+    <?php endif; ?>
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
     
     <!-- Preconnect for fonts -->

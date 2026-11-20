@@ -20,6 +20,23 @@ class BlogController extends Controller
             $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
             $all[$article['slug']] = $article;
         }
+        // Сортировка — из настроек (Настройки → Статьи)
+        $sortOrder = (string) ($settings['articleSortOrder'] ?? 'newest');
+        if ($sortOrder === 'oldest') {
+            uasort($all, static function (array $a, array $b): int {
+                return strcmp((string) $a['published_at'], (string) $b['published_at']);
+            });
+        } elseif ($sortOrder === 'popular') {
+            $commentCounts = $content->commentCounts();
+            uasort($all, static function (array $a, array $b) use ($commentCounts): int {
+                $countA = (int) ($commentCounts[$a['slug']] ?? 0);
+                $countB = (int) ($commentCounts[$b['slug']] ?? 0);
+                if ($countA !== $countB) {
+                    return $countB <=> $countA;
+                }
+                return strcmp((string) $a['published_at'], (string) $b['published_at']);
+            });
+        }
         $total = count($all);
         $pages = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
@@ -31,7 +48,7 @@ class BlogController extends Controller
         }
 
         return $this->page('frontend', 'blog', [
-            'title' => 'Блог — МойБлог',
+            'title' => 'Блог',
             'description' => 'Статьи о веб-разработке, дизайне и инструментах.',
             'activePage' => 'blog',
             'articles' => $articles,
@@ -40,6 +57,8 @@ class BlogController extends Controller
             'pageScripts' => ['/js/blog-search.js'],
             'blogHeading' => (string) ($settings['blogTitle'] ?? '') ?: 'Блог',
             'blogHeadingLead' => (string) ($settings['blogLead'] ?? '') ?: 'Последние записи и полезные материалы',
+            'articleExcerptLength' => max(50, min(2000, (int) ($settings['articleExcerptLength'] ?? 300) ?: 300)),
+            'showArticleCategories' => (bool) ($settings['articleCategoriesEnabled'] ?? true),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -66,6 +85,22 @@ class BlogController extends Controller
             $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
             $all[$article['slug']] = $article;
         }
+        $sortOrder = (string) ($settings['articleSortOrder'] ?? 'newest');
+        if ($sortOrder === 'oldest') {
+            uasort($all, static function (array $a, array $b): int {
+                return strcmp((string) $a['published_at'], (string) $b['published_at']);
+            });
+        } elseif ($sortOrder === 'popular') {
+            $commentCounts = $content->commentCounts();
+            uasort($all, static function (array $a, array $b) use ($commentCounts): int {
+                $countA = (int) ($commentCounts[$a['slug']] ?? 0);
+                $countB = (int) ($commentCounts[$b['slug']] ?? 0);
+                if ($countA !== $countB) {
+                    return $countB <=> $countA;
+                }
+                return strcmp((string) $a['published_at'], (string) $b['published_at']);
+            });
+        }
         $total = count($all);
         $pages = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
@@ -78,7 +113,7 @@ class BlogController extends Controller
         }
 
         return $this->page('frontend', 'blog', [
-            'title' => 'Рубрика «' . $category['name'] . '» — МойБлог',
+            'title' => 'Рубрика «' . $category['name'] . '»',
             'description' => 'Статьи рубрики «' . $category['name'] . '».',
             'activePage' => 'blog',
             'articles' => $articles,
@@ -88,6 +123,8 @@ class BlogController extends Controller
             'categoryDescription' => $category['description'] ?? '',
             'pagination' => ['total' => $total, 'pages' => $pages, 'current' => $page],
             'pageScripts' => ['/js/blog-search.js'],
+            'articleExcerptLength' => max(50, min(2000, (int) ($settings['articleExcerptLength'] ?? 300) ?: 300)),
+            'showArticleCategories' => (bool) ($settings['articleCategoriesEnabled'] ?? true),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -151,14 +188,46 @@ class BlogController extends Controller
         $commentsCount = $content->commentsCount($slug);
         $comments = $commentsVisible ? $content->commentsByArticle($slug) : [];
 
+        // Тумблеры отображения (Настройки → Статьи)
+        $showArticleTags = (bool) $commentsSettings->get('articleTagsEnabled', true);
+        $showArticleCategories = (bool) $commentsSettings->get('articleCategoriesEnabled', true);
+        $showArticleReadTime = (bool) $commentsSettings->get('articleReadTime', true);
+        $showRelatedArticles = (bool) $commentsSettings->get('articleRelatedEnabled', true);
+        $showShareButtons = (bool) $commentsSettings->get('articleShareButtons', true);
+
+        // Похожие статьи: те же рубрики, до 3, текущую пропускаем
+        $relatedArticles = [];
+        if ($showRelatedArticles && !empty($article['category_slug'])) {
+            foreach ($content->articlesByCategory((string) $article['category_slug']) as $related) {
+                if ($related['slug'] === $slug) {
+                    continue;
+                }
+                $relatedArticles[] = ['slug' => $related['slug'], 'title' => $related['title']];
+                if (count($relatedArticles) >= 3) {
+                    break;
+                }
+            }
+        }
+
+        // Абсолютная ссылка на страницу статьи для кнопок «Поделиться»
+        $shareScheme = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off') ? 'https' : 'http';
+        $shareUrl = $shareScheme . '://' . ($_SERVER['HTTP_HOST'] ?? 'myblog.loc') . '/' . rawurlencode($slug) . '.html';
+
         return $this->page('frontend', $template, [
-            'title' => $article['title'] . ' — МойБлог',
+            'title' => $article['title'],
             'description' => $article['description'],
             'activePage' => 'blog',
             'article' => $article,
             'prevArticle' => $prev,
             'nextArticle' => $next,
             'latestArticles' => $latestArticles,
+            'relatedArticles' => $relatedArticles,
+            'shareUrl' => $shareUrl,
+            'showArticleTags' => $showArticleTags,
+            'showArticleCategories' => $showArticleCategories,
+            'showArticleReadTime' => $showArticleReadTime,
+            'showRelatedArticles' => $showRelatedArticles,
+            'showShareButtons' => $showShareButtons,
             'comments' => $comments,
             'commentsCount' => $commentsCount,
             'commentsVisible' => $commentsVisible,

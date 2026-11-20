@@ -8,6 +8,10 @@
             </ol>
         </nav>
         <h1 class="fw-bold mb-2"><?= htmlspecialchars($article['title'], ENT_QUOTES, 'UTF-8') ?></h1>
-        <p class="fw-bold mb-0"><i class="bi bi-calendar3"></i> <?= htmlspecialchars($article['date'], ENT_QUOTES, 'UTF-8') ?> · <i class="bi bi-tag"></i> <?= htmlspecialchars($article['category'], ENT_QUOTES, 'UTF-8') ?> · <?= (int) $article['readingTime'] ?> мин чтения</p>
+        <p class="fw-bold mb-0">
+            <i class="bi bi-calendar3"></i> <?= htmlspecialchars($article['date'], ENT_QUOTES, 'UTF-8') ?>
+            <?php if (!empty($showArticleCategories)): ?> · <i class="bi bi-tag"></i> <?= htmlspecialchars($article['category'], ENT_QUOTES, 'UTF-8') ?><?php endif; ?>
+            <?php if (!empty($showArticleReadTime)): ?> · <?= (int) $article['readingTime'] ?> мин чтения<?php endif; ?>
+        </p>
     </div>
 </header>

@@ -114,25 +114,31 @@
                 <h2 class="fw-bold display-5">Связаться со мной</h2>
             </div>
             <div class="row g-4 justify-content-center">
+                <?php
+                // Контактные данные — из настроек сайта (Настройки → Контакты)
+                $homeContactEmail = trim((string) ($homeSettings['contactEmail'] ?? '')) ?: 'hello@moyblog.ru';
+                $homeContactPhone = trim((string) ($homeSettings['contactPhone'] ?? '')) ?: '+7 (900) 123-45-67';
+                $homeContactAddress = trim((string) ($homeSettings['contactAddress'] ?? '')) ?: 'г. Самара, ул. Примерная, 1';
+                ?>
                 <div class="col-md-4 text-center">
                     <div class="feature-item p-4 h-100">
                         <i class="bi bi-envelope display-6 text-orange"></i>
                         <h5 class="fw-bold mt-3">Email</h5>
-                        <p class="fw-bold mb-0">hello@moyblog.ru</p>
+                        <p class="fw-bold mb-0"><?= htmlspecialchars($homeContactEmail, ENT_QUOTES, 'UTF-8') ?></p>
                     </div>
                 </div>
                 <div class="col-md-4 text-center">
                     <div class="feature-item p-4 h-100">
                         <i class="bi bi-telephone display-6 text-orange"></i>
                         <h5 class="fw-bold mt-3">Телефон</h5>
-                        <p class="fw-bold mb-0">+7 (900) 123-45-67</p>
+                        <p class="fw-bold mb-0"><?= htmlspecialchars($homeContactPhone, ENT_QUOTES, 'UTF-8') ?></p>
                     </div>
                 </div>
                 <div class="col-md-4 text-center">
                     <div class="feature-item p-4 h-100">
                         <i class="bi bi-geo-alt display-6 text-orange"></i>
                         <h5 class="fw-bold mt-3">Адрес</h5>
-                        <p class="fw-bold mb-0">г. Самара, ул. Примерная, 1</p>
+                        <p class="fw-bold mb-0"><?= htmlspecialchars($homeContactAddress, ENT_QUOTES, 'UTF-8') ?></p>
                     </div>
                 </div>
             </div>

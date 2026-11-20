@@ -11,7 +11,7 @@
         // localStorage используется только как запасной источник значений
         var applySettings = function (settings) {
             Array.from(form.elements).forEach(function (field) {
-                if (!field.id || field.id === 'smtpPassword' || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
+                if (!field.id || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
                 if (field.type === 'checkbox') {
                     field.checked = Boolean(settings[field.id]);
                 } else {
@@ -89,7 +89,7 @@
 
             var updated = {};
             Array.from(form.elements).forEach(function (field) {
-                if (!field.id || field.id === 'smtpPassword') return;
+                if (!field.id) return;
                 updated[field.id] = field.type === 'checkbox' ? field.checked : field.value.trim();
             });
 

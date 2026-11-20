@@ -52,7 +52,7 @@ class HomeController extends Controller
         }
 
         return $this->page('frontend', 'home', [
-            'title' => 'Главная — МойБлог',
+            'title' => 'Главная',
             'description' => 'Личный блог о веб-разработке и дизайне, статьи, проекты и услуги.',
             'activePage' => 'home',
             'featuredArticles' => $featuredArticles,

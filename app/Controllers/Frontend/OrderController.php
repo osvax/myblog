@@ -11,7 +11,7 @@ class OrderController extends Controller
         $user = current_user();
 
         return $this->page('frontend', 'order', [
-            'title' => 'Заказать — Мой Блог',
+            'title' => 'Заказать',
             'description' => 'Оставьте заявку на разработку сайта.',
             'activePage' => 'order',
             'includeFormsScript' => true,

@@ -8,6 +8,7 @@ use App\Controllers\Frontend\ContactsController;
 use App\Controllers\Frontend\OrderController;
 use App\Controllers\Frontend\AuthController;
 use App\Controllers\Frontend\ProfileController;
+use App\Controllers\Frontend\SeoController;
 use App\Controllers\Admin\PageController;
 
 return function (Router $router) {
@@ -47,12 +48,16 @@ return function (Router $router) {
     // Страница рубрики блога (важно: до catch-all /{slug}.html)
     $router->get('/category/{slug}.html', [$blog, 'category']);
 
+    $seo = new SeoController();
+    $router->get('/robots.txt', [$seo, 'robots']);
+    $router->get('/sitemap.xml', [$seo, 'sitemap']);
+
     // Заглушка режима обслуживания (в общем дизайне сайта)
     $router->get('/maintenance.html', function ($request) {
         $user = current_user();
         $message = trim((string) (new \App\Models\SiteSettings())->get('maintenanceMessage', ''));
         return \App\Core\View::renderPage('frontend', 'maintenance', [
-            'title' => 'Сайт на обслуживании — МойБлог',
+            'title' => 'Сайт на обслуживании',
             'description' => 'Ведутся технические работы.',
             'activePage' => '',
             'maintenanceMessage' => $message !== '' ? $message : 'Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!',

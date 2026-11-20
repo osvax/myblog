@@ -318,10 +318,12 @@ class FormController extends Controller
         $subject = trim($subject);
         $body = ltrim($body, "\r\n");
 
-        $this->sendMail($subject, $body, $email, $name);
+        // Ключи флагов «Уведомления» для каждой формы
+        $notifyKeys = ['order' => 'notifyOrders', 'feedback' => 'notifyMessages', 'comment' => 'notifyComments'];
+        $this->sendMail($subject, $body, $email, $name, $notifyKeys[$formType] ?? '');
     }
 
-    private function sendMail($subject, $body, $email, $name)
+    private function sendMail($subject, $body, $email, $name, string $notifyKey = '')
     {
         $safeName = str_replace(["\r", "\n"], '', $name);
         $safeEmail = str_replace(["\r", "\n"], '', $email);
@@ -335,8 +337,10 @@ class FormController extends Controller
 
         $htmlBody = nl2br(htmlspecialchars($body, ENT_QUOTES, 'UTF-8'));
 
-        // Send to admin
-        \App\Core\Mailer::send($subject, $body, $recipient, 'Admin', $htmlBody);
+        // Письмо администратору — по флагу «Уведомления» (Настройки сайта)
+        if ($notifyKey === '' || (bool) (new \App\Models\SiteSettings())->get($notifyKey, true)) {
+            \App\Core\Mailer::send($subject, $body, $recipient, 'Admin', $htmlBody);
+        }
 
         // Send copy to sender
         if ($copyToSender) {
