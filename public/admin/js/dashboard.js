@@ -105,6 +105,8 @@
             document.getElementById('systemWebServer').textContent = data.webServer;
             document.getElementById('systemPhpVersion').textContent = data.phpVersion;
             document.getElementById('systemOs').textContent = data.os;
+            document.getElementById('systemDb').textContent = data.dbHost + (data.dbVersion ? ' — ' + data.dbVersion : '');
+            document.getElementById('systemServerTime').textContent = data.serverTime;
             document.getElementById('systemTimezone').textContent = data.timezone;
             document.getElementById('systemUploadLimit').textContent = data.uploadLimit;
             document.getElementById('systemMemoryLimit').textContent = data.memoryLimit;

@@ -235,13 +235,6 @@ return array (
       5 => 'js/landing-pages.js',
     ),
   ),
-  'preview' =>
-  array (
-    'title' => 'Предпросмотр',
-    'scripts' =>
-    array (
-    ),
-  ),
   'templates' =>
   array (
     'title' => 'Редактор шаблонов сайта',

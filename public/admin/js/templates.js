@@ -268,17 +268,39 @@
             saveButton.disabled = false;
         }
 
-        // ---------- Полный предпросмотр: отдельная страница, без всплывающего окна ----------
-        var previewStorageKey = 'myblog.admin.preview.v1';
+        // ---------- Предпросмотр: всплывающее окно с рендером ----------
+        var previewModalEl = document.getElementById('templatePreviewModal');
+        var previewFrame = document.getElementById('templatePreviewFrame');
+        var previewTitle = document.getElementById('templatePreviewTitle');
+        var previewModal = null;
+        // Модалка есть в шаблоне (добавлена в том же коммите); guard на случай правок шаблона
+        if (previewModalEl && window.bootstrap) {
+            previewModal = bootstrap.Modal.getOrCreateInstance(previewModalEl);
+            previewModalEl.addEventListener('hidden.bs.modal', function () {
+                // Очищаем, чтобы следующее открытие загрузило содержимое заново
+                if (previewFrame) {
+                    previewFrame.removeAttribute('src');
+                    previewFrame.removeAttribute('srcdoc');
+                }
+            });
+        }
 
         function openPreviewPage() {
-            // Статическая страница из базы — через рендер-эндпоинт (плейсхолдеры раскрываются)
-            if (currentFile && currentFile.type === 'page' && pageState && pageState.editId) {
-                window.location.href = '/admin/preview.html?page=' + encodeURIComponent(pageState.editId)
-                    + '&title=' + encodeURIComponent(pageState.title || currentFile.slug);
+            if (!previewModal || !previewFrame) {
+                showError('Предпросмотр недоступен');
                 return;
             }
-            // CSS/JS/PHP-файл — srcdoc из текущего содержимого редактора (включая несохранённое)
+            var title;
+            // Статическая страница из базы (уже сохранена) — рендер-эндпоинт:
+            // плейсхолдеры {{field}}/{{menu}}/{{asset}} раскрываются на сервере
+            if (currentFile && currentFile.type === 'page' && pageState && pageState.editId) {
+                title = (pageState.title || currentFile.slug) + ' — /' + currentFile.slug + '.html';
+                previewTitle.innerHTML = '<i class="bi bi-eye me-2"></i>' + escapeHtml(title);
+                previewFrame.src = '/api/admin/pages/' + encodeURIComponent(pageState.editId) + '/preview';
+                previewModal.show();
+                return;
+            }
+            // Файл или несохранённая страница — содержимое редактора (включая несохранённое)
             var content = editor.getValue();
             var html;
             if (currentFile && currentFile.type === 'asset' && currentFile.path.toLowerCase().endsWith('.css')) {
@@ -288,15 +310,16 @@
             } else {
                 html = content;
             }
-            var title = (currentFile && currentFile.path) ? currentFile.path : 'Файл шаблона';
-            try {
-                sessionStorage.setItem(previewStorageKey, JSON.stringify({ title: title, html: html }));
-            } catch (error) {
-                console.error('Не удалось сохранить данные предпросмотра.', error);
-                showError('Не удалось открыть предпросмотр');
-                return;
-            }
-            window.location.href = '/admin/preview.html?title=' + encodeURIComponent(title);
+            title = (currentFile && currentFile.path) ? currentFile.path : 'Файл шаблона';
+            previewTitle.innerHTML = '<i class="bi bi-eye me-2"></i>' + escapeHtml(title);
+            previewFrame.setAttribute('srcdoc', html);
+            previewModal.show();
+        }
+
+        function escapeHtml(str) {
+            var div = document.createElement('div');
+            div.textContent = str;
+            return div.innerHTML;
         }
 
         templateSelect.addEventListener('change', function () {

@@ -1501,13 +1501,14 @@ body.templates-page .admin-content {
     min-height: 320px;
 }
 
-/* Предпросмотр на полной странице */
-.preview-frame {
+/* Предпросмотр во всплывающем окне («Страницы», «Шаблоны») */
+.preview-modal-frame {
     display: block;
     width: 100%;
-    height: calc(100vh - 230px);
+    height: 70vh;
     min-height: 420px;
-    border-radius: 0 0 .5rem .5rem;
+    border: 0;
+    background: #fff;
 }
 
 .sales-chart {

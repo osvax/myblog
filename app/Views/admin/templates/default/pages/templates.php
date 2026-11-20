@@ -19,7 +19,7 @@
             <div class="col-12 d-flex flex-wrap gap-2">
                 <button class="btn btn-orange fw-bold" type="button" id="saveTemplate"><i class="bi bi-save"></i> Сохранить</button>
                 <button class="btn btn-outline-secondary fw-bold" type="button" id="reloadTemplate">Перезагрузить</button>
-                <button class="btn btn-outline-secondary" type="button" id="openPreview" aria-label="Предпросмотр" title="Открыть предпросмотр на полной странице"><i class="bi bi-eye"></i></button>
+                <button class="btn btn-outline-secondary" type="button" id="openPreview" aria-label="Предпросмотр" title="Открыть предпросмотр"><i class="bi bi-eye"></i></button>
                 <span class="ms-auto small fw-bold text-muted align-self-center" id="templateActiveBadge"></span>
             </div>
         </div>
@@ -29,3 +29,18 @@
         <textarea id="templateEditor" aria-label="Исходный код выбранного файла шаблона"></textarea>
     </div>
 </section>
+
+<!-- Предпросмотр: всплывающее окно с рендером выбранного файла/страницы -->
+<div class="modal fade" id="templatePreviewModal" tabindex="-1" aria-labelledby="templatePreviewTitle" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold" id="templatePreviewTitle"><i class="bi bi-eye me-2"></i>Предпросмотр</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
+            </div>
+            <div class="modal-body p-0">
+                <iframe id="templatePreviewFrame" class="preview-modal-frame" title="Предпросмотр шаблона"></iframe>
+            </div>
+        </div>
+    </div>
+</div>

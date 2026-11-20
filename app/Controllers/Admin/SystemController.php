@@ -19,12 +19,29 @@ class SystemController extends Controller
             ? substr(preg_replace('/[\x00-\x1F\x7F]/', '', $_SERVER['SERVER_SOFTWARE']), 0, 120)
             : 'Не определён';
 
+        // База данных: хост из конфигурации, версия — запросом к серверу
+        $dbConfig = is_file(APP_ROOT . '/config/database.php') ? require APP_ROOT . '/config/database.php' : [];
+        $dbHost = '';
+        if (preg_match('/host=([^;]+)/', (string) ($dbConfig['dsn'] ?? ''), $m)) {
+            $dbHost = trim($m[1]);
+        }
+        $dbVersion = '';
+        try {
+            $row = \App\Core\Database::connection()->query('SELECT VERSION() AS v')->fetch(\PDO::FETCH_ASSOC);
+            $dbVersion = $row ? trim((string) $row['v']) : '';
+        } catch (\Exception $e) {
+            // БД недоступна — показываем только хост
+        }
+
         return $this->json([
             'success' => true,
             'webServer' => $serverSoftware !== '' ? $serverSoftware : 'Не определён',
-            'phpVersion' => PHP_VERSION,
+            'phpVersion' => PHP_VERSION . ' (' . php_sapi_name() . ')',
             'os' => PHP_OS_FAMILY,
-            'timezone' => date_default_timezone_get(),
+            'dbHost' => $dbHost !== '' ? $dbHost : 'Не задан',
+            'dbVersion' => $dbVersion !== '' ? $dbVersion : 'Не определена',
+            'serverTime' => date('d.m.Y H:i:s'),
+            'timezone' => date_default_timezone_get() . ' (UTC' . date('P') . ')',
             'uploadLimit' => ini_get('upload_max_filesize'),
             'memoryLimit' => ini_get('memory_limit'),
         ]);

@@ -75,6 +75,8 @@
                     <dt class="col-sm-5">Веб-сервер</dt><dd class="col-sm-7" id="systemWebServer">—</dd>
                     <dt class="col-sm-5">Версия PHP</dt><dd class="col-sm-7" id="systemPhpVersion">—</dd>
                     <dt class="col-sm-5">Операционная система</dt><dd class="col-sm-7" id="systemOs">—</dd>
+                    <dt class="col-sm-5">База данных</dt><dd class="col-sm-7" id="systemDb">—</dd>
+                    <dt class="col-sm-5">Время на сервере</dt><dd class="col-sm-7" id="systemServerTime">—</dd>
                     <dt class="col-sm-5">Часовой пояс</dt><dd class="col-sm-7" id="systemTimezone">—</dd>
                     <dt class="col-sm-5">Лимит загрузки</dt><dd class="col-sm-7" id="systemUploadLimit">—</dd>
                     <dt class="col-sm-5">Память PHP</dt><dd class="col-sm-7" id="systemMemoryLimit">—</dd>

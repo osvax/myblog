@@ -245,11 +245,31 @@
             pageForm.classList.remove('was-validated');
         }
 
-        // ---------- Живой предпросмотр: полная страница, без всплывающего окна ----------
+        // ---------- Живой предпросмотр: всплывающее окно, iframe на рендер-эндпоинт ----------
+        var previewModalEl = document.getElementById('pagePreviewModal');
+        var previewFrame = document.getElementById('pagePreviewFrame');
+        var previewTitle = document.getElementById('pagePreviewTitle');
+        var previewModal = null;
+        // Модалка есть в шаблоне (добавлена в том же коммите); guard на случай правок шаблона
+        if (previewModalEl && window.bootstrap) {
+            previewModal = bootstrap.Modal.getOrCreateInstance(previewModalEl);
+            previewModalEl.addEventListener('hidden.bs.modal', function () {
+                // Очищаем, чтобы следующее открытие загрузило рендер заново
+                if (previewFrame) {
+                    previewFrame.removeAttribute('src');
+                }
+            });
+        }
+
         function openPreview(page) {
-            var url = '/admin/preview.html?page=' + encodeURIComponent(page.id)
-                + '&title=' + encodeURIComponent(page.title || page.slug);
-            window.location.href = url;
+            if (!previewModal || !previewFrame) {
+                showError('Предпросмотр недоступен');
+                return;
+            }
+            previewTitle.innerHTML = '<i class="bi bi-eye me-2"></i>' + escapeHtml(page.title || page.slug)
+                + ' <span class="text-muted fw-normal">/ ' + escapeHtml(page.slug) + '.html</span>';
+            previewFrame.src = '/api/admin/pages/' + encodeURIComponent(page.id) + '/preview';
+            previewModal.show();
         }
 
         // ---------- Удалить страницу ----------
