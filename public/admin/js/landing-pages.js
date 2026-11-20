@@ -313,7 +313,7 @@
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = '<i class="bi bi-magic me-1"></i> Сгенерировать из настроек';
             }).catch(function (error) {
-                showError('Не удалось сгенерировать: ' + error.message');
+                showError('Не удалось сгенерировать: ' + error.message);
                 generateBtn.disabled = false;
                 generateBtn.innerHTML = '<i class="bi bi-magic me-1"></i> Сгенерировать из настроек';
             });
