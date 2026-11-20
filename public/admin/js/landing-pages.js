@@ -60,20 +60,34 @@
         var cancelPageBtn = document.getElementById('cancelPageBtn');
         var fillStarterBtn = document.getElementById('fillStarterBtn');
         var pageHtmlBody = document.getElementById('pageHtmlBody');
-        var previewModal = document.getElementById('pagePreviewModal');
-        var previewFrame = document.getElementById('pagePreviewFrame');
-        var previewTitle = document.getElementById('pagePreviewTitle');
+        var themeSelect = document.getElementById('editorTheme');
         var pagesError = document.getElementById('pagesError');
         var pagesSuccess = document.getElementById('pagesSuccess');
 
         var currentPages = [];
 
         // Код-редактор тела (CodeMirror — подключён для страницы в admin-pages.php);
-        // без него — обычный textarea.
+        // без него — обычный textarea. Инициализируется лениво при первом открытии
+        // редактора: в скрытом контейнере CodeMirror некорректно измеряет размеры
+        // и тело «не появляется» до повторного нажатия.
         var bodyEditor = null;
-        if (window.CodeMirror && pageHtmlBody) {
+
+        // Единая тема редактора CodeMirror для «Страниц» и «Шаблонов»
+        var themeStorageKey = 'myblog.admin.codemirror.theme.v1';
+
+        function currentTheme() {
+            try {
+                var stored = localStorage.getItem(themeStorageKey);
+                if (stored === 'default' || stored === 'material-darker') return stored;
+            } catch (error) { /* localStorage недоступен — берём текущий выбор */ }
+            return themeSelect && themeSelect.value === 'material-darker' ? 'material-darker' : 'default';
+        }
+
+        function ensureBodyEditor() {
+            if (bodyEditor || !window.CodeMirror || !pageHtmlBody) return;
             bodyEditor = CodeMirror.fromTextArea(pageHtmlBody, {
                 mode: 'htmlmixed',
+                theme: currentTheme(),
                 lineNumbers: true,
                 lineWrapping: false,
                 indentUnit: 4,
@@ -93,15 +107,6 @@
             } else if (pageHtmlBody) {
                 pageHtmlBody.value = value;
             }
-        }
-
-        // Модалка предпросмотра (есть в шаблоне страницы)
-        var previewModalInstance = null;
-        if (previewModal && window.bootstrap && bootstrap.Modal) {
-            previewModalInstance = bootstrap.Modal.getOrCreateInstance(previewModal);
-            previewModal.addEventListener('hidden.bs.modal', function () {
-                previewFrame.src = 'about:blank';
-            });
         }
 
         // ---------- Вспомогательные функции ----------
@@ -216,7 +221,6 @@
                 pageSlug.readOnly = true;
                 pageTitle.value = page.title;
                 pageActive.checked = page.is_active == 1;
-                setBody(page.html_content || '');
                 pageEditorTitle.textContent = 'Редактировать страницу: ' + page.slug;
             } else {
                 // Режим создания: тело открывается сразу с заготовкой
@@ -225,10 +229,13 @@
                 pageSlug.readOnly = false;
                 pageTitle.value = '';
                 pageActive.checked = true;
-                setBody(PAGE_STARTER);
                 pageEditorTitle.textContent = 'Добавить страницу';
             }
+            // Сначала показываем карточку, потом создаём редактор:
+            // в скрытом контейнере CodeMirror не отмеряет высоту
             pageEditor.hidden = false;
+            ensureBodyEditor();
+            setBody(page ? (page.html_content || '') : PAGE_STARTER);
             pageEditor.scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -238,15 +245,11 @@
             pageForm.classList.remove('was-validated');
         }
 
-        // ---------- Живой предпросмотр ----------
+        // ---------- Живой предпросмотр: полная страница, без всплывающего окна ----------
         function openPreview(page) {
-            if (!previewModalInstance) {
-                showError('Предпросмотр недоступен');
-                return;
-            }
-            previewTitle.textContent = page.title + ' (/ ' + page.slug + '.html)';
-            previewFrame.src = '/api/admin/pages/' + page.id + '/preview';
-            previewModalInstance.show();
+            var url = '/admin/preview.html?page=' + encodeURIComponent(page.id)
+                + '&title=' + encodeURIComponent(page.title || page.slug);
+            window.location.href = url;
         }
 
         // ---------- Удалить страницу ----------
@@ -340,6 +343,21 @@
         });
 
         generateBtn.addEventListener('click', generateFromSettings);
+
+        // Переключатель темы CodeMirror (общий с разделом «Шаблоны»)
+        if (themeSelect) {
+            themeSelect.value = currentTheme();
+            themeSelect.addEventListener('change', function () {
+                if (bodyEditor) {
+                    bodyEditor.setOption('theme', themeSelect.value);
+                }
+                try {
+                    localStorage.setItem(themeStorageKey, themeSelect.value);
+                } catch (error) {
+                    console.error('Не удалось сохранить тему редактора.', error);
+                }
+            });
+        }
 
         // ---------- Инициализация ----------
         loadPages();

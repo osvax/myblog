@@ -1496,20 +1496,18 @@ body.templates-page .admin-content {
     min-height: 320px;
 }
 
-.template-preview {
-    display: block;
-    width: 100%;
-    flex: 1;
+/* Редактор тела страницы в «Страницах» — высота как у «Шаблонов» */
+.page-editor-card .CodeMirror {
     min-height: 320px;
-    border: 1px solid #dee2e6;
-    border-radius: .5rem;
 }
 
-#previewContainer:not([hidden]) {
-    flex: 1;
-    min-height: 0;
-    display: flex;
-    flex-direction: column;
+/* Предпросмотр на полной странице */
+.preview-frame {
+    display: block;
+    width: 100%;
+    height: calc(100vh - 230px);
+    min-height: 420px;
+    border-radius: 0 0 .5rem .5rem;
 }
 
 .sales-chart {

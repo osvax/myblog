@@ -36,12 +36,19 @@
 </section>
 
 <!-- Редактор страницы: карточка + тело (заготовка) -->
-<div id="pageEditor" class="card admin-card" hidden>
-    <div class="card-header bg-white d-flex justify-content-between align-items-center">
+<div id="pageEditor" class="card admin-card page-editor-card" hidden>
+    <div class="card-header bg-white d-flex justify-content-between align-items-center gap-2 flex-wrap">
         <h2 class="h5 fw-bold mb-0"><i class="bi bi-pencil-square me-2"></i><span id="pageEditorTitle">Добавить страницу</span></h2>
-        <button class="btn btn-outline-secondary btn-sm" type="button" id="closeEditor">
-            <i class="bi bi-x"></i> Закрыть
-        </button>
+        <div class="d-flex align-items-center gap-2">
+            <label class="small fw-bold text-muted d-none d-md-inline" for="editorTheme">Тема редактора</label>
+            <select class="form-select form-select-sm w-auto" id="editorTheme" aria-label="Тема редактора">
+                <option value="default">Светлая</option>
+                <option value="material-darker">Тёмная</option>
+            </select>
+            <button class="btn btn-outline-secondary btn-sm" type="button" id="closeEditor">
+                <i class="bi bi-x"></i> Закрыть
+            </button>
+        </div>
     </div>
     <div class="card-body p-4">
         <form id="pageForm" novalidate>
@@ -95,20 +102,3 @@
     </div>
 </div>
 
-<!-- Живой предпросмотр страницы -->
-<div class="modal fade" id="pagePreviewModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-xl">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 class="h5 fw-bold modal-title"><i class="bi bi-eye me-2"></i>Предпросмотр — <span id="pagePreviewTitle"></span></h2>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Закрыть"></button>
-            </div>
-            <div class="modal-body p-0">
-                <iframe id="pagePreviewFrame" class="w-100 border-0" style="height: 75vh; background: #fff;" title="Предпросмотр страницы"></iframe>
-            </div>
-            <div class="modal-footer py-2">
-                <button type="button" class="btn btn-outline-secondary btn-sm" data-bs-dismiss="modal">Закрыть</button>
-            </div>
-        </div>
-    </div>
-</div>

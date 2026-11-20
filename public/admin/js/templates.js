@@ -7,9 +7,7 @@
         var themeSelect = document.getElementById('editorTheme');
         var saveButton = document.getElementById('saveTemplate');
         var reloadButton = document.getElementById('reloadTemplate');
-        var previewButton = document.getElementById('togglePreview');
-        var previewContainer = document.getElementById('previewContainer');
-        var previewFrame = document.getElementById('templatePreview');
+        var previewButton = document.getElementById('openPreview');
         var errorBox = document.getElementById('templateError');
         var activeBadge = document.getElementById('templateActiveBadge');
         var editor = CodeMirror.fromTextArea(document.getElementById('templateEditor'), {
@@ -26,11 +24,21 @@
         var currentFile = null; // {type: 'file'|'asset'|'page', ...}
         var pageState = null;   // данные статической страницы (title, is_active, edit_id)
         var loading = false;
-        var themeStorageKey = 'myblog.admin.templates.theme.v1';
+        // Единая тема редактора CodeMirror (общая с разделом «Страницы»).
+        // Старый ключ «Шаблонов» мигрируется при первом запуске.
+        var themeStorageKey = 'myblog.admin.codemirror.theme.v1';
+        var themeLegacyKey = 'myblog.admin.templates.theme.v1';
 
         // Светлая (default) и тёмная (material-darker) темы CodeMirror
         try {
             var storedTheme = localStorage.getItem(themeStorageKey);
+            if (!storedTheme) {
+                var legacyTheme = localStorage.getItem(themeLegacyKey);
+                if (legacyTheme === 'default' || legacyTheme === 'material-darker') {
+                    storedTheme = legacyTheme;
+                    localStorage.setItem(themeStorageKey, legacyTheme);
+                }
+            }
             if (storedTheme === 'default' || storedTheme === 'material-darker') {
                 themeSelect.value = storedTheme;
             }
@@ -158,7 +166,6 @@
             currentHash = hash || '';
             fileSelect.dataset.previous = fileSelect.value;
             saveButton.disabled = false;
-            if (!previewContainer.hidden) updatePreview();
         }
 
         function loadFile() {
@@ -259,18 +266,37 @@
 
         function savedFlash() {
             saveButton.disabled = false;
-            if (!previewContainer.hidden) updatePreview();
         }
 
-        function updatePreview() {
-            var content = editor.getValue();
-            if (currentFile && currentFile.type === 'asset' && currentFile.path.toLowerCase().endsWith('.css')) {
-                previewFrame.setAttribute('srcdoc', '<style>' + content + '</style><div class="container py-4"><h1>Заголовок</h1><p>Пример текста и <a href="#">ссылка</a>.</p><button class="btn btn-primary">Кнопка</button></div>');
-            } else if (currentFile && currentFile.type === 'asset') {
-                previewFrame.setAttribute('srcdoc', '<script>try{' + content + '}catch(e){document.body.textContent="Ошибка JS: "+e.message;}<\/script>');
-            } else {
-                previewFrame.setAttribute('srcdoc', content);
+        // ---------- Полный предпросмотр: отдельная страница, без всплывающего окна ----------
+        var previewStorageKey = 'myblog.admin.preview.v1';
+
+        function openPreviewPage() {
+            // Статическая страница из базы — через рендер-эндпоинт (плейсхолдеры раскрываются)
+            if (currentFile && currentFile.type === 'page' && pageState && pageState.editId) {
+                window.location.href = '/admin/preview.html?page=' + encodeURIComponent(pageState.editId)
+                    + '&title=' + encodeURIComponent(pageState.title || currentFile.slug);
+                return;
             }
+            // CSS/JS/PHP-файл — srcdoc из текущего содержимого редактора (включая несохранённое)
+            var content = editor.getValue();
+            var html;
+            if (currentFile && currentFile.type === 'asset' && currentFile.path.toLowerCase().endsWith('.css')) {
+                html = '<style>' + content + '</style><div class="container py-4"><h1>Заголовок</h1><p>Пример текста и <a href="#">ссылка</a>.</p><button class="btn btn-primary">Кнопка</button></div>';
+            } else if (currentFile && currentFile.type === 'asset') {
+                html = '<script>try{' + content + '}catch(e){document.body.textContent="Ошибка JS: "+e.message;}<\/script>';
+            } else {
+                html = content;
+            }
+            var title = (currentFile && currentFile.path) ? currentFile.path : 'Файл шаблона';
+            try {
+                sessionStorage.setItem(previewStorageKey, JSON.stringify({ title: title, html: html }));
+            } catch (error) {
+                console.error('Не удалось сохранить данные предпросмотра.', error);
+                showError('Не удалось открыть предпросмотр');
+                return;
+            }
+            window.location.href = '/admin/preview.html?title=' + encodeURIComponent(title);
         }
 
         templateSelect.addEventListener('change', function () {
@@ -286,11 +312,7 @@
         reloadButton.addEventListener('click', function () {
             loadFile();
         });
-        previewButton.addEventListener('click', function () {
-            previewContainer.hidden = !previewContainer.hidden;
-            previewButton.setAttribute('aria-pressed', String(!previewContainer.hidden));
-            if (!previewContainer.hidden) updatePreview();
-        });
+        previewButton.addEventListener('click', openPreviewPage);
 
         loadTemplates()
             .then(loadFiles)

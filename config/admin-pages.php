@@ -223,6 +223,7 @@ return array (
     'styles' =>
     array (
       0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
+      1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css',
     ),
     'scripts' =>
     array (
@@ -232,6 +233,13 @@ return array (
       3 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js',
       4 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js',
       5 => 'js/landing-pages.js',
+    ),
+  ),
+  'preview' =>
+  array (
+    'title' => 'Предпросмотр',
+    'scripts' =>
+    array (
     ),
   ),
   'templates' =>

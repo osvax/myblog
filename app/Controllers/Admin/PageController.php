@@ -26,8 +26,14 @@ class PageController extends Controller
             return Response::redirect('/admin/login.html');
         }
 
-        // Проверка прав доступа
-        if (!\admin_can_access($slug)) {
+        // Проверка прав доступа. «Предпросмотр» — служебная страница:
+        // открывается, если есть право хотя бы на один из разделов-источников.
+        if ($slug === 'preview') {
+            $canPreview = \admin_can_access('landing-pages') || \admin_can_access('templates');
+        } else {
+            $canPreview = \admin_can_access($slug);
+        }
+        if (!$canPreview) {
             \App\Core\Logger::write('security', 'Отказ в доступе к разделу админки «' . $slug . '»', \admin_get_user_id());
             return \App\Core\ErrorPages::page(403, 'Доступ запрещён', 'У вашей роли нет прав на этот раздел админ-панели.', '/admin/index.html');
         }
