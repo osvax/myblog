@@ -102,7 +102,7 @@
 
   &:focus {
     outline: 0;
-    border-color: $primary;
+    border-color: var(--theme-primary, #ff8c1a);
     background: $white;
     box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-primary, #ff8c1a) 14%, transparent);
   }

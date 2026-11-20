@@ -1,11 +1,18 @@
 <?php
     // Карточка «Информация о проекте» — значения из БД (клиент, год, сроки, стек).
-    $projectInfoRows = [
-        ['label' => 'Клиент', 'icon' => 'bi-person', 'value' => trim((string) ($project['client'] ?? ''))],
-        ['label' => 'Год', 'icon' => 'bi-calendar3', 'value' => trim((string) ($project['year'] ?? $project['project_year'] ?? ''))],
-        ['label' => 'Сроки', 'icon' => 'bi-clock-history', 'value' => trim((string) ($project['duration'] ?? ''))],
-        ['label' => 'Стек', 'icon' => 'bi-tools', 'value' => trim((string) ($project['stack'] ?? ''))],
-    ];
+    // Показ строк — тумблеры (Настройки → Портфолио):
+    // «Показывать клиента» / «Показывать год» / «Показывать технологии» (стек).
+    $projectInfoRows = [];
+    if (!empty($showPortfolioClient)) {
+        $projectInfoRows[] = ['label' => 'Клиент', 'icon' => 'bi-person', 'value' => trim((string) ($project['client'] ?? ''))];
+    }
+    if (!empty($showPortfolioDate)) {
+        $projectInfoRows[] = ['label' => 'Год', 'icon' => 'bi-calendar3', 'value' => trim((string) ($project['year'] ?? $project['project_year'] ?? ''))];
+    }
+    $projectInfoRows[] = ['label' => 'Сроки', 'icon' => 'bi-clock-history', 'value' => trim((string) ($project['duration'] ?? ''))];
+    if (!empty($showPortfolioTags)) {
+        $projectInfoRows[] = ['label' => 'Стек', 'icon' => 'bi-tools', 'value' => trim((string) ($project['stack'] ?? ''))];
+    }
     $projectInfoRows = array_values(array_filter($projectInfoRows, static function ($row) {
         return $row['value'] !== '';
     }));

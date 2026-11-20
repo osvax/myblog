@@ -92,6 +92,9 @@ class PortfolioController extends Controller
             $template = $project['slug'];
         }
 
+        // Тумблеры карточки «Информация о проекте» (Настройки → Портфолио)
+        $projectSettings = new \App\Models\SiteSettings();
+
         return $this->page('frontend', $template, [
             'title' => $project['title'],
             'description' => $project['description'],
@@ -101,9 +104,13 @@ class PortfolioController extends Controller
             'prevProject' => $prev,
             'nextProject' => $next,
             // Сайдбар страницы проекта (Настройки → Портфолио)
-            'projectPageSidebar' => (string) ((new \App\Models\SiteSettings())->get('projectPageSidebar', 'right') ?: 'right'),
+            'projectPageSidebar' => (string) ($projectSettings->get('projectPageSidebar', 'right') ?: 'right'),
             // Доп. поля в карточке «Информация о проекте» (Настройки → Портфолио)
-            'showPortfolioExtraFields' => (bool) (new \App\Models\SiteSettings())->get('portfolioShowExtraFields', true),
+            'showPortfolioExtraFields' => (bool) $projectSettings->get('portfolioShowExtraFields', true),
+            // Строки «Клиент»/«Год»/«Стек» в карточке «Информация о проекте»
+            'showPortfolioClient' => (bool) $projectSettings->get('portfolioShowClient', true),
+            'showPortfolioDate' => (bool) $projectSettings->get('portfolioShowDate', true),
+            'showPortfolioTags' => (bool) $projectSettings->get('portfolioShowTags', true),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -121,6 +128,9 @@ class PortfolioController extends Controller
         $project['screenshots'] = $this->parseScreenshots($project['screenshots_json'] ?? null);
         $project['results'] = $this->parseResults($project['results_json'] ?? null);
 
+        // Тумблеры карточки «Информация о проекте» (Настройки → Портфолио)
+        $projectSettings = new \App\Models\SiteSettings();
+
         return $this->page('frontend', $slug, [
             'title' => $project['title'],
             'description' => $project['description'],
@@ -128,9 +138,13 @@ class PortfolioController extends Controller
             'project' => $project,
             'otherProjects' => [],
             // Сайдбар страницы проекта (Настройки → Портфолио)
-            'projectPageSidebar' => (string) ((new \App\Models\SiteSettings())->get('projectPageSidebar', 'right') ?: 'right'),
+            'projectPageSidebar' => (string) ($projectSettings->get('projectPageSidebar', 'right') ?: 'right'),
             // Доп. поля в карточке «Информация о проекте» (Настройки → Портфолио)
-            'showPortfolioExtraFields' => (bool) (new \App\Models\SiteSettings())->get('portfolioShowExtraFields', true),
+            'showPortfolioExtraFields' => (bool) $projectSettings->get('portfolioShowExtraFields', true),
+            // Строки «Клиент»/«Год»/«Стек» в карточке «Информация о проекте»
+            'showPortfolioClient' => (bool) $projectSettings->get('portfolioShowClient', true),
+            'showPortfolioDate' => (bool) $projectSettings->get('portfolioShowDate', true),
+            'showPortfolioTags' => (bool) $projectSettings->get('portfolioShowTags', true),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

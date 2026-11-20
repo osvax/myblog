@@ -4,19 +4,19 @@
 
 // Order form
 .order-form {
-  border-top: 6px solid $primary;
+  border-top: 6px solid var(--theme-primary, #ff8c1a);
 }
 
 // Form controls focus
 .form-control:focus,
 .form-select:focus {
-  border-color: $primary;
+  border-color: var(--theme-primary, #ff8c1a);
   box-shadow: 0 0 0 0.25rem color-mix(in srgb, var(--theme-primary, #ff8c1a) 25%, transparent);
 }
 
 .form-check-input:checked {
-  background-color: $primary;
-  border-color: $primary;
+  background-color: var(--theme-primary, #ff8c1a);
+  border-color: var(--theme-primary, #ff8c1a);
 }
 
 // Auth forms
@@ -50,7 +50,7 @@
     transition: border-color $transition-base, box-shadow $transition-base;
 
     &:focus {
-      border-color: $primary;
+      border-color: var(--theme-primary, #ff8c1a);
       box-shadow: 0 0 0 0.2rem color-mix(in srgb, var(--theme-primary, #ff8c1a) 25%, transparent);
     }
   }
@@ -72,7 +72,7 @@
   }
 
   a {
-    color: $primary;
+    color: var(--theme-primary, #ff8c1a);
     font-weight: 600;
     text-decoration: none;
 

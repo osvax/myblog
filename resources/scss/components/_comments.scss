@@ -5,7 +5,7 @@
 .comment-item {
   background-color: $orange-light;
   border-radius: $border-radius-lg;
-  border-left: 4px solid $primary;
+  border-left: 4px solid var(--theme-primary, #ff8c1a);
   padding: 1.25rem;
   margin-bottom: 1rem;
 }
@@ -17,7 +17,7 @@
   padding: 1rem;
   background-color: $white;
   border-radius: $border-radius-lg;
-  border-left: 4px solid $primary;
+  border-left: 4px solid var(--theme-primary, #ff8c1a);
 
   @include media-breakpoint-down(sm) {
     margin-left: 1rem;

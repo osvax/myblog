@@ -40,6 +40,6 @@
 
   blockquote {
     padding: 0.5rem 1.25rem;
-    border-left: 4px solid $primary;
+    border-left: 4px solid var(--theme-primary, #ff8c1a);
   }
 }

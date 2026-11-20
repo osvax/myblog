@@ -28,13 +28,13 @@
   object-fit: cover;
   margin: 0 auto 1rem;
   display: block;
-  border: 3px solid $primary;
+  border: 3px solid var(--theme-primary, #ff8c1a);
 }
 
 .avatar-placeholder {
   width: 100%;
   height: 100%;
-  background: $primary;
+  background: var(--theme-primary, #ff8c1a);
   color: $white;
   @include flex-center;
   font-size: 2.5rem;

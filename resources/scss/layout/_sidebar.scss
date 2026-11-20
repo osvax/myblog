@@ -4,7 +4,7 @@
 
 aside {
   .card {
-    border-top: 4px solid $primary;
+    border-top: 4px solid var(--theme-primary, #ff8c1a);
     border-radius: $border-radius-lg;
     box-shadow: 0 0.5rem 1rem rgba(53, 53, 53, 0.08);
 
@@ -27,12 +27,12 @@ aside {
       transition: color $transition-base, padding-left $transition-base;
 
       &:hover {
-        color: $primary;
+        color: var(--theme-primary, #ff8c1a);
         padding-left: 0.5rem;
       }
 
       &.active {
-        color: $primary;
+        color: var(--theme-primary, #ff8c1a);
         font-weight: $font-weight-bold;
       }
     }

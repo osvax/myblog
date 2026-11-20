@@ -53,20 +53,13 @@
 
 // ============================================================
 // «Оформление» (Настройки → Оформление)
-// Переменные темы --theme-* в лейауте подставляются из
-// site_settings; фолбэки ниже — стандартный дизайн сайта.
+// Переменные темы --theme-* подставляются лейаутом из
+// site_settings инлайн-блоком <style> в <head>; фолбэки в
+// var() ниже — стандартный дизайн сайта.
+// ВАЖНО: здесь нельзя объявлять :root { --theme-*: … } —
+// файл стилей идёт ПОСЛЕ инлайн-блока и перетрет значения
+// из базы, и публичная часть перестанет реагировать на тему.
 // ============================================================
-:root {
-  --theme-primary: #ff8c1a;
-  --theme-primary-light: #fff3e6;
-  --theme-bg: #ffffff;
-  --theme-block-bg: #ffffff;
-  --theme-sidebar-bg: #ffffff;
-  --theme-text: #353535;
-  --theme-font-size: 16px;
-  --theme-nav-size: 1rem;
-  --theme-heading-scale: 1;
-}
 
 // Базовый размер текста: масштабирует всё, что задано в rem (текст, меню, отступы)
 html {
@@ -99,6 +92,31 @@ h6, .h6 { font-size: calc(1rem * var(--theme-heading-scale, 1)); }
 // Основной цвет: навбар, кнопки, ссылки, бейджи, иконки
 .bg-orange {
   background-color: var(--theme-primary, $orange) !important;
+}
+
+// Обычные ссылки (без кастомных классов) — основной цвет темы
+a {
+  color: var(--theme-primary, $orange);
+
+  &:hover,
+  &:focus {
+    color: var(--theme-primary, $orange);
+  }
+}
+
+// Пагинация — основной цвет темы
+.pagination .page-link {
+  color: var(--theme-primary, $orange-dark);
+}
+
+.pagination .page-link:hover {
+  color: var(--theme-primary, $orange);
+  border-color: var(--theme-primary, $orange);
+}
+
+.pagination .page-item.active .page-link {
+  background-color: var(--theme-primary, $orange);
+  border-color: var(--theme-primary, $orange);
 }
 
 .bg-orange-light {

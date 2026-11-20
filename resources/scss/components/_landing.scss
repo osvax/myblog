@@ -10,7 +10,7 @@
 
   &:hover {
     transform: translateX(8px);
-    border-color: $primary;
+    border-color: var(--theme-primary, #ff8c1a);
   }
 }
 
@@ -36,7 +36,7 @@
 
   &:hover {
     transform: translateY(-8px);
-    border-color: $primary;
+    border-color: var(--theme-primary, #ff8c1a);
   }
 
   h5 {
@@ -56,7 +56,7 @@
   height: 60px;
   border-radius: $border-radius-round;
   background-color: $white;
-  color: $primary;
+  color: var(--theme-primary, #ff8c1a);
   font-size: 1.6rem;
   font-weight: $font-weight-bold;
   @include flex-center;
@@ -64,7 +64,7 @@
 
 // Hero section
 .hero {
-  background-color: $primary;
+  background-color: var(--theme-primary, #ff8c1a);
 }
 
 .hero-icon {
@@ -91,7 +91,7 @@
 
 // Page header
 .page-header {
-  background-color: $primary;
+  background-color: var(--theme-primary, #ff8c1a);
 }
 
 // Feature items (home page)
