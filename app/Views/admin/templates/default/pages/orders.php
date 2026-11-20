@@ -38,11 +38,22 @@
                 <div class="card-body">
                     <div class="row g-4">
                         <div class="col-lg-8">
-                            <h3 class="h6 fw-bold">Оборот по периодам</h3>
+                            <div class="d-flex flex-wrap align-items-center justify-content-between gap-2 mb-2">
+                                <h3 class="h6 fw-bold mb-0">Оборот по периодам</h3>
+                                <div class="d-flex align-items-center gap-2">
+                                    <div class="btn-group btn-group-sm" role="group" aria-label="Группировка оборота по периодам">
+                                        <button type="button" class="btn btn-outline-secondary orders-gran-btn" data-orders-gran="day">Дни</button>
+                                        <button type="button" class="btn btn-outline-secondary orders-gran-btn" data-orders-gran="week">Недели</button>
+                                        <button type="button" class="btn btn-outline-secondary orders-gran-btn active" data-orders-gran="month">Месяцы</button>
+                                        <button type="button" class="btn btn-outline-secondary orders-gran-btn" data-orders-gran="year">Годы</button>
+                                    </div>
+                                    <button type="button" class="btn btn-outline-secondary btn-sm" id="ordersZoomReset" hidden title="Сбросить зум"><i class="bi bi-fullscreen"></i></button>
+                                </div>
+                            </div>
                             <div class="orders-chart-wrap">
-                                <div id="ordersLineChart" class="orders-chart" role="img" aria-label="Линейный график оборота заказов"></div>
+                                <div id="ordersLineChart" class="orders-chart" role="img" aria-label="График оборота заказов по периодам"></div>
                                 <div class="orders-chart-wheel-hint" aria-hidden="true">
-                                    <i class="bi bi-mouse"></i><span>Колесико мыши — масштаб</span>
+                                    <i class="bi bi-zoom-in"></i><span>Выделите область — зум по периоду</span>
                                 </div>
                             </div>
                         </div>

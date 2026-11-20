@@ -586,6 +586,21 @@ footer {
     height: auto;
 }
 
+.orders-chart-empty {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 240px;
+    padding: 0 1rem;
+    border: 1px dashed #dee2e6;
+    border-radius: .5rem;
+    background: #f8f9fa;
+    color: #6c757d;
+    font-size: .875rem;
+    font-weight: 700;
+    text-align: center;
+}
+
 .orders-chart-wheel-hint {
     position: absolute;
     top: .5rem;
