@@ -45,6 +45,8 @@ $defaults = [
     ['portfolioLead', 'Мои лучшие работы и проекты', 'text', 'headings', 4, 'Портфолио — подзаголовок'],
     ['contactsTitle', 'Контакты', 'text', 'headings', 5, 'Контакты — заголовок'],
     ['contactsLead', 'Буду рад связи и сотрудничеству', 'text', 'headings', 6, 'Контакты — подзаголовок'],
+    ['orderTitle', 'Заказать', 'text', 'headings', 7, 'Заказать — заголовок'],
+    ['orderLead', 'Расскажите о своей задаче — я свяжусь с вами', 'text', 'headings', 8, 'Заказать — подзаголовок'],
 
     // === mail ===
     ['mailOrderSubject', 'Новая заявка с сайта', 'text', 'mail', 1, 'Тема письма заявки'],
@@ -87,27 +89,34 @@ $defaults = [
 
     // === security ===
     ['siteStatus', 'online', 'select', 'security', 1, 'Режим сайта'],
-    ['twoFactorMethod', 'off', 'select', 'security', 2, 'Двухфакторная аутентификация'],
-    ['maintenanceMessage', 'Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!', 'text', 'security', 3, 'Сообщение на время обслуживания'],
-    ['maintenanceAllowedIps', "127.0.0.1\n::1", 'text', 'security', 4, 'IP-адреса с доступом при обслуживании'],
-    ['adminIpAllowlist', '', 'text', 'security', 5, 'Разрешённые IP для входа в админку'],
-    ['securityContactEmail', '', 'email', 'security', 6, 'Email для уведомлений о безопасности'],
-    ['twoFactorPhone', '', 'tel', 'security', 7, 'Телефон для SMS-кодов'],
-    ['maxLoginAttempts', '5', 'number', 'security', 8, 'Попытки входа до блокировки'],
-    ['lockoutMinutes', '15', 'number', 'security', 9, 'Время блокировки (минуты)'],
-    ['adminSessionHours', '8', 'number', 'security', 10, 'Срок сессии админки (часы)'],
-    ['loginCaptcha', '0', 'checkbox', 'security', 11, 'Проверка CAPTCHA при входе'],
-    ['securityLoginAlerts', '1', 'checkbox', 'security', 12, 'Уведомлять о новых входах'],
+    ['maintenanceMessage', 'Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!', 'text', 'security', 2, 'Сообщение на время обслуживания'],
+    ['maintenanceStart', '', 'text', 'security', 3, 'Обслуживание с (от), Y-m-d H:i'],
+    ['maintenanceEnd', '', 'text', 'security', 4, 'Обслуживание до (по), Y-m-d H:i'],
+    ['maintenanceAllowedIps', '', 'text', 'security', 5, 'IP-адреса с доступом при обслуживании'],
+    ['blockedIps', '', 'text', 'security', 6, 'IP-адреса без доступа (блокировка)'],
+    ['maxLoginAttempts', '5', 'number', 'security', 7, 'Попытки входа до блокировки'],
+    ['lockoutMinutes', '15', 'number', 'security', 8, 'Время блокировки (минуты)'],
+    ['adminSessionHours', '8', 'number', 'security', 9, 'Срок сессии админки (часы)'],
+
+    // === logs (журнал событий; таблица logs) ===
+    ['logsEnabled', '1', 'checkbox', 'logs', 1, 'Вести журнал событий'],
+    ['logsAutoClean', '1', 'checkbox', 'logs', 2, 'Автоочистка журнала по сроку хранения'],
+    ['logsRetentionDays', '30', 'number', 'logs', 3, 'Срок хранения записей журнала (дней)'],
+    ['logsAuth', '1', 'checkbox', 'logs', 4, 'Журнал: входы и регистрации'],
+    ['logsForms', '1', 'checkbox', 'logs', 5, 'Журнал: отправка форм'],
+    ['logsSecurity', '1', 'checkbox', 'logs', 6, 'Журнал: блокировки и отказы в доступе'],
+    ['logsErrors', '1', 'checkbox', 'logs', 7, 'Журнал: ошибки сервера 500'],
 
     // === email ===
-    ['smtpHost', '', 'text', 'email', 1, 'SMTP-сервер'],
-    ['smtpPort', '587', 'number', 'email', 2, 'Порт'],
-    ['smtpEncryption', 'tls', 'select', 'email', 3, 'Шифрование'],
-    ['smtpUsername', '', 'text', 'email', 4, 'Имя пользователя'],
-    ['smtpFromName', 'МойБлог', 'text', 'email', 5, 'Имя отправителя'],
-    ['smtpFromEmail', 'no-reply@example.com', 'email', 'email', 6, 'Email отправителя'],
-    ['smtpRecipient', 'admin@example.com', 'email', 'email', 7, 'Email получателя заявок'],
-    ['smtpReplyTo', '', 'email', 'email', 8, 'Ответы направлять на'],
+    ['smtpEnabled', '1', 'checkbox', 'email', 1, 'Отправлять письма через SMTP (иначе PHP mail())'],
+    ['smtpHost', '', 'text', 'email', 2, 'SMTP-сервер'],
+    ['smtpPort', '587', 'number', 'email', 3, 'Порт'],
+    ['smtpEncryption', 'tls', 'select', 'email', 4, 'Шифрование'],
+    ['smtpUsername', '', 'text', 'email', 5, 'Имя пользователя'],
+    ['smtpFromName', 'МойБлог', 'text', 'email', 6, 'Имя отправителя'],
+    ['smtpFromEmail', 'no-reply@example.com', 'email', 'email', 7, 'Email отправителя'],
+    ['smtpRecipient', 'admin@example.com', 'email', 'email', 8, 'Email получателя заявок'],
+    ['smtpReplyTo', '', 'email', 'email', 9, 'Ответы направлять на'],
 
     // === articles ===
     ['articlePerPage', '12', 'number', 'articles', 1, 'Статей на странице'],
@@ -115,23 +124,18 @@ $defaults = [
     ['articleExcerptLength', '300', 'number', 'articles', 3, 'Длина анонса (символов)'],
     ['articleCommentsEnabled', '1', 'checkbox', 'articles', 4, 'Разрешить комментарии'],
     ['commentsAccess', 'users', 'select', 'articles', 5, 'Кто видит комментарии'],
-    ['articleFeaturedEnabled', '1', 'checkbox', 'articles', 6, 'Показывать избранные статьи'],
-    ['articleTagsEnabled', '1', 'checkbox', 'articles', 7, 'Показывать теги'],
-    ['articleCategoriesEnabled', '1', 'checkbox', 'articles', 8, 'Показывать рубрики'],
-    ['articleReadTime', '1', 'checkbox', 'articles', 9, 'Показывать время чтения'],
-    ['articleRelatedEnabled', '1', 'checkbox', 'articles', 10, 'Показывать похожие статьи'],
-    ['articleShareButtons', '1', 'checkbox', 'articles', 11, 'Кнопки «Поделиться»'],
+    ['articleTagsEnabled', '1', 'checkbox', 'articles', 6, 'Показывать теги'],
+    ['articleCategoriesEnabled', '1', 'checkbox', 'articles', 7, 'Показывать рубрики'],
+    ['articleReadTime', '1', 'checkbox', 'articles', 8, 'Показывать время чтения'],
+    ['articleRelatedEnabled', '1', 'checkbox', 'articles', 9, 'Показывать похожие статьи'],
+    ['articleShareButtons', '1', 'checkbox', 'articles', 10, 'Кнопки «Поделиться»'],
 
     // === portfolio ===
     ['portfolioPerPage', '12', 'number', 'portfolio', 1, 'Работ на странице'],
     ['portfolioLayout', 'grid', 'select', 'portfolio', 2, 'Тип отображения'],
-    ['portfolioShowTags', '1', 'checkbox', 'portfolio', 3, 'Показывать теги'],
-    ['portfolioShowCategories', '1', 'checkbox', 'portfolio', 4, 'Показывать рубрики'],
-    ['portfolioShowViews', '1', 'checkbox', 'portfolio', 5, 'Показывать счётчик просмотров'],
-    ['portfolioShowDate', '1', 'checkbox', 'portfolio', 6, 'Показывать дату'],
-    ['portfolioFeaturedEnabled', '1', 'checkbox', 'portfolio', 7, 'Показывать избранные работы'],
-    ['portfolioShowClient', '1', 'checkbox', 'portfolio', 8, 'Показывать клиента'],
-    ['portfolioShowLink', '1', 'checkbox', 'portfolio', 9, 'Показывать ссылку на проект'],
+    ['portfolioShowTags', '1', 'checkbox', 'portfolio', 3, 'Показывать технологии'],
+    ['portfolioShowDate', '1', 'checkbox', 'portfolio', 4, 'Показывать год'],
+    ['portfolioShowClient', '1', 'checkbox', 'portfolio', 5, 'Показывать клиента'],
 ];
 
 // Ключи, которые добавляются только при отсутствии в БД (INSERT IGNORE):
@@ -153,7 +157,7 @@ $defaultsIgnore = [
     ['statisticsUpdateInterval', '900', 'number', 'statistics', 4, 'Интервал обновления статистики (секунды), дашборд'],
 
     // === email (секреты — только пустой дефолт, значение пользователь вводит сам) ===
-    ['smtpPassword', '', 'text', 'email', 5, 'Пароль приложения'],
+    ['smtpPassword', '', 'text', 'email', 10, 'Пароль приложения'],
 ];
 
 $stmt = $db->prepare(

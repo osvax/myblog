@@ -145,3 +145,45 @@ function admin_json_response($status, $payload)
     echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
     exit;
 }
+
+/**
+ * Проверить IP по списку: точные адреса (IPv4/IPv6) и IPv4-подсети в CIDR.
+ * Список — текст, по одному IP/CIDR на строку (или через запятую).
+ *
+ * @param string $ip   Проверяемый IP
+ * @param string $list Список IP/CIDR
+ */
+function ip_in_list(string $ip, string $list): bool
+{
+    $ip = trim($ip);
+    if ($ip === '' || !filter_var($ip, FILTER_VALIDATE_IP)) {
+        return false;
+    }
+
+    $entries = preg_split('/[\s,;]+/u', $list) ?: [];
+    foreach ($entries as $entry) {
+        $entry = trim((string) $entry);
+        if ($entry === '') {
+            continue;
+        }
+
+        // Точное совпадение (IPv4 и IPv6)
+        if (filter_var($entry, FILTER_VALIDATE_IP) && strtolower($entry) === strtolower($ip)) {
+            return true;
+        }
+
+        // IPv4-подсеть: 192.168.1.0/24
+        if (strpos($entry, '/') !== false && filter_var($ip, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+            [$subnet, $bits] = explode('/', $entry, 2);
+            $bits = (int) $bits;
+            if ($bits >= 0 && $bits <= 32 && filter_var($subnet, FILTER_VALIDATE_IP, FILTER_FLAG_IPV4)) {
+                $mask = $bits === 0 ? 0 : (~0) << (32 - $bits);
+                if ((ip2long($ip) & $mask) === (ip2long($subnet) & $mask)) {
+                    return true;
+                }
+            }
+        }
+    }
+
+    return false;
+}

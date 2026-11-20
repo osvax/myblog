@@ -74,7 +74,7 @@ class BlogController extends Controller
         $slug = isset($parameters['slug']) ? (string) $parameters['slug'] : '';
         $category = $content->categoryBySlug($slug);
         if (!$category) {
-            return new Response('Рубрика не найдена', 404);
+            return \App\Core\ErrorPages::page(404, 'Рубрика не найдена', 'Такой рубрики нет или она была переименована.', '/blog.html');
         }
 
         $settings = (new \App\Models\SiteSettings())->all();
@@ -136,7 +136,7 @@ class BlogController extends Controller
         $content = new ContentRepository();
         $article = $content->articleBySlug($slug);
         if (!$article) {
-            return new Response('Статья не найдена', 404);
+            return \App\Core\ErrorPages::page(404, 'Статья не найдена', 'Такой статьи нет или она была удалена.', '/blog.html');
         }
 
         $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';

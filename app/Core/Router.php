@@ -85,12 +85,36 @@ class Router
                 }
             }
             if ($allowed) {
-                return new Response('Method not allowed', 405, ['Allow' => implode(', ', $allowed)]);
+                return $this->methodNotAllowed($request->path());
             }
-            return new Response('Not found', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
+            return $this->notFound($request->path());
         }
 
-        return new Response('Not found', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
+        return $this->notFound($request->path());
+    }
+
+    /**
+     * 404: JSON для API, красивая страница для HTML-маршрутов.
+     */
+    private function notFound(string $path): Response
+    {
+        if (strpos($path, '/api/') === 0) {
+            return Response::json(['success' => false, 'error' => 'Не найдено'], 404);
+        }
+        $home = strpos($path, '/admin') === 0 ? '/admin/index.html' : '/';
+        return ErrorPages::page(404, 'Страница не найдена', 'Такой страницы нет или она была перемещена.', $home);
+    }
+
+    /**
+     * 405: JSON для API, красивая страница для HTML-маршрутов.
+     */
+    private function methodNotAllowed(string $path): Response
+    {
+        if (strpos($path, '/api/') === 0) {
+            return new Response('Method not allowed', 405, ['Allow' => 'GET, POST, PUT, DELETE', 'Content-Type' => 'application/json; charset=utf-8']);
+        }
+        $home = strpos($path, '/admin') === 0 ? '/admin/index.html' : '/';
+        return ErrorPages::page(403, 'Метод не поддерживается', 'Эта страница не отвечает на такой способ запроса. Вернитесь на главную.', $home);
     }
 
     private function invoke(callable $handler, Request $request, array $parameters)
@@ -108,7 +132,12 @@ class Router
             return new Response('', 204);
         } catch (\Throwable $error) {
             error_log('MVC request failed: ' . $error->getMessage() . ' in ' . $error->getFile() . ':' . $error->getLine() . "\n" . $error->getTraceAsString());
-            return Response::json(['success' => false, 'error' => 'Внутренняя ошибка сервера.'], 500);
+            \App\Core\Logger::write('errors', 'Ошибка 500: ' . $error->getMessage() . ' (' . $request->path() . ')');
+            if (strpos($request->path(), '/api/') === 0) {
+                return Response::json(['success' => false, 'error' => 'Внутренняя ошибка сервера.'], 500);
+            }
+            $home = strpos($request->path(), '/admin') === 0 ? '/admin/index.html' : '/';
+            return ErrorPages::page(500, 'Внутренняя ошибка сервера', 'Что-то пошло не так. Попробуйте обновить страницу через минуту.', $home);
         }
     }
 }

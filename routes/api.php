@@ -132,6 +132,8 @@ return function (Router $router) {
     $router->post('/api/admin/settings/fields', [$siteSettings, 'addField']);
     $router->delete('/api/admin/settings/fields/{key}', [$siteSettings, 'deleteField']);
     $router->post('/api/admin/settings/test-email', [$siteSettings, 'testEmail']);
+    $router->get('/api/admin/settings/logs', [$siteSettings, 'logs']);
+    $router->post('/api/admin/settings/logs/clear', [$siteSettings, 'clearLogs']);
 
     // ---------- Дополнительные настройки лендинга ----------
     $router->get('/api/admin/landing-page', [$landingPage, 'index']);

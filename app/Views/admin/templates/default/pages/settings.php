@@ -15,9 +15,6 @@
                             <button class="nav-link" id="headings-tab" data-bs-toggle="tab" data-bs-target="#headings-pane" type="button" role="tab" aria-controls="headings-pane" aria-selected="false" title="Заголовки"><i class="bi bi-type-h1"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
-                            <button class="nav-link" id="seo-tab" data-bs-toggle="tab" data-bs-target="#seo-pane" type="button" role="tab" aria-controls="seo-pane" aria-selected="false" title="SEO"><i class="bi bi-search"></i></button>
-                        </li>
-                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="notifications-tab" data-bs-toggle="tab" data-bs-target="#notifications-pane" type="button" role="tab" aria-controls="notifications-pane" aria-selected="false" title="Уведомления"><i class="bi bi-bell"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
@@ -28,6 +25,9 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security-pane" type="button" role="tab" aria-controls="security-pane" aria-selected="false" title="Безопасность"><i class="bi bi-shield-lock"></i></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs-pane" type="button" role="tab" aria-controls="logs-pane" aria-selected="false" title="Логи"><i class="bi bi-clock-history"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="email-tab" data-bs-toggle="tab" data-bs-target="#email-pane" type="button" role="tab" aria-controls="email-pane" aria-selected="false" title="Email"><i class="bi bi-envelope-at"></i></button>
@@ -68,6 +68,26 @@
                                         <option selected>Русский</option>
                                         <option>English</option>
                                     </select>
+                                </div>
+                            </div>
+
+                            <h3 class="h5 fw-bold mt-5 mb-3">SEO</h3>
+                            <div class="row g-3">
+                                <div class="col-12">
+                                    <label for="keywords" class="form-label fw-bold">Ключевые слова (через запятую)</label>
+                                    <input type="text" id="keywords" class="form-control" value="блог, портфолио, верстка, bootstrap, html, css, javascript">
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-3">
+                                        <input class="form-check-input" type="checkbox" checked id="sitemap">
+                                        <label class="form-check-label fw-bold" for="sitemap">Генерировать sitemap.xml</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-3">
+                                        <input class="form-check-input" type="checkbox" checked id="robots">
+                                        <label class="form-check-label fw-bold" for="robots">Разрешить индексацию</label>
+                                    </div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
@@ -167,6 +187,14 @@
                                     <label for="contactsLead" class="form-label fw-bold">Контакты — подзаголовок</label>
                                     <input type="text" id="contactsLead" class="form-control" value="Буду рад связи и сотрудничеству" maxlength="200">
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="orderTitle" class="form-label fw-bold">Заказать — заголовок</label>
+                                    <input type="text" id="orderTitle" class="form-control" value="Заказать" maxlength="120">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="orderLead" class="form-label fw-bold">Заказать — подзаголовок</label>
+                                    <input type="text" id="orderLead" class="form-control" value="Расскажите о своей задаче — я свяжусь с вами" maxlength="200">
+                                </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
@@ -230,29 +258,6 @@ Email: {email}
                             </div>
 
                             <button type="submit" class="btn btn-orange fw-bold"><i class="bi bi-save"></i> Сохранить</button>
-                        </section>
-
-                        <section class="tab-pane fade" id="seo-pane" role="tabpanel" aria-labelledby="seo-tab" tabindex="0">
-                            <h3 class="h5 fw-bold mb-4">SEO настройки</h3>
-                            <div class="row g-3">
-                                <div class="col-12">
-                                    <label for="keywords" class="form-label fw-bold">Ключевые слова (через запятую)</label>
-                                    <input type="text" id="keywords" class="form-control" value="блог, портфолио, верстка, bootstrap, html, css, javascript">
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="sitemap">
-                                        <label class="form-check-label fw-bold" for="sitemap">Генерировать sitemap.xml</label>
-                                    </div>
-                                </div>
-                                <div class="col-md-6">
-                                    <div class="form-check form-switch mt-3">
-                                        <input class="form-check-input" type="checkbox" checked id="robots">
-                                        <label class="form-check-label fw-bold" for="robots">Разрешить индексацию</label>
-                                    </div>
-                                </div>
-                            </div>
-                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
 
                         <section class="tab-pane fade" id="notifications-pane" role="tabpanel" aria-labelledby="notifications-tab" tabindex="0">
@@ -384,10 +389,25 @@ Email: {email}
                                     <label for="maintenanceMessage" class="form-label fw-bold">Сообщение на время обслуживания</label>
                                     <textarea id="maintenanceMessage" class="form-control" rows="2" maxlength="300">Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!</textarea>
                                 </div>
+                                <div class="col-md-6">
+                                    <label for="maintenanceStart" class="form-label fw-bold">Обслуживание с (от)</label>
+                                    <input type="datetime-local" id="maintenanceStart" class="form-control">
+                                    <div class="small text-muted mt-1">Если указаны обе границы — сайт закрывается автоматически в это время.</div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="maintenanceEnd" class="form-label fw-bold">Обслуживание до (по)</label>
+                                    <input type="datetime-local" id="maintenanceEnd" class="form-control">
+                                    <div class="small text-muted mt-1">После этого времени сайт откроется автоматически; на заглушке будет идти обратный отсчёт.</div>
+                                </div>
                                 <div class="col-12">
                                     <label for="maintenanceAllowedIps" class="form-label fw-bold">IP-адреса с доступом при обслуживании</label>
                                     <textarea id="maintenanceAllowedIps" class="form-control font-monospace" rows="2" placeholder="127.0.0.1&#10;::1"></textarea>
-                                    <div class="small text-muted mt-1">По одному IP на строку (или через запятую). Эти посетители видят обычный сайт в режиме обслуживания.</div>
+                                    <div class="small text-muted mt-1">По одному IP на строку (или через запятую). Эти посетители видят обычный сайт в режиме обслуживания. Оставьте пустым, чтобы закрыть сайт для всех.</div>
+                                </div>
+                                <div class="col-12">
+                                    <label for="blockedIps" class="form-label fw-bold">IP-адреса без доступа (блокировка)</label>
+                                    <textarea id="blockedIps" class="form-control font-monospace" rows="2" placeholder="203.0.113.10&#10;198.51.100.0/24"></textarea>
+                                    <div class="small text-muted mt-1">По одному IP или подсети (CIDR) на строку. Посетители из списка видят страницу 403.</div>
                                 </div>
                                 <div class="col-md-6">
                                     <label for="maxLoginAttempts" class="form-label fw-bold">Попытки входа до блокировки</label>
@@ -409,9 +429,89 @@ Email: {email}
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
 
+                        <section class="tab-pane fade" id="logs-pane" role="tabpanel" aria-labelledby="logs-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-4">Система логирования</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" checked id="logsEnabled">
+                                        <label class="form-check-label fw-bold" for="logsEnabled">Вести журнал событий</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" checked id="logsAutoClean">
+                                        <label class="form-check-label fw-bold" for="logsAutoClean">Автоматическая очистка по сроку хранения</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="logsRetentionDays" class="form-label fw-bold">Срок хранения записей (дней)</label>
+                                    <input type="number" id="logsRetentionDays" class="form-control" min="1" max="3650" value="30">
+                                </div>
+                            </div>
+
+                            <h4 class="h6 fw-bold mt-4 mb-3">Что записывать в журнал</h4>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" checked id="logsAuth">
+                                        <label class="form-check-label fw-bold" for="logsAuth">Входы и регистрации (auth)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" checked id="logsForms">
+                                        <label class="form-check-label fw-bold" for="logsForms">Отправка форм (заявки, сообщения, комментарии)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" checked id="logsSecurity">
+                                        <label class="form-check-label fw-bold" for="logsSecurity">Блокировки и отказы в доступе (security)</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-2">
+                                        <input class="form-check-input" type="checkbox" checked id="logsErrors">
+                                        <label class="form-check-label fw-bold" for="logsErrors">Ошибки сервера 500 (errors)</label>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+
+                            <h4 class="h6 fw-bold mt-5 mb-3">Последние записи журнала <span class="text-muted fw-normal" id="logsTotal"></span></h4>
+                            <div class="table-responsive">
+                                <table class="table table-sm align-middle" id="logsTable">
+                                    <thead class="table-light">
+                                        <tr>
+                                            <th>Время</th>
+                                            <th>Тип</th>
+                                            <th>Событие</th>
+                                            <th>Пользователь</th>
+                                            <th>IP</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td colspan="5" class="text-center text-muted">Загрузка журнала…</td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                            <button type="button" class="btn btn-outline-danger mt-3" id="clearLogsBtn"><i class="bi bi-trash"></i> Очистить журнал</button>
+                        </section>
+
                         <section class="tab-pane fade" id="email-pane" role="tabpanel" aria-labelledby="email-tab" tabindex="0">
                             <h3 class="h5 fw-bold mb-4">Параметры отправки почты (SMTP)</h3>
                             <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch mt-3">
+                                        <input class="form-check-input" type="checkbox" checked id="smtpEnabled">
+                                        <label class="form-check-label fw-bold" for="smtpEnabled">Отправлять письма через SMTP (снят тумблер — обычная PHP-отправка mail())</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6 d-flex align-items-end">
+                                    <button type="button" class="btn btn-orange fw-bold" id="testEmailBtn"><i class="bi bi-send"></i> Тест отправки</button>
+                                    <span class="ms-2 small text-muted" id="testEmailStatus"></span>
+                                </div>
                                 <div class="col-md-6">
                                     <label for="smtpHost" class="form-label fw-bold">SMTP-сервер</label>
                                     <input type="text" id="smtpHost" class="form-control" placeholder="smtp.example.com">

@@ -311,8 +311,14 @@ class FormController extends Controller
             $body = $defaults[$formType]['body'];
         }
 
-        // Подставляем значения, неизвестные метки вырезаем
-        $rendered = strtr($subject . "\n" . $body, $placeholders);
+        // Подставляем значения в метки вида {name}, неизвестные метки вырезаем.
+        // Ключи strtr должны совпадать с шаблоном целиком (с фигурными скобками),
+        // иначе внутри скобок останутся подставленные значения: {Тест}.
+        $bracedMap = [];
+        foreach ($placeholders as $key => $value) {
+            $bracedMap['{' . $key . '}'] = (string) $value;
+        }
+        $rendered = strtr($subject . "\n" . $body, $bracedMap);
         $rendered = preg_replace('/\{[a-z_]+\}/i', '', $rendered) ?? '';
         [$subject, $body] = explode("\n", $rendered, 2);
         $subject = trim($subject);
@@ -321,6 +327,9 @@ class FormController extends Controller
         // Ключи флагов «Уведомления» для каждой формы
         $notifyKeys = ['order' => 'notifyOrders', 'feedback' => 'notifyMessages', 'comment' => 'notifyComments'];
         $this->sendMail($subject, $body, $email, $name, $notifyKeys[$formType] ?? '');
+
+        $formLabels = ['order' => 'Заявка', 'feedback' => 'Сообщение', 'comment' => 'Комментарий'];
+        \App\Core\Logger::write('forms', ($formLabels[$formType] ?? $formType) . ' от ' . $name . ' (' . $email . ')');
     }
 
     private function sendMail($subject, $body, $email, $name, string $notifyKey = '')

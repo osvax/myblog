@@ -52,15 +52,41 @@ return function (Router $router) {
     $router->get('/robots.txt', [$seo, 'robots']);
     $router->get('/sitemap.xml', [$seo, 'sitemap']);
 
-    // Заглушка режима обслуживания (в общем дизайне сайта)
+    // Заглушка режима обслуживания (в общем дизайне сайта).
+    // Если сайт уже открыт (режим снят или время «до» вышло) — редирект на главную.
     $router->get('/maintenance.html', function ($request) {
+        $settings = new \App\Models\SiteSettings();
+        // Пустое значение (могло остаться из формы) трактуем как online
+        $status = (string) $settings->get('siteStatus', 'online');
+        $status = ($status === 'maintenance') ? 'maintenance' : 'online';
+        $maintEnd = trim((string) $settings->get('maintenanceEnd', ''));
+        $maintStart = trim((string) $settings->get('maintenanceStart', ''));
+        $endTs = $maintEnd !== '' ? (int) strtotime(str_replace('T', ' ', $maintEnd)) : 0;
+        $startTs = $maintStart !== '' ? (int) strtotime(str_replace('T', ' ', $maintStart)) : 0;
+
+        // Авто-закрытие по интервалу: статус online, но сейчас внутри окна «от — до»
+        $inWindow = $status === 'online' && $startTs > 0 && $endTs > $startTs
+            && time() >= $startTs && time() < $endTs;
+
+        // Сайт закрыт, если: режим maintenance и (время «до» не задано или ещё не вышло),
+        // либо сейчас внутри окна «от — до»
+        $isClosed = $inWindow
+            || ($status === 'maintenance' && ($endTs === 0 || time() < $endTs));
+
+        if (!$isClosed) {
+            // Сайт открыт — заглушка не нужна
+            return \App\Core\Response::redirect('/', 302);
+        }
+
         $user = current_user();
-        $message = trim((string) (new \App\Models\SiteSettings())->get('maintenanceMessage', ''));
+        $message = trim((string) $settings->get('maintenanceMessage', ''));
         return \App\Core\View::renderPage('frontend', 'maintenance', [
             'title' => 'Сайт на обслуживании',
             'description' => 'Ведутся технические работы.',
             'activePage' => '',
             'maintenanceMessage' => $message !== '' ? $message : 'Сайт временно закрыт на техническое обслуживание. Скоро вернёмся!',
+            // Метка времени конца обслуживания (Unix) для обратного отсчёта на заглушке
+            'maintenanceEndTs' => $endTs > 0 ? $endTs : null,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

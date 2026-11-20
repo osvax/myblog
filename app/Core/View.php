@@ -48,7 +48,12 @@ class View
         $data['content'] = self::capture($base . '/pages/' . $page, $data);
         // Заголовок вкладки: страница передаёт свою часть, лейаут прибивает siteTitle
         $data['title'] = $data['title'] ?? ($area === 'admin' ? 'Администрирование' : (trim((string) ($data['siteTitle'] ?? '')) !== '' ? $data['siteTitle'] : 'МойБлог'));
-        $data['description'] = $data['description'] ?? (trim((string) ($data['siteDescription'] ?? '')) !== '' ? $data['siteDescription'] : 'Личный блог о веб-разработке и дизайне.');
+        // Meta description: в первую очередь «Описание сайта (SEO description)» из настроек,
+        // description страницы — только запасной вариант при пустой настройке
+        $siteDescription = trim((string) ($data['siteDescription'] ?? ''));
+        $data['description'] = $siteDescription !== ''
+            ? $siteDescription
+            : ($data['description'] ?? 'Личный блог о веб-разработке и дизайне.');
         return self::render($base . '/layout', $data);
     }
 

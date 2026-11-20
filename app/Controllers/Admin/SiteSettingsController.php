@@ -124,4 +124,32 @@ class SiteSettingsController extends Controller
         $result = \App\Core\Mailer::testConnection();
         return $this->json($result);
     }
+
+    /**
+     * Последние записи журнала событий (вкладка «Логи»).
+     */
+    public function logs($request)
+    {
+        if ($request->method() !== 'GET') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        $result = \App\Core\Logger::recent(50);
+        return $this->json(['success' => true] + $result);
+    }
+
+    /**
+     * Очистить журнал событий.
+     */
+    public function clearLogs($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        \admin_require_csrf();
+
+        $deleted = \App\Core\Logger::clear();
+        return $this->json(['success' => true, 'deleted' => $deleted]);
+    }
 }

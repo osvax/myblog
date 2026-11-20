@@ -23,7 +23,7 @@ class HomeController extends Controller
                 // Defense in depth: санитизируем и при выводе
                 return Sanitizer::clean($page['html_content']);
             }
-            return new \App\Core\Response('Главная страница не найдена', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
+            return \App\Core\ErrorPages::page(404, 'Главная страница не найдена', 'Статическая главная страница не активна.', '/');
         }
 
         $content = new ContentRepository();

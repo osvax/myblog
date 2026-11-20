@@ -138,6 +138,7 @@ class AuthController extends Controller
 
         $result = (new User())->verifyCredentials($email, $password);
         if (!$result['valid']) {
+            \App\Core\Logger::write('auth', 'Неудачная попытка входа: ' . $email);
             return $this->json(['success' => false, 'error' => $result['error']], 401);
         }
 
@@ -214,6 +215,8 @@ class AuthController extends Controller
         $_SESSION['user_name'] = $user['name'];
         $_SESSION['user_role'] = $user['role'];
         $_SESSION['user_authenticated_at'] = time();
+
+        \App\Core\Logger::write('auth', 'Вход: ' . $user['name'] . ' (' . $user['email'] . ')', (int) $user['id']);
 
         return $this->json(['success' => true]);
     }
@@ -358,6 +361,8 @@ class AuthController extends Controller
             }
         }
 
+        \App\Core\Logger::write('auth', 'Регистрация: ' . $name . ' (' . $email . ')');
+
         return $this->json(['success' => true]);
     }
 
@@ -467,6 +472,9 @@ class AuthController extends Controller
 
         \user_start_session();
 
+        // Запоминаем, кто выходит (до очистки сессии)
+        \App\Core\Logger::write('auth', 'Выход: ' . ($_SESSION['user_name'] ?? '?') . ' (' . ($_SESSION['user_email'] ?? '?') . ')', (int) ($_SESSION['user_id'] ?? 0));
+
         $_SESSION = [];
 
         if (ini_get('session.use_cookies')) {
@@ -497,6 +505,9 @@ class AuthController extends Controller
         }
 
         \user_start_session();
+
+        // Запоминаем, кто выходит (до очистки сессии)
+        \App\Core\Logger::write('auth', 'Выход: ' . ($_SESSION['user_name'] ?? '?') . ' (' . ($_SESSION['user_email'] ?? '?') . ')', (int) ($_SESSION['user_id'] ?? 0));
 
         $_SESSION = [];
 

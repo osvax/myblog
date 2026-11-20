@@ -13,7 +13,7 @@ class PageController extends Controller
         $configPath = APP_ROOT . '/config/admin-pages.php';
         $pages = is_file($configPath) ? require $configPath : [];
         if (!isset($pages[$slug])) {
-            return new Response('Not found', 404, ['Content-Type' => 'text/plain; charset=utf-8']);
+            return \App\Core\ErrorPages::page(404, 'Страница не найдена', 'Такой страницы админ-панели нет или она была перемещена.', '/admin/index.html');
         }
 
         if (!empty($pages[$slug]['standalone'])) {
@@ -28,7 +28,8 @@ class PageController extends Controller
 
         // Проверка прав доступа
         if (!\admin_can_access($slug)) {
-            return new Response('Доступ запрещён', 403, ['Content-Type' => 'text/plain; charset=utf-8']);
+            \App\Core\Logger::write('security', 'Отказ в доступе к разделу админки «' . $slug . '»', \admin_get_user_id());
+            return \App\Core\ErrorPages::page(403, 'Доступ запрещён', 'У вашей роли нет прав на этот раздел админ-панели.', '/admin/index.html');
         }
 
         if (!empty($pages[$slug]['standalone'])) {

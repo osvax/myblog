@@ -4,7 +4,7 @@
 <script>window.CalculatorData = <?= json_encode(is_array($calculatorConfig ?? null) ? $calculatorConfig : [], JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP); ?>;</script>
 
     <!-- ================= ЗАГОЛОВОК СТРАНИЦЫ ================= -->
-    <?php $heading = 'Заказать'; $headingLead = 'Расскажите о своей задаче — я свяжусь с вами'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
+    <?php $heading = $orderHeading ?? 'Заказать'; $headingLead = $orderHeadingLead ?? 'Расскажите о своей задаче — я свяжусь с вами'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
 
     <form action="/api/forms/order" method="POST" enctype="multipart/form-data" class="order-form">
     <!-- ================= КАЛЬКУЛЯТОР СТОИМОСТИ ================= -->
