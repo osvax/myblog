@@ -5,7 +5,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= htmlspecialchars($title ?? 'Администрирование', ENT_QUOTES, 'UTF-8') ?></title>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-    
+
+    <?php
+    // «Оформление» (Настройки → Оформление): общий с сайтом шрифт
+    // и основной цвет (тёмная схема админки сохраняется)
+    $adminFontFamily = trim((string) ($themeFontFamily ?? ''));
+    $adminFontUrl = trim((string) ($themeFontUrl ?? ''));
+    $adminFontFile = trim((string) ($themeFontFile ?? ''));
+    $adminUrlSafe = preg_match('#^https?://#i', $adminFontUrl) === 1;
+    $adminFileSafe = $adminFontFamily !== ''
+        && preg_match('#^uploads/fonts/[A-Za-z0-9._-]+\.(woff|woff2|ttf|otf)$#i', $adminFontFile) === 1
+        && is_file(APP_ROOT . '/public/' . $adminFontFile);
+    $adminFontCssName = str_replace(['"', '\\', ';', '{', '}'], '', $adminFontFamily);
+    ?>
+    <?php if ($adminUrlSafe): ?>
+    <link rel="stylesheet" href="<?= htmlspecialchars($adminFontUrl, ENT_QUOTES, 'UTF-8') ?>">
+    <?php endif; ?>
+    <?php if ($adminFileSafe): ?>
+    <style id="admin-theme-font">
+        @font-face {
+            font-family: '<?= htmlspecialchars($adminFontCssName, ENT_QUOTES, 'UTF-8') ?>';
+            src: url('/<?= htmlspecialchars($adminFontFile, ENT_QUOTES, 'UTF-8') ?>') format('<?= strtolower(pathinfo($adminFontFile, PATHINFO_EXTENSION)) ?>');
+            font-display: swap;
+        }
+    </style>
+    <?php endif; ?>
+    <style id="admin-theme-vars">
+        :root {
+            --theme-primary: <?= $themePrimary ?? '#ff8c1a' ?>;
+            --theme-primary-light: <?= $themePrimaryLight ?? '#fff3e6' ?>;
+            --theme-bg: <?= $themeBackground ?? '#ffffff' ?>;
+            --theme-block-bg: <?= $themeBlockBg ?? '#ffffff' ?>;
+            --theme-sidebar-bg: <?= $themeSidebarBg ?? '#ffffff' ?>;
+            --theme-text: <?= $themeText ?? '#353535' ?>;
+        }
+        <?php if ($adminFontFamily !== ''): ?>
+        body, button, input, select, textarea {
+            font-family: '<?= htmlspecialchars($adminFontCssName, ENT_QUOTES, 'UTF-8') ?>', 'Montserrat', 'Segoe UI', Arial, sans-serif !important;
+        }
+        <?php endif; ?>
+    </style>
+
     <?php if (!empty($viteManifest['resources/js/admin.js'])): ?>
         <?php // Vite CSS админки: порт admin.css + тема сайта (bootstrap и иконки уже в бандле) ?>
         <?php foreach (vite_css('resources/js/admin.js') as $css): ?>

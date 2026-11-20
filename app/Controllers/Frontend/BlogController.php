@@ -47,6 +47,15 @@ class BlogController extends Controller
             $categoriesMap[$cat['id']] = $cat['name'];
         }
 
+        // Сайдбар страницы списка (Настройки → Статьи): свежие записи, до 5
+        $latestForSidebar = [];
+        foreach ($all as $latest) {
+            $latestForSidebar[] = ['slug' => $latest['slug'], 'title' => $latest['title']];
+            if (count($latestForSidebar) >= 5) {
+                break;
+            }
+        }
+
         return $this->page('frontend', 'blog', [
             'title' => 'Блог',
             'description' => 'Статьи о веб-разработке, дизайне и инструментах.',
@@ -59,6 +68,10 @@ class BlogController extends Controller
             'blogHeadingLead' => (string) ($settings['blogLead'] ?? '') ?: 'Последние записи и полезные материалы',
             'articleExcerptLength' => max(50, min(2000, (int) ($settings['articleExcerptLength'] ?? 300) ?: 300)),
             'showArticleCategories' => (bool) ($settings['articleCategoriesEnabled'] ?? true),
+            'articlesPerRow' => (int) ($settings['articlesPerRow'] ?? 3),
+            'blogSidebar' => (string) ($settings['blogSidebar'] ?? 'none'),
+            'sidebarCategories' => $categories,
+            'latestArticles' => $latestForSidebar,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -112,6 +125,15 @@ class BlogController extends Controller
             $categoriesMap[$cat['id']] = $cat['name'];
         }
 
+        // Сайдбар страницы рубрики (Настройки → Статьи): свежие записи, до 5
+        $latestForSidebar = [];
+        foreach ($all as $latest) {
+            $latestForSidebar[] = ['slug' => $latest['slug'], 'title' => $latest['title']];
+            if (count($latestForSidebar) >= 5) {
+                break;
+            }
+        }
+
         return $this->page('frontend', 'blog', [
             'title' => 'Рубрика «' . $category['name'] . '»',
             'description' => 'Статьи рубрики «' . $category['name'] . '».',
@@ -125,6 +147,10 @@ class BlogController extends Controller
             'pageScripts' => ['/js/blog-search.js'],
             'articleExcerptLength' => max(50, min(2000, (int) ($settings['articleExcerptLength'] ?? 300) ?: 300)),
             'showArticleCategories' => (bool) ($settings['articleCategoriesEnabled'] ?? true),
+            'articlesPerRow' => (int) ($settings['articlesPerRow'] ?? 3),
+            'blogSidebar' => (string) ($settings['blogSidebar'] ?? 'none'),
+            'sidebarCategories' => $categories,
+            'latestArticles' => $latestForSidebar,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -194,6 +220,7 @@ class BlogController extends Controller
         $showArticleReadTime = (bool) $commentsSettings->get('articleReadTime', true);
         $showRelatedArticles = (bool) $commentsSettings->get('articleRelatedEnabled', true);
         $showShareButtons = (bool) $commentsSettings->get('articleShareButtons', true);
+        $articlePageSidebar = (string) ($commentsSettings->get('articlePageSidebar', 'right') ?: 'right');
 
         // Похожие статьи: те же рубрики, до 3, текущую пропускаем
         $relatedArticles = [];
@@ -233,6 +260,7 @@ class BlogController extends Controller
             'commentsVisible' => $commentsVisible,
             'commentsEnabled' => $commentsEnabled,
             'sidebarCategories' => $sidebarCategories,
+            'articlePageSidebar' => $articlePageSidebar,
             // Форма комментария отправляется через AJAX forms.js с тостом,
             // иначе браузер уходит на JSON-ответ обработчика
             'includeFormsScript' => true,

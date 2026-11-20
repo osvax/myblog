@@ -14,12 +14,54 @@
     <meta name="keywords" content="<?= htmlspecialchars(trim((string) $siteKeywords), ENT_QUOTES, 'UTF-8') ?>">
     <?php endif; ?>
     <meta name="csrf-token" content="<?= htmlspecialchars(csrf_token(), ENT_QUOTES, 'UTF-8') ?>">
-    
+
     <!-- Preconnect for fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
-    
+
+    <?php
+    // «Оформление» (Настройки → Оформление): шрифт из CDN-ссылки или
+    // загруженного файла + CSS-переменные темы для SCSS (var(--theme-*))
+    $themeFontFamily = trim((string) ($themeFontFamily ?? ''));
+    $themeFontUrl = trim((string) ($themeFontUrl ?? ''));
+    $themeFontFile = trim((string) ($themeFontFile ?? ''));
+    $themeUrlSafe = preg_match('#^https?://#i', $themeFontUrl) === 1;
+    $themeFileSafe = $themeFontFamily !== ''
+        && preg_match('#^uploads/fonts/[A-Za-z0-9._-]+\.(woff|woff2|ttf|otf)$#i', $themeFontFile) === 1
+        && is_file(APP_ROOT . '/public/' . $themeFontFile);
+    $themeFontCssName = str_replace(['"', '\\', ';', '{', '}'], '', $themeFontFamily);
+    ?>
+    <?php if ($themeUrlSafe): ?>
+    <!-- Шрифт по ссылке из настроек (CDN, например Google Fonts) -->
+    <link rel="stylesheet" href="<?= htmlspecialchars($themeFontUrl, ENT_QUOTES, 'UTF-8') ?>">
+    <?php endif; ?>
+    <?php if ($themeFileSafe): ?>
+    <!-- Шрифт, загруженный в настройках (файл из /uploads/fonts/) -->
+    <style id="site-theme-font">
+        @font-face {
+            font-family: '<?= htmlspecialchars($themeFontCssName, ENT_QUOTES, 'UTF-8') ?>';
+            src: url('/<?= htmlspecialchars($themeFontFile, ENT_QUOTES, 'UTF-8') ?>') format('<?= strtolower(pathinfo($themeFontFile, PATHINFO_EXTENSION)) ?>');
+            font-display: swap;
+        }
+    </style>
+    <?php endif; ?>
+    <style id="site-theme-vars">
+        :root {
+            --theme-primary: <?= $themePrimary ?? '#ff8c1a' ?>;
+            --theme-primary-light: <?= $themePrimaryLight ?? '#fff3e6' ?>;
+            --theme-bg: <?= $themeBackground ?? '#ffffff' ?>;
+            --theme-block-bg: <?= $themeBlockBg ?? '#ffffff' ?>;
+            --theme-sidebar-bg: <?= $themeSidebarBg ?? '#ffffff' ?>;
+            --theme-text: <?= $themeText ?? '#353535' ?>;
+        }
+        <?php if ($themeFontFamily !== ''): ?>
+        body, button, input, select, textarea {
+            font-family: '<?= htmlspecialchars($themeFontCssName, ENT_QUOTES, 'UTF-8') ?>', 'Montserrat', 'Segoe UI', Arial, sans-serif !important;
+        }
+        <?php endif; ?>
+    </style>
+
     <?php if (has_vite_manifest() && isset($viteManifest['resources/js/app.js'])): ?>
         <!-- Production: Vite built assets (CSS + modulepreload) -->
         <?php foreach (vite_css('resources/js/app.js') as $css): ?>

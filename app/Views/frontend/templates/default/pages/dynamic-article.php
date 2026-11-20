@@ -1,10 +1,22 @@
 <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/article-heading.php'; ?>
 <?php $waveColors = ['#ff8c1a', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+<?php
+// Сайдбар страницы статьи (Настройки → Статьи): слева / справа / выключен
+$articleSide = in_array($articlePageSidebar ?? 'right', ['left', 'right'], true) ? $articlePageSidebar : ($articlePageSidebar === 'none' ? 'none' : 'right');
+ob_start();
+if ($articleSide !== 'none') {
+    require APP_ROOT . '/app/Views/frontend/templates/default/components/article-sidebar.php';
+}
+$articleSidebarHtml = ob_get_clean();
+?>
 <section class="py-5">
     <div class="container">
         <div class="row g-5">
+            <?php if ($articleSide === 'left'): ?>
+                <aside class="col-lg-4 sidebar-block"><?= $articleSidebarHtml ?></aside>
+            <?php endif; ?>
             <!-- Статья: полный текст из базы (body_html) -->
-            <div class="col-lg-8">
+            <div class="<?= $articleSide === 'none' ? 'col-12' : 'col-lg-8' ?>">
                 <article>
                     <?php if (!empty($article['cover'])): ?>
                         <img src="/<?= htmlspecialchars(ltrim($article['cover'], '/'), ENT_QUOTES, 'UTF-8') ?>" class="img-fluid rounded mb-4" alt="<?= htmlspecialchars($article['title'], ENT_QUOTES, 'UTF-8') ?>">
@@ -44,31 +56,10 @@
                     <?php require APP_ROOT . '/app/Views/frontend/templates/default/components/comments-section.php'; ?>
                 </div>
             </div>
-            <!-- Сайдбар: рубрики из базы + свежие записи -->
-            <aside class="col-lg-4">
-                <?php if (!empty($showArticleCategories)): ?>
-                    <?php require APP_ROOT . '/app/Views/frontend/templates/default/components/categories-sidebar.php'; ?>
-                <?php endif; ?>
-                <?php if (!empty($showRelatedArticles) && !empty($relatedArticles)): ?>
-                    <div class="card border-0 shadow-sm p-4 mb-4">
-                        <h5 class="fw-bold mb-3"><i class="bi bi-collection text-orange"></i> Похожие статьи</h5>
-                        <ul class="list-unstyled mb-0">
-                            <?php foreach ($relatedArticles as $relatedArticle): ?>
-                                <li class="mb-2"><a href="/<?= htmlspecialchars($relatedArticle['slug'], ENT_QUOTES, 'UTF-8') ?>.html" class="fw-bold text-orange link-orange"><?= htmlspecialchars($relatedArticle['title'], ENT_QUOTES, 'UTF-8') ?></a></li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </div>
-                <?php endif; ?>
-                <div class="card border-0 shadow-sm p-4 mb-4">
-                    <h5 class="fw-bold mb-3"><i class="bi bi-clock-history text-orange"></i> Свежие записи</h5>
-                    <?php foreach ((array) ($latestArticles ?? []) as $latestArticle): ?>
-                        <a href="/<?= htmlspecialchars($latestArticle['slug'], ENT_QUOTES, 'UTF-8') ?>.html" class="fw-bold text-orange link-orange d-block mb-2"><?= htmlspecialchars($latestArticle['title'], ENT_QUOTES, 'UTF-8') ?></a>
-                    <?php endforeach; ?>
-                    <?php if (empty($latestArticles ?? [])): ?>
-                        <span class="fw-bold text-muted">Пока нет других записей</span>
-                    <?php endif; ?>
-                </div>
-            </aside>
+            <?php if ($articleSide === 'right'): ?>
+                <!-- Сайдбар: рубрики из базы + свежие записи -->
+                <aside class="col-lg-4 sidebar-block"><?= $articleSidebarHtml ?></aside>
+            <?php endif; ?>
         </div>
     </div>
 </section>

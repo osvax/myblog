@@ -6,8 +6,11 @@ if ($cardExcerptLength > 0 && mb_strlen($cardExcerpt) > $cardExcerptLength) {
     $cardExcerpt = mb_substr($cardExcerpt, 0, $cardExcerptLength) . '…';
 }
 $showCardCategories = !empty($showArticleCategories);
+// Ширина карточки в ряду (Настройки → Статьи → «Статей в ряд»):
+// 1 — во всю ширину, 2 — половина, 3 — текущая треть
+$cardColClass = (isset($blogCardCol) && is_string($blogCardCol) && $blogCardCol !== '') ? $blogCardCol : 'col-md-4';
 ?>
-<div class="col-md-4">
+<div class="<?= $cardColClass ?>">
     <div class="card h-100 shadow-sm border-0 post-card">
         <?php $cardCover = !empty($article['cover']) ? (string) $article['cover'] : ''; ?>
         <a href="/<?= htmlspecialchars($articleSlug, ENT_QUOTES, 'UTF-8') ?>.html" class="card-img-top post-card-cover text-decoration-none" tabindex="-1" aria-hidden="true">

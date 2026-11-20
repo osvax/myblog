@@ -132,6 +132,7 @@ return function (Router $router) {
     $router->post('/api/admin/settings/fields', [$siteSettings, 'addField']);
     $router->delete('/api/admin/settings/fields/{key}', [$siteSettings, 'deleteField']);
     $router->post('/api/admin/settings/test-email', [$siteSettings, 'testEmail']);
+    $router->post('/api/admin/settings/font', [$siteSettings, 'font']);
     $router->get('/api/admin/settings/logs', [$siteSettings, 'logs']);
     $router->post('/api/admin/settings/logs/clear', [$siteSettings, 'clearLogs']);
 

@@ -22,8 +22,13 @@
     if (!empty($showPortfolioClient) && !empty($project['client'])) {
         $cardMeta[] = (string) $project['client'];
     }
+    // Ширина карточки в ряду (Настройки → Портфолио → «Работ в ряд»):
+    // 1 — во всю ширину, 2 — половина, 3 — текущая треть; мозаика — без колонок
+    $portfolioCardClass = !empty($portfolioMasonry)
+        ? 'work-masonry-item'
+        : ((isset($portfolioCardCol) && is_string($portfolioCardCol) && $portfolioCardCol !== '') ? $portfolioCardCol : 'col-md-6 col-lg-4');
 ?>
-<div class="<?= !empty($portfolioMasonry) ? 'work-masonry-item' : 'col-md-6 col-lg-4' ?>">
+<div class="<?= $portfolioCardClass ?>">
     <a href="/<?= htmlspecialchars($projectSlug, ENT_QUOTES, 'UTF-8') ?>.html" class="text-decoration-none">
         <div class="card h-100 border-0 shadow-sm work-card overflow-hidden">
             <?php if ($projectCover): ?>

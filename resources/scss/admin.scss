@@ -1896,3 +1896,14 @@ body.templates-page .admin-content {
     &.article-crop-handle-bl { bottom: -6px; left: -6px; cursor: nesw-resize; }
     &.article-crop-handle-br { bottom: -6px; right: -6px; cursor: nwse-resize; }
 }
+
+/* ============================================================
+   «Оформление» (Настройки → Оформление)
+   Переменные --theme-* лейаут подставляет из site_settings;
+   акценты админки (--orange) следуют за основным цветом темы.
+   ============================================================ */
+:root {
+    --orange: var(--theme-primary, #ff8c1a);
+    --orange-dark: var(--theme-primary, #ff8c1a);
+    --orange-light: var(--theme-primary-light, #fff3e6);
+}

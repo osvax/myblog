@@ -126,6 +126,57 @@ class SiteSettingsController extends Controller
     }
 
     /**
+     * Загрузить файл шрифта (вкладка «Оформление»): woff/woff2/ttf/otf
+     * до 2 МБ. Файл кладётся в /uploads/fonts/, путь — в настройку
+     * themeFontFile (лейауты генерируют из него @font-face).
+     */
+    public function font($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+
+        \admin_require_csrf();
+
+        $file = $_FILES['font_file'] ?? null;
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
+            || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            return $this->json(['success' => false, 'error' => 'Не передан файл шрифта'], 400);
+        }
+        if ((int) $file['size'] < 1 || (int) $file['size'] > 2 * 1024 * 1024) {
+            return $this->json(['success' => false, 'error' => 'Размер файла шрифта должен быть от 1 байта до 2 МБ'], 400);
+        }
+        $extension = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
+        if (!in_array($extension, ['woff', 'woff2', 'ttf', 'otf'], true)) {
+            return $this->json(['success' => false, 'error' => 'Допустимые форматы шрифтов: woff, woff2, ttf, otf'], 400);
+        }
+
+        $targetDir = APP_ROOT . '/public/uploads/fonts';
+        if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
+            return $this->json(['success' => false, 'error' => 'Не удалось создать каталог для шрифтов'], 500);
+        }
+
+        $oldPath = trim((string) (new SiteSettings())->get('themeFontFile', ''));
+        $newName = md5(uniqid('', true)) . '.' . $extension;
+        if (!move_uploaded_file($file['tmp_name'], $targetDir . '/' . $newName)) {
+            return $this->json(['success' => false, 'error' => 'Не удалось сохранить файл шрифта'], 500);
+        }
+
+        (new SiteSettings())->saveAllWithType(['themeFontFile' => 'uploads/fonts/' . $newName]);
+
+        // Удаляем прежний файл (только если он лежит в uploads/fonts/)
+        if ($oldPath !== '' && preg_match('#^uploads/fonts/[A-Za-z0-9._-]+\.(woff|woff2|ttf|otf)$#i', $oldPath)) {
+            $oldFile = APP_ROOT . '/public/' . $oldPath;
+            if (is_file($oldFile)) {
+                @unlink($oldFile);
+            }
+        }
+
+        \App\Core\Logger::write('security', 'Загружен файл шрифта: ' . $newName);
+        return $this->json(['success' => true, 'path' => 'uploads/fonts/' . $newName, 'file' => $newName]);
+    }
+
+    /**
      * Последние записи журнала событий (вкладка «Логи»).
      */
     public function logs($request)

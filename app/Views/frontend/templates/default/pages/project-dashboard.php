@@ -10,16 +10,27 @@
     <!-- ================= ОПИСАНИЕ ПРОЕКТА ================= -->
     <section class="py-5">
         <div class="container">
+            <?php
+            // Сайдбар страницы проекта (Настройки → Портфолио): слева / справа / выключен
+            // (выключен — инфо-карточка и «Другие проекты» выводятся под описанием)
+            $projectSide = in_array($projectPageSidebar ?? 'right', ['left', 'right'], true) ? $projectPageSidebar : ($projectPageSidebar === 'none' ? 'none' : 'right');
+            ob_start();
+            require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-info-card.php';
+            require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-other-projects.php';
+            $projectSidebarHtml = ob_get_clean();
+            ?>
             <div class="row g-5">
-                <div class="col-lg-8">
+                <?php if ($projectSide === 'left'): ?>
+                    <aside class="col-lg-4 sidebar-block"><?= $projectSidebarHtml ?></aside>
+                <?php endif; ?>
+                <div class="<?= $projectSide === 'none' ? 'col-12' : 'col-lg-8' ?>">
                     <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-brief.php'; ?>
                 </div>
-
-                <!-- Боковая панель -->
-                <div class="col-lg-4">
-                    <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-info-card.php'; ?>
-                    <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-other-projects.php'; ?>
-                </div>
+                <?php if ($projectSide === 'right'): ?>
+                    <aside class="col-lg-4 sidebar-block"><?= $projectSidebarHtml ?></aside>
+                <?php elseif ($projectSide === 'none'): ?>
+                    <div class="col-12 sidebar-block"><?= $projectSidebarHtml ?></div>
+                <?php endif; ?>
             </div>
 
         </div>

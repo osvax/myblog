@@ -166,6 +166,48 @@
             });
         }
 
+        // ---------- Загрузка файла шрифта («Оформление») ----------
+        // Отдельный multipart-запрос: файл кладётся в /uploads/fonts/,
+        // путь сохраняется в скрытом поле themeFontFile и уезжает
+        // вместе с остальной формой при «Сохранить».
+        var fontUploadBtn = document.getElementById('fontUploadBtn');
+        var fontFileInput = document.getElementById('themeFontFileInput');
+        if (fontUploadBtn && fontFileInput) {
+            fontUploadBtn.addEventListener('click', function () {
+                var statusEl = document.getElementById('fontUploadStatus');
+                var file = fontFileInput.files && fontFileInput.files[0];
+                if (!file) {
+                    if (statusEl) statusEl.textContent = 'Сначала выберите файл шрифта';
+                    return;
+                }
+                fontUploadBtn.disabled = true;
+                if (statusEl) statusEl.textContent = 'Загружаем файл…';
+                var fd = new FormData();
+                fd.append('font_file', file);
+                fetch('../api/auth/csrf', { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (csrf) {
+                        return fetch('../api/admin/settings/font', {
+                            method: 'POST', credentials: 'same-origin',
+                            headers: { 'X-CSRF-Token': csrf.token },
+                            body: fd
+                        });
+                    })
+                    .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d || !d.success) throw new Error((d && d.error) || 'Не удалось загрузить файл'); return d; }); })
+                    .then(function (d) {
+                        var hidden = document.getElementById('themeFontFile');
+                        if (hidden) hidden.value = d.path || '';
+                        if (statusEl) statusEl.textContent = 'Сохранён файл: ' + (d.file || file.name);
+                        window.AdminNotifications.show(true, 'Файл шрифта сохранён — нажмите «Сохранить», чтобы применить');
+                    })
+                    .catch(function (error) {
+                        if (statusEl) statusEl.textContent = 'Ошибка загрузки';
+                        window.AdminNotifications.show(false, error.message || 'Не удалось загрузить файл шрифта.');
+                    })
+                    .then(function () { fontUploadBtn.disabled = false; });
+            });
+        }
+
         // ---------- Журнал событий («Логи») ----------
         var logsTypeLabels = { auth: 'Входы', forms: 'Формы', security: 'Безопасность', errors: 'Ошибки' };
 

@@ -25,6 +25,12 @@ class PortfolioController extends Controller
         $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
         $pageProjects = array_slice($projects, ($page - 1) * $perPage, $perPage, true);
 
+        // Сайдбар страницы портфолио (Настройки → Портфолио): список проектов
+        $sidebarProjects = [];
+        foreach ($projects as $sidebarProject) {
+            $sidebarProjects[] = ['slug' => $sidebarProject['slug'], 'title' => $sidebarProject['title']];
+        }
+
         return $this->page('frontend', 'portfolio', [
             'title' => 'Портфолио',
             'description' => 'Мои проекты: вёрстка, дизайн, разработка.',
@@ -37,6 +43,9 @@ class PortfolioController extends Controller
             'showPortfolioTags' => (bool) ($settings['portfolioShowTags'] ?? true),
             'showPortfolioDate' => (bool) ($settings['portfolioShowDate'] ?? true),
             'showPortfolioClient' => (bool) ($settings['portfolioShowClient'] ?? true),
+            'projectsPerRow' => (int) ($settings['projectsPerRow'] ?? 3),
+            'portfolioSidebar' => (string) ($settings['portfolioSidebar'] ?? 'none'),
+            'sidebarProjects' => $sidebarProjects,
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -91,6 +100,8 @@ class PortfolioController extends Controller
             'otherProjects' => $otherProjects,
             'prevProject' => $prev,
             'nextProject' => $next,
+            // Сайдбар страницы проекта (Настройки → Портфолио)
+            'projectPageSidebar' => (string) ((new \App\Models\SiteSettings())->get('projectPageSidebar', 'right') ?: 'right'),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);
@@ -113,6 +124,9 @@ class PortfolioController extends Controller
             'description' => $project['description'],
             'activePage' => 'portfolio',
             'project' => $project,
+            'otherProjects' => [],
+            // Сайдбар страницы проекта (Настройки → Портфолио)
+            'projectPageSidebar' => (string) ((new \App\Models\SiteSettings())->get('projectPageSidebar', 'right') ?: 'right'),
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

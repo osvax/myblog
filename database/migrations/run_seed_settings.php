@@ -147,6 +147,16 @@ $defaultsIgnore = [
     ['darkMode', '0', 'checkbox', 'appearance', 3, 'Тёмная тема админки'],
     ['sidebarCollapse', '0', 'checkbox', 'appearance', 4, 'Свёрнутый сайдбар по умолчанию'],
 
+    // === appearance: вкладки «Оформление» (цвета и шрифт сайта + админки) ===
+    ['themePrimary', '#ff8c1a', 'color', 'appearance', 5, 'Основной цвет'],
+    ['themeBackground', '#ffffff', 'color', 'appearance', 6, 'Фон страницы'],
+    ['themeBlockBg', '#ffffff', 'color', 'appearance', 7, 'Фон блоков (карточек)'],
+    ['themeSidebarBg', '#ffffff', 'color', 'appearance', 8, 'Фон сайдбаров'],
+    ['themeText', '#353535', 'color', 'appearance', 9, 'Цвет текста'],
+    ['themeFontFamily', '', 'text', 'appearance', 10, 'Название шрифта'],
+    ['themeFontUrl', '', 'text', 'appearance', 11, 'Ссылка на шрифт (CDN)'],
+    ['themeFontFile', '', 'text', 'appearance', 12, 'Файл загруженного шрифта'],
+
     // === calculator ===
     ['calculatorConfig', json_encode(calculator_default_config(), JSON_UNESCAPED_UNICODE), 'json', 'calculator', 1, 'Конфигурация калькулятора заказа'],
 
@@ -158,6 +168,14 @@ $defaultsIgnore = [
 
     // === email (секреты — только пустой дефолт, значение пользователь вводит сам) ===
     ['smtpPassword', '', 'text', 'email', 10, 'Пароль приложения'],
+
+    // === раскладка: сетки и сайдбары статей/портфолио (вкладки «Статьи» и «Портфолио») ===
+    ['articlesPerRow', '3', 'select', 'articles', 11, 'Статей в ряд'],
+    ['blogSidebar', 'none', 'select', 'articles', 12, 'Сайдбар на странице списка'],
+    ['articlePageSidebar', 'right', 'select', 'articles', 13, 'Сайдбар на странице статьи'],
+    ['projectsPerRow', '3', 'select', 'portfolio', 6, 'Работ в ряд'],
+    ['portfolioSidebar', 'none', 'select', 'portfolio', 7, 'Сайдбар на странице портфолио'],
+    ['projectPageSidebar', 'right', 'select', 'portfolio', 8, 'Сайдбар на странице проекта'],
 ];
 
 $stmt = $db->prepare(

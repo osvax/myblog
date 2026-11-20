@@ -38,6 +38,9 @@
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="portfolio-tab" data-bs-toggle="tab" data-bs-target="#portfolio-pane" type="button" role="tab" aria-controls="portfolio-pane" aria-selected="false" title="Портфолио"><i class="bi bi-collection"></i></button>
                         </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance-pane" type="button" role="tab" aria-controls="appearance-pane" aria-selected="false" title="Оформление"><i class="bi bi-palette"></i></button>
+                        </li>
                     </ul>
                 </div>
                 <div class="card-body p-4">
@@ -564,6 +567,30 @@ Email: {email}
                                     <input type="number" id="articlePerPage" class="form-control" min="1" max="100" value="12">
                                 </div>
                                 <div class="col-md-6">
+                                    <label for="articlesPerRow" class="form-label fw-bold">Статей в ряд</label>
+                                    <select id="articlesPerRow" class="form-select">
+                                        <option value="1">Одна (во всю ширину)</option>
+                                        <option value="2">Две (половина ширины)</option>
+                                        <option value="3" selected>Три</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="blogSidebar" class="form-label fw-bold">Сайдбар на странице списка</label>
+                                    <select id="blogSidebar" class="form-select">
+                                        <option value="none" selected>Выключен</option>
+                                        <option value="left">Слева</option>
+                                        <option value="right">Справа</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="articlePageSidebar" class="form-label fw-bold">Сайдбар на странице статьи</label>
+                                    <select id="articlePageSidebar" class="form-select">
+                                        <option value="left">Слева</option>
+                                        <option value="right" selected>Справа</option>
+                                        <option value="none">Выключен</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
                                     <label for="articleSortOrder" class="form-label fw-bold">Сортировка статей</label>
                                     <select id="articleSortOrder" class="form-select">
                                         <option value="newest">Сначала новые</option>
@@ -631,10 +658,34 @@ Email: {email}
                                     <input type="number" id="portfolioPerPage" class="form-control" min="1" max="100" value="12">
                                 </div>
                                 <div class="col-md-6">
+                                    <label for="projectsPerRow" class="form-label fw-bold">Работ в ряд</label>
+                                    <select id="projectsPerRow" class="form-select">
+                                        <option value="1">Одна (во всю ширину)</option>
+                                        <option value="2">Две (половина ширины)</option>
+                                        <option value="3" selected>Три</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
                                     <label for="portfolioLayout" class="form-label fw-bold">Тип отображения</label>
                                     <select id="portfolioLayout" class="form-select">
                                         <option value="grid">Сетка</option>
                                         <option value="masonry">Мозаика</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="portfolioSidebar" class="form-label fw-bold">Сайдбар на странице портфолио</label>
+                                    <select id="portfolioSidebar" class="form-select">
+                                        <option value="none" selected>Выключен</option>
+                                        <option value="left">Слева</option>
+                                        <option value="right">Справа</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="projectPageSidebar" class="form-label fw-bold">Сайдбар на странице проекта</label>
+                                    <select id="projectPageSidebar" class="form-select">
+                                        <option value="left">Слева</option>
+                                        <option value="right" selected>Справа</option>
+                                        <option value="none">Выключен (под описанием)</option>
                                     </select>
                                 </div>
                                 <div class="col-md-6">
@@ -656,6 +707,58 @@ Email: {email}
                                     </div>
                                 </div>
                             </div>
+                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+                        </section>
+
+                        <section class="tab-pane fade" id="appearance-pane" role="tabpanel" aria-labelledby="appearance-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-4">Оформление сайта и админки</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="themePrimary" class="form-label fw-bold">Основной цвет</label>
+                                    <input type="color" id="themePrimary" class="form-control form-control-color w-100 py-1" value="#ff8c1a">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="themeBackground" class="form-label fw-bold">Фон страницы</label>
+                                    <input type="color" id="themeBackground" class="form-control form-control-color w-100 py-1" value="#ffffff">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="themeBlockBg" class="form-label fw-bold">Фон блоков (карточек)</label>
+                                    <input type="color" id="themeBlockBg" class="form-control form-control-color w-100 py-1" value="#ffffff">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="themeSidebarBg" class="form-label fw-bold">Фон сайдбаров</label>
+                                    <input type="color" id="themeSidebarBg" class="form-control form-control-color w-100 py-1" value="#ffffff">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="themeText" class="form-label fw-bold">Цвет текста</label>
+                                    <input type="color" id="themeText" class="form-control form-control-color w-100 py-1" value="#353535">
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="themeFontFamily" class="form-label fw-bold">Название шрифта</label>
+                                    <input type="text" id="themeFontFamily" class="form-control" list="fontFamilyList" placeholder="Например, Open Sans (пусто — стандартный Montserrat)" autocomplete="off">
+                                    <datalist id="fontFamilyList">
+                                        <option value="Open Sans"></option>
+                                        <option value="Roboto"></option>
+                                        <option value="Raleway"></option>
+                                        <option value="Lato"></option>
+                                        <option value="Inter"></option>
+                                        <option value="PT Sans"></option>
+                                        <option value="Montserrat"></option>
+                                    </datalist>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="themeFontUrl" class="form-label fw-bold">Ссылка на шрифт (CDN)</label>
+                                    <input type="url" id="themeFontUrl" class="form-control" placeholder="https://fonts.googleapis.com/css2?family=Open+Sans&display=swap" autocomplete="off">
+                                </div>
+                            </div>
+                            <hr class="my-4">
+                            <label class="form-label fw-bold d-block mb-2">Или загрузить файл шрифта (woff, woff2, ttf, otf — до 2 МБ)</label>
+                            <div class="d-flex flex-wrap align-items-center gap-2">
+                                <input type="file" id="themeFontFileInput" class="form-control" style="max-width: 24rem;" accept=".woff,.woff2,.ttf,.otf">
+                                <button type="button" class="btn btn-orange fw-bold" id="fontUploadBtn"><i class="bi bi-cloud-upload"></i> Загрузить файл</button>
+                                <span class="fw-bold text-muted" id="fontUploadStatus"></span>
+                            </div>
+                            <input type="hidden" id="themeFontFile" value="">
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
                     </div>

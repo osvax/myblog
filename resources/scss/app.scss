@@ -50,3 +50,76 @@
     page-break-inside: avoid;
   }
 }
+
+// ============================================================
+// «Оформление» (Настройки → Оформление)
+// Переменные темы --theme-* в лейауте подставляются из
+// site_settings; фолбэки ниже — стандартный дизайн сайта.
+// ============================================================
+:root {
+  --theme-primary: #ff8c1a;
+  --theme-primary-light: #fff3e6;
+  --theme-bg: #ffffff;
+  --theme-block-bg: #ffffff;
+  --theme-sidebar-bg: #ffffff;
+  --theme-text: #353535;
+}
+
+body {
+  background-color: var(--theme-bg, #ffffff);
+  color: var(--theme-text, $text-main);
+}
+
+// Основной цвет: навбар, кнопки, ссылки, бейджи, иконки
+.bg-orange {
+  background-color: var(--theme-primary, $orange) !important;
+}
+
+.bg-orange-light {
+  background-color: var(--theme-primary-light, $orange-light) !important;
+}
+
+.text-orange {
+  color: var(--theme-primary, $orange) !important;
+}
+
+.link-orange {
+  color: var(--theme-primary, $orange);
+
+  &:hover,
+  &:focus {
+    color: var(--theme-primary, $orange);
+  }
+}
+
+.btn-orange {
+  background-color: var(--theme-primary, $orange);
+  border-color: var(--theme-primary, $orange);
+  color: #ffffff;
+
+  &:hover,
+  &:focus,
+  &:active {
+    background-color: var(--theme-primary, $orange);
+    border-color: var(--theme-primary, $orange);
+    color: #ffffff;
+    filter: brightness(0.92);
+  }
+
+  &:disabled,
+  &.disabled {
+    background-color: var(--theme-primary, $orange);
+    border-color: var(--theme-primary, $orange);
+    color: #ffffff;
+  }
+}
+
+// Блоки (карточки) — «фон блоков»
+.card {
+  background-color: var(--theme-block-bg, #ffffff);
+}
+
+// Сайдбары — «фон сайдбара»
+.sidebar-block .card {
+  background-color: var(--theme-sidebar-bg, #ffffff);
+}

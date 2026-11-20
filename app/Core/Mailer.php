@@ -4,6 +4,7 @@ namespace App\Core;
 
 use Symfony\Component\Mailer\Mailer as SymfonyMailer;
 use Symfony\Component\Mailer\Transport;
+use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
 use App\Models\SiteSettings;
 
@@ -141,9 +142,11 @@ class Mailer
 
             $mailer = self::getMailer();
 
+            // Symfony Mime 7: from()/to() принимают список адресов; имя —
+            // только через new Address($email, $name)
             $email = (new Email())
-                ->from($config['from_address'], $config['from_name'])
-                ->to($toEmail, $toName)
+                ->from(new Address($config['from_address'], $config['from_name']))
+                ->to(new Address($toEmail, $toName))
                 ->subject($subject)
                 ->text($body);
 
@@ -163,17 +166,26 @@ class Mailer
 
     /**
      * Проверить канал отправки (SMTP-подключение или PHP mail()).
+     * Каждый неудачный тест пишется в журнал событий (раздел «Ошибки»),
+     * в ответ возвращается понятное объяснение и тестируемое подключение.
      */
     public static function testConnection(): array
     {
-        try {
-            $config = self::getConfig();
+        $config = self::getConfig();
+        // Подключение для отчёта (пароль не показываем)
+        $encryption = strtolower(trim((string) $config['encryption']));
+        $reportDsn = ($encryption === 'ssl' ? 'smtps' : 'smtp') . '://'
+            . (!empty($config['username']) ? $config['username'] . ':(пароль скрыт)@' : '')
+            . $config['host'] . ':' . $config['port'];
 
+        try {
             if (!$config['use_smtp']) {
                 // PHP mail(): отправляем тест на email отправителя
                 $target = (string) $config['from_address'];
                 if (!filter_var($target, FILTER_VALIDATE_EMAIL)) {
-                    return ['success' => false, 'error' => 'Укажите корректный email отправителя, на который отправим тест.'];
+                    $error = 'Укажите корректный email отправителя, на который отправим тест.';
+                    \App\Core\Logger::write('errors', 'Тест отправки (PHP mail) не выполнен: ' . $error);
+                    return ['success' => false, 'error' => $error];
                 }
                 $sent = self::sendViaPhpMail(
                     'Тест отправки — МойБлог',
@@ -183,25 +195,55 @@ class Mailer
                     null,
                     $config
                 );
-                return $sent
-                    ? ['success' => true, 'message' => 'Тестовое письмо отправлено через PHP mail()']
-                    : ['success' => false, 'error' => 'PHP mail() не смог отправить письмо. Проверьте почтовый демон сервера (sendmail/postfix).'];
+                if ($sent) {
+                    return ['success' => true, 'message' => 'Тестовое письмо отправлено через PHP mail() на ' . $target];
+                }
+                $error = 'PHP mail() не смог отправить письмо. Проверьте почтовый демон сервера (sendmail/postfix).';
+                \App\Core\Logger::write('errors', 'Тест отправки (PHP mail) не прошёл: mail() вернул false для ' . $target);
+                return ['success' => false, 'error' => $error];
             }
 
             $transport = Transport::fromDsn(self::buildDsn($config));
             $mailer = new SymfonyMailer($transport);
 
-            // Пробуем отправить тестовое письмо на тот же адрес
+            // Отправляем тестовое письмо на адрес отправителя
             $email = (new Email())
-                ->from($config['from_address'], $config['from_name'])
-                ->to($config['from_address'], 'Test')
+                ->from(new Address($config['from_address'], $config['from_name']))
+                ->to(new Address($config['from_address'], 'МойБлог'))
                 ->subject('SMTP Test - МойБлог')
                 ->text('Это тестовое письмо для проверки SMTP настроек.');
 
             $mailer->send($email);
-            return ['success' => true, 'message' => 'Тестовое письмо отправлено успешно'];
+            return ['success' => true, 'message' => 'Тестовое письмо отправлено успешно через SMTP на ' . $config['from_address']];
         } catch (\Throwable $e) {
-            return ['success' => false, 'error' => $e->getMessage()];
+            $error = self::explainSmtpError($e->getMessage()) . ' Проверка подключения: ' . $reportDsn;
+            \App\Core\Logger::write('errors', 'Тест отправки (SMTP) не прошёл: ' . $e->getMessage() . ' (' . $reportDsn . ')');
+            return ['success' => false, 'error' => $error];
         }
+    }
+
+    /**
+     * Перевести типичные ошибки SMTP на понятный язык.
+     */
+    private static function explainSmtpError(string $raw): string
+    {
+        $lower = strtolower($raw);
+        if (strpos($lower, '535') !== false || stripos($raw, 'authenticat') !== false || stripos($raw, 'login') !== false) {
+            return 'Ошибка авторизации: проверьте имя пользователя и пароль приложения. Подробности: ' . $raw;
+        }
+        if (strpos($lower, '553') !== false || stripos($raw, 'sender') !== false) {
+            return 'Сервер отклонил адрес отправителя («Email отправителя»): он должен совпадать с логином SMTP. Подробности: ' . $raw;
+        }
+        if (stripos($raw, 'connect') !== false || stripos($raw, 'refused') !== false
+            || stripos($raw, 'timed out') !== false || stripos($raw, 'connection') !== false) {
+            return 'Не удалось подключиться к SMTP-серверу: проверьте адрес сервера и порт (587 = STARTTLS, 465 = SSL/TLS). Подробности: ' . $raw;
+        }
+        if (stripos($raw, 'tls') !== false || stripos($raw, 'ssl') !== false || stripos($raw, 'certificate') !== false) {
+            return 'Ошибка шифрования: проверьте «Шифрование» и порт (587 = STARTTLS, 465 = SSL/TLS). Подробности: ' . $raw;
+        }
+        if (stripos($raw, 'addr-spec') !== false || stripos($raw, 'rfc 2822') !== false) {
+            return 'Некорректный email-адрес: проверьте «Email отправителя» (должен иметь вид name@domain). Подробности: ' . $raw;
+        }
+        return $raw;
     }
 }

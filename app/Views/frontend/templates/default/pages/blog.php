@@ -16,6 +16,19 @@
     <!-- ================= БЛОГ ================= -->
     <section class="py-5 bg-orange-light">
         <div class="container">
+            <?php
+            // Раскладка (Настройки → Статьи): статей в ряд и сайдбар слева/справа
+            $blogPerRow = max(1, min(3, (int) ($articlesPerRow ?? 3)));
+            $blogCardCol = ['1' => 'col-12', '2' => 'col-md-6', '3' => 'col-md-4'][$blogPerRow] ?? 'col-md-4';
+            $blogSide = in_array($blogSidebar ?? 'none', ['left', 'right'], true) ? $blogSidebar : 'none';
+            ?>
+            <div class="row g-4">
+                <?php if ($blogSide === 'left'): ?>
+                    <aside class="col-lg-4 sidebar-block">
+                        <?php require APP_ROOT . '/app/Views/frontend/templates/default/components/article-sidebar.php'; ?>
+                    </aside>
+                <?php endif; ?>
+                <div class="<?= $blogSide === 'none' ? 'col-12' : 'col-lg-8' ?>">
             <?php if ($blogIsCategory): ?>
                 <div class="text-center mb-4">
                     <span class="badge bg-orange fw-bold p-2 mb-2">Рубрика</span>
@@ -75,7 +88,13 @@
                     </ul>
                 </nav>
             <?php endif; ?>
-
+                </div>
+                <?php if ($blogSide === 'right'): ?>
+                    <aside class="col-lg-4 sidebar-block">
+                        <?php require APP_ROOT . '/app/Views/frontend/templates/default/components/article-sidebar.php'; ?>
+                    </aside>
+                <?php endif; ?>
+            </div>
         </div>
     </section>
 
