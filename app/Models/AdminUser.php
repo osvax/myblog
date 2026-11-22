@@ -6,9 +6,19 @@ class AdminUser
 {
     public function verifyCredentials($email, $password)
     {
+        $config = require APP_ROOT . '/config/admin-auth.php';
+        $configuredEmail = strtolower(trim((string) ($config['email'] ?? '')));
+        $configuredHash = (string) ($config['password_hash'] ?? '');
+        $email = strtolower(trim((string) $email));
+
+        if (!filter_var($configuredEmail, FILTER_VALIDATE_EMAIL)
+            || !password_get_info($configuredHash)['algo']) {
+            return ['valid' => false, 'configured' => false];
+        }
+
         $db = \App\Core\Database::connection();
 
-        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE LOWER(email) = :email LIMIT 1");
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
@@ -20,7 +30,11 @@ class AdminUser
             return ['valid' => false, 'configured' => true, 'error' => 'Аккаунт заблокирован'];
         }
 
-        if (!password_verify($password, $user['password_hash'])) {
+        $passwordValid = password_verify($password, $user['password_hash']);
+        if (!$passwordValid && hash_equals($configuredEmail, $email)) {
+            $passwordValid = password_verify($password, $configuredHash);
+        }
+        if (!$passwordValid) {
             return ['valid' => false, 'configured' => true, 'error' => 'Неверный email или пароль'];
         }
 

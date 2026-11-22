@@ -23,6 +23,137 @@ class AuthController extends Controller
         ]);
     }
 
+    public function yandexRedirect($request)
+    {
+        \user_start_session();
+        $settings = new \App\Models\SiteSettings();
+        if (!(bool) $settings->get('yandexAuthEnabled', false)) return \App\Core\Response::redirect('/login.html', 302);
+        $clientId = trim((string) $settings->get('yandexClientId', ''));
+        $redirect = trim((string) $settings->get('yandexRedirectUri', ''));
+        if ($clientId === '' || $redirect === '') return new \App\Core\Response('Яндекс OAuth не настроен', 503);
+        $_SESSION['yandex_oauth_state'] = bin2hex(random_bytes(16));
+        $url = 'https://oauth.yandex.ru/authorize?' . http_build_query(['response_type'=>'code','client_id'=>$clientId,'redirect_uri'=>$redirect,'state'=>$_SESSION['yandex_oauth_state']]);
+        return \App\Core\Response::redirect($url, 302);
+    }
+
+    public function yandexCallback($request)
+    {
+        \user_start_session();
+
+        if (!empty($_GET['error'])) {
+            return new \App\Core\Response('Авторизация через Яндекс отменена', 401);
+        }
+
+        $state = (string) ($_GET['state'] ?? '');
+        if ($state === '' || !hash_equals((string) ($_SESSION['yandex_oauth_state'] ?? ''), $state)) {
+            return new \App\Core\Response('Некорректный OAuth state', 400);
+        }
+        unset($_SESSION['yandex_oauth_state']);
+
+        $code = trim((string) ($_GET['code'] ?? ''));
+        if ($code === '') {
+            return new \App\Core\Response('Яндекс не вернул код авторизации', 401);
+        }
+
+        $settings = new \App\Models\SiteSettings();
+        $clientId = trim((string) $settings->get('yandexClientId', ''));
+        $redirectUri = trim((string) $settings->get('yandexRedirectUri', ''));
+        $token = $this->oauthPost('https://oauth.yandex.ru/token', [
+            'grant_type' => 'authorization_code',
+            'code' => $code,
+            'client_id' => $clientId,
+            'client_secret' => $settings->get('yandexClientSecret', ''),
+            'redirect_uri' => $redirectUri,
+        ]);
+        if (empty($token['access_token'])) {
+            \App\Core\Logger::write('auth', 'Яндекс OAuth: не удалось получить access_token: ' . ($token['error_description'] ?? $token['error'] ?? 'неизвестная ошибка'));
+            return new \App\Core\Response('Не удалось получить токен Яндекс', 401);
+        }
+
+        $profile = $this->oauthGet('https://login.yandex.ru/info?format=json', $token['access_token']);
+        $yandexId = trim((string) ($profile['id'] ?? ''));
+        $email = strtolower(trim((string) ($profile['default_email'] ?? '')));
+        if ($yandexId === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
+            \App\Core\Logger::write('auth', 'Яндекс OAuth: профиль не содержит корректные id/email');
+            return new \App\Core\Response('Яндекс не вернул email', 401);
+        }
+
+        $users = new User();
+        $user = $users->findByYandexId($yandexId) ?: $users->findByEmail($email);
+        if (!$user) {
+            $name = trim((string) ($profile['real_name'] ?? $profile['display_name'] ?? $email));
+            $created = $users->create($email, password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), $name);
+            if (empty($created['success']) || empty($created['user_id'])) {
+                return new \App\Core\Response('Не удалось создать пользователя: ' . ($created['error'] ?? 'ошибка базы данных'), 500);
+            }
+            $users->setRole((int) $created['user_id'], 'user');
+            $user = $users->findById((int) $created['user_id']);
+        }
+
+        if (!$user || empty($user['id'])) {
+            return new \App\Core\Response('Пользователь не найден после авторизации', 500);
+        }
+
+        $users->linkYandex((int) $user['id'], $yandexId);
+        $user = $users->findById((int) $user['id']);
+        if (!$user) {
+            return new \App\Core\Response('Не удалось загрузить профиль пользователя', 500);
+        }
+
+        $this->completeLogin($user);
+        return \App\Core\Response::redirect('/', 302);
+    }
+
+    private function oauthPost(string $url, array $data): array
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_POSTFIELDS => http_build_query($data),
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['Content-Type: application/x-www-form-urlencoded'],
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $raw = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($raw === false || $error !== '') {
+            \App\Core\Logger::write('auth', 'Яндекс OAuth HTTP ошибка: ' . $error);
+            return [];
+        }
+        $response = json_decode($raw, true);
+        if ($status < 200 || $status >= 300 || !is_array($response)) {
+            \App\Core\Logger::write('auth', 'Яндекс OAuth HTTP статус ' . $status);
+            return is_array($response) ? $response : [];
+        }
+        return $response;
+    }
+
+    private function oauthGet(string $url, string $token): array
+    {
+        $ch = curl_init($url);
+        curl_setopt_array($ch, [
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => ['Authorization: OAuth ' . $token],
+            CURLOPT_TIMEOUT => 15,
+        ]);
+        $raw = curl_exec($ch);
+        $error = curl_error($ch);
+        $status = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($raw === false || $error !== '') {
+            \App\Core\Logger::write('auth', 'Яндекс profile HTTP ошибка: ' . $error);
+            return [];
+        }
+        $response = json_decode($raw, true);
+        if ($status < 200 || $status >= 300 || !is_array($response)) {
+            \App\Core\Logger::write('auth', 'Яндекс profile HTTP статус ' . $status);
+            return [];
+        }
+        return $response;
+    }
+
     /**
      * Проверить rate limit для auth эндпоинтов.
      *

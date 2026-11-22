@@ -57,6 +57,30 @@ class User
         return $user ?: null;
     }
 
+    public function findByYandexId(string $yandexId): ?array
+    {
+        $stmt = Database::connection()->prepare("SELECT * FROM " . db_table('users') . " WHERE yandex_id = :id LIMIT 1");
+        $stmt->execute(['id' => $yandexId]);
+        return $stmt->fetch() ?: null;
+    }
+
+    public function linkYandex(int $userId, string $yandexId): void
+    {
+        $stmt = Database::connection()->prepare("UPDATE " . db_table('users') . " SET yandex_id = :id, updated_at = NOW() WHERE id = :user");
+        $stmt->execute(['id' => $yandexId, 'user' => $userId]);
+    }
+
+    /** Пользователь, созданный через внешний OAuth, всегда получает обычную роль. */
+    public function setRole(int $userId, string $role): void
+    {
+        $allowed = ['user', 'editor', 'manager', 'admin'];
+        if (!in_array($role, $allowed, true)) {
+            $role = 'user';
+        }
+        $stmt = Database::connection()->prepare("UPDATE " . db_table('users') . " SET role = :role, updated_at = NOW() WHERE id = :id");
+        $stmt->execute(['role' => $role, 'id' => $userId]);
+    }
+
     /**
      * Найти пользователя по ID.
      *

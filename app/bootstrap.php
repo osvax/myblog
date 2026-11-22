@@ -2,6 +2,22 @@
 
 define('APP_ROOT', dirname(__DIR__));
 
+if (!function_exists('request_is_https')) {
+    function request_is_https(): bool
+    {
+        if (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') {
+            return true;
+        }
+
+        $forwardedProto = strtolower(trim((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')));
+        if ($forwardedProto !== '') {
+            return strtolower(trim(explode(',', $forwardedProto)[0])) === 'https';
+        }
+
+        return (string) ($_SERVER['SERVER_PORT'] ?? '') === '443';
+    }
+}
+
 // Load environment variables from .env
 if (is_file(APP_ROOT . '/vendor/autoload.php')) {
     require_once APP_ROOT . '/vendor/autoload.php';

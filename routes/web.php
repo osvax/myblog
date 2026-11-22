@@ -120,6 +120,8 @@ return function (Router $router) {
 
     // ---------- Маршруты авторизации ----------
     $router->get('/login.html', [$auth, 'login']);
+    $router->get('/api/auth/yandex', [$auth, 'yandexRedirect']);
+    $router->get('/api/auth/yandex/callback', [$auth, 'yandexCallback']);
     $router->get('/register.html', [$auth, 'register']);
     $router->get('/forgot-password.html', [$auth, 'forgotPassword']);
     $router->get('/reset-password/{token}', [$auth, 'resetPassword']);

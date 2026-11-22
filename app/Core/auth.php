@@ -12,7 +12,7 @@ function user_start_session(): void
 
     ini_set('session.use_strict_mode', '1');
     ini_set('session.use_only_cookies', '1');
-    $https = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== '' && strtolower($_SERVER['HTTPS']) !== 'off';
+    $https = request_is_https();
     session_set_cookie_params([
         'lifetime' => 0,
         'path' => '/',
