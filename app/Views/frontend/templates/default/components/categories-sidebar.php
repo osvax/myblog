@@ -10,9 +10,11 @@ $sidebarCategories = (isset($sidebarCategories) && is_array($sidebarCategories))
 ?>
 <div class="card border-0 shadow-sm p-4 mb-4">
     <h5 class="fw-bold mb-3"><i class="bi bi-tags text-orange"></i> Рубрики</h5>
-    <?php $rubricMenus = (new \App\Models\Menu())->menusByPrefix('rubric_'); ?>
-    <?php if ($rubricMenus && render_menu_rubric(substr($rubricMenus[0]['menu_name'], 7), 'nav flex-column', 'nav-item mb-2', 'fw-bold text-orange link-orange') !== ''): ?>
-        <?= render_menu_rubric(substr($rubricMenus[0]['menu_name'], 7), 'nav flex-column', 'nav-item mb-2', 'fw-bold text-orange link-orange') ?>
+    <?php $rubricMenuModel = new \App\Models\Menu(); ?>
+    <?php $rubricMenuModel->syncRubricMenu('main'); ?>
+    <?php $rubricMenus = $rubricMenuModel->menusByPrefix('rubric_'); ?>
+    <?php if ($rubricMenus && render_menu_rubric('main', 'nav flex-column', 'nav-item mb-2', 'fw-bold text-orange link-orange') !== ''): ?>
+        <?= render_menu_rubric('main', 'nav flex-column', 'nav-item mb-2', 'fw-bold text-orange link-orange') ?>
     <?php else: ?>
     <ul class="list-unstyled mb-0">
         <?php $sidebarIndex = 0; foreach ($sidebarCategories as $sidebarCategory): ?>

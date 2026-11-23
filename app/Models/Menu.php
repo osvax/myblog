@@ -55,6 +55,56 @@ class Menu
     }
 
     /**
+     * Добавить в основное меню рубрик новые рубрики, не меняя ручной порядок.
+     */
+    public function syncRubricMenu(string $name = 'main'): ?array
+    {
+        $menuName = 'rubric_' . $name;
+        $db = Database::connection();
+        $menu = $this->menuByName($menuName);
+        if (!$menu) {
+            $this->createMenu($menuName, $name === 'main' ? 'Рубрики блога' : $name);
+            $menu = $this->menuByName($menuName);
+        }
+        if (!$menu) {
+            return null;
+        }
+
+        $categories = $db->query(
+            'SELECT id, name, slug FROM ' . db_table('categories') . ' ORDER BY id ASC'
+        )->fetchAll();
+        $existing = $db->prepare(
+            'SELECT url FROM ' . db_table('menu_items') . ' WHERE menu_id = :menu_id'
+        );
+        $existing->execute(['menu_id' => $menu['id']]);
+        $existingUrls = array_fill_keys($existing->fetchAll(\PDO::FETCH_COLUMN), true);
+        $orderStatement = $db->prepare(
+            'SELECT COALESCE(MAX(display_order), 0) FROM ' . db_table('menu_items') . ' WHERE menu_id = :menu_id'
+        );
+        $insert = $db->prepare(
+            'INSERT INTO ' . db_table('menu_items') . ' (menu_id, parent_id, title, url, icon, css_class, display_order, is_active)
+             VALUES (:menu_id, NULL, :title, :url, :icon, \'\', :display_order, 1)'
+        );
+        $orderStatement->execute(['menu_id' => $menu['id']]);
+        $order = (int) $orderStatement->fetchColumn();
+        foreach ($categories as $category) {
+            $url = '/category/' . rawurlencode((string) $category['slug']) . '.html';
+            if (isset($existingUrls[$url])) {
+                continue;
+            }
+            $insert->execute([
+                'menu_id' => $menu['id'],
+                'title' => $category['name'],
+                'url' => $url,
+                'icon' => 'bi-tag',
+                'display_order' => ++$order,
+            ]);
+            $existingUrls[$url] = true;
+        }
+        return $menu;
+    }
+
+    /**
      * Пункты меню (плоский список в порядке отображения).
      */
     public function items(int $menuId, bool $activeOnly = false): array

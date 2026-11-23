@@ -53,7 +53,11 @@ class MenuController extends Controller
         if ($request->method() === 'GET') {
             $action = isset($_GET['action']) && is_string($_GET['action']) ? $_GET['action'] : 'items';
             if ($action === 'menus') {
-                return $this->json(['success' => true, 'menus' => (new Menu())->menusByPrefix($this->menuPrefix)]);
+                $model = new Menu();
+                if ($this->menuPrefix === 'rubric_') {
+                    $model->syncRubricMenu('main');
+                }
+                return $this->json(['success' => true, 'menus' => $model->menusByPrefix($this->menuPrefix)]);
             }
             if ($action === 'items') {
                 $menuName = isset($_GET['menu']) && is_string($_GET['menu']) ? $_GET['menu'] : 'main';
