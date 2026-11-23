@@ -18,7 +18,7 @@ class AuthController extends Controller
         $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
         $result = (new AdminUser())->verifyCredentials($email, $password);
         if (!$result['configured']) {
-            return $this->json(['success' => false, 'error' => 'Проверьте настройки авторизации в config/admin-auth.php'], 503);
+            return $this->json(['success' => false, 'error' => 'Проверьте email входа в админ-панель в настройках сайта'], 503);
         }
         if (!$result['valid']) {
             return $this->json(['success' => false, 'error' => $result['error'] ?? 'Неверный email или пароль'], 401);

@@ -63,6 +63,11 @@ return function (Router $router) {
     $router->post('/api/admin/categories', [$content, 'categories']);
     $router->put('/api/admin/categories/{id}', [$content, 'categories']);
     $router->delete('/api/admin/categories/{id}', [$content, 'categories']);
+    $router->get('/api/admin/categories/{id}/navigation', [$content, 'categoryNavigation']);
+    $router->post('/api/admin/categories/{id}/navigation', [$content, 'categoryNavigation']);
+    $router->patch('/api/admin/categories/{id}/navigation', [$content, 'categoryNavigation']);
+    $router->put('/api/admin/categories/{id}/navigation/{item_id}', [$content, 'categoryNavigation']);
+    $router->delete('/api/admin/categories/{id}/navigation/{item_id}', [$content, 'categoryNavigation']);
 
     $router->get('/api/admin/orders', [$content, 'orders']);
     $router->post('/api/admin/orders/export', [$content, 'exportOrders']);
@@ -98,8 +103,12 @@ return function (Router $router) {
     // ---------- Меню сайта ----------
     $router->get('/api/admin/menus', [$menus, 'handle']);
     $router->post('/api/admin/menus', [$menus, 'handle']);
+    $router->get('/api/admin/rubric-menus', [$menus, 'handleRubric']);
+    $router->post('/api/admin/rubric-menus', [$menus, 'handleRubric']);
     $router->delete('/api/admin/menus/{id}/delete-item', [$menus, 'deleteItem']);
     $router->delete('/api/admin/menus/{name}/delete-menu', [$menus, 'deleteMenu']);
+    $router->delete('/api/admin/rubric-menus/{id}/delete-item', [$menus, 'deleteRubricItem']);
+    $router->delete('/api/admin/rubric-menus/{name}/delete-menu', [$menus, 'deleteRubricMenu']);
 
     $router->post('/api/forms/order', [$forms, 'order']);
     $router->post('/api/forms/feedback', [$forms, 'feedback']);
@@ -133,6 +142,9 @@ return function (Router $router) {
     $router->delete('/api/admin/settings/fields/{key}', [$siteSettings, 'deleteField']);
     $router->post('/api/admin/settings/test-email', [$siteSettings, 'testEmail']);
     $router->post('/api/admin/settings/font', [$siteSettings, 'font']);
+    $router->post('/api/admin/settings/contacts-about-photo', [$siteSettings, 'contactsAboutPhoto']);
+    $router->get('/uploads/contacts/{filename}', [$siteSettings, 'serveContactsAboutPhoto']);
+    $router->head('/uploads/contacts/{filename}', [$siteSettings, 'serveContactsAboutPhoto']);
     $router->get('/api/admin/settings/logs', [$siteSettings, 'logs']);
     $router->post('/api/admin/settings/logs/clear', [$siteSettings, 'clearLogs']);
 
@@ -158,7 +170,3 @@ return function (Router $router) {
     $router->post('/api/admin/custom-fields/{id}/toggle', [$customFields, 'toggleActive']);
     $router->delete('/api/admin/custom-fields/{id}', [$customFields, 'delete']);
 };
-    $router->get('/api/admin/rubric-menus', [$menus, 'handleRubric']);
-    $router->post('/api/admin/rubric-menus', [$menus, 'handleRubric']);
-    $router->delete('/api/admin/rubric-menus/{id}/delete-item', [$menus, 'deleteRubricItem']);
-    $router->delete('/api/admin/rubric-menus/{name}/delete-menu', [$menus, 'deleteRubricMenu']);

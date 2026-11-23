@@ -1,0 +1,77 @@
+// Stages Block
+.va_stages {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $va_spacing-lg;
+
+    @include mq-tablet {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @include mq-mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.va_stage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  padding: $va_spacing-xl;
+  background: $va_color-white;
+  border-radius: $va_border-radius-md;
+  box-shadow: $va_shadow-sm;
+  transition: all $va_transition-base;
+
+  &:hover {
+    box-shadow: $va_shadow-md;
+    transform: translateY(-3px);
+  }
+}
+
+.va_stage__number {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background-size: cover;
+  background-position: center;
+  margin-bottom: $va_spacing-lg;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  span {
+    position: relative;
+    z-index: 1;
+    font-size: $va_font-size-xl;
+    font-weight: 700;
+    color: $va_color-white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+  }
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    border-radius: 50%;
+    z-index: 0;
+  }
+}
+
+.va_stage__title {
+  font-size: $va_font-size-lg;
+  font-weight: 700;
+  color: $va_color-dark;
+  margin-bottom: $va_spacing-sm;
+}
+
+.va_stage__text {
+  font-size: $va_font-size-sm;
+  color: $va_color-gray;
+  line-height: 1.5;
+}

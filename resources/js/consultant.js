@@ -639,6 +639,7 @@ function attachEvents(settings) {
 }
 
 function loadConsultant() {
+    if (document.body.classList.contains('auth-page')) return;
     createChatWidget();
 
     jsonRequest('getSettings').then(function (response) {

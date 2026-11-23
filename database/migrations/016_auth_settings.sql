@@ -3,6 +3,7 @@ ALTER TABLE users
 
 INSERT INTO site_settings (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
 VALUES
+ ('adminLoginEmail', 'osvax@yandex.ru', 'email', 'authentication', 1, 'Email для входа в админ-панель'),
  ('auth2faEnabled', '0', 'checkbox', 'authentication', 10, ''),
  ('yandexAuthEnabled', '0', 'checkbox', 'authentication', 20, ''),
  ('yandexClientId', '', 'text', 'authentication', 30, 'ID приложения Яндекс'),

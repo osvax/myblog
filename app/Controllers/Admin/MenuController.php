@@ -259,6 +259,9 @@ class MenuController extends Controller
         if (!$menu || ($this->menuPrefix === '' && $menu['menu_name'] !== $name)) {
             return $this->json(['success' => false, 'error' => 'Меню не найдено'], 404);
         }
+        if ($menu['menu_name'] === 'rubric_main') {
+            return $this->json(['success' => false, 'error' => 'Основное меню рубрик удалить нельзя'], 400);
+        }
         $result = $model->deleteMenu((string) $menu['menu_name']);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => 'Меню не найдено или главное'], 404);

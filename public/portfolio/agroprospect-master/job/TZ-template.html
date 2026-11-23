@@ -1,0 +1,227 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Техническое задание — Агропроспект</title>
+<style>
+  @font-face {
+    font-family: 'PT Sans';
+    src: url('../fonts/PTSans-Regular/PTSans-Regular.woff2') format('woff2');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'PT Sans';
+    src: url('../fonts/PTSans-Bold/PTSans-Bold.woff2') format('woff2');
+    font-weight: 700;
+    font-display: swap;
+  }
+
+  :root {
+    --green: #18965e;
+    --green-dark: #0c7e4b;
+    --heading: #383c43;
+    --text: #474e53;
+    --muted: #9ea7ad;
+    --line: #e5e7e9;
+    --bg-soft: #f5f7f6;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  html { font-size: 13px; }
+
+  body {
+    font-family: 'PT Sans', Arial, sans-serif;
+    color: var(--text);
+    line-height: 1.5;
+    background: #fff;
+  }
+
+  .page {
+    max-width: 186mm;
+    margin: 0 auto;
+    padding: 14mm 16mm;
+  }
+
+  /* ---------- Шапка документа ---------- */
+  .doc-head {
+    border-bottom: 3px solid var(--green);
+    padding-bottom: 14px;
+    margin-bottom: 22px;
+  }
+
+  .doc-head .kicker {
+    color: var(--green);
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .12em;
+    margin-bottom: 6px;
+  }
+
+  .doc-head h1 {
+    color: var(--heading);
+    font-size: 24px;
+    line-height: 1.2;
+    font-weight: 700;
+  }
+
+  .doc-head .sub {
+    color: var(--muted);
+    font-size: 12px;
+    margin-top: 6px;
+  }
+
+  /* ---------- Разделы ---------- */
+  h2 {
+    color: var(--heading);
+    font-size: 15px;
+    font-weight: 700;
+    margin: 22px 0 10px;
+    padding-left: 10px;
+    border-left: 4px solid var(--green);
+    line-height: 1.3;
+  }
+
+  h2 .num { color: var(--green); }
+
+  /* ---------- Таблица ---------- */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  th, td {
+    border: 1px solid var(--line);
+    padding: 7px 10px;
+    text-align: left;
+    vertical-align: top;
+  }
+
+  th {
+    width: 34%;
+    background: var(--bg-soft);
+    color: var(--heading);
+    font-weight: 700;
+  }
+
+  /* ---------- Списки ---------- */
+  ul {
+    padding-left: 18px;
+    margin: 4px 0;
+  }
+
+  li { margin-bottom: 5px; }
+  li::marker { color: var(--green); }
+
+  strong { color: var(--heading); }
+
+  code {
+    font-family: Consolas, 'Courier New', monospace;
+    font-size: 11px;
+    background: var(--bg-soft);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 0 4px;
+    color: var(--green-dark);
+  }
+
+  /* ---------- Форматирование для печати ---------- */
+  @page {
+    size: A4;
+    margin: 0;
+  }
+
+  .page { page-break-inside: auto; }
+  h2 { page-break-after: avoid; }
+  table, .doc-head { page-break-inside: avoid; }
+  li { page-break-inside: avoid; }
+
+  .doc-foot {
+    margin-top: 28px;
+    padding-top: 10px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 10px;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+  <div class="page">
+    <div class="doc-head">
+      <div class="kicker">Техническое задание</div>
+      <h1>АГРОПРОСПЕКТ — дилер сельскохозяйственной техники</h1>
+      <div class="sub">Перевёрстка многостраничного сайта: SCSS + БЭМ (префикс <code>va_</code>), полная адаптивность, сохранение контента и интерактива</div>
+    </div>
+
+    <h2><span class="num">1.</span> Общие сведения</h2>
+    <table>
+      <tr><th>Проект</th><td>АГРОПРОСПЕКТ — дилер сельскохозяйственной техники</td></tr>
+      <tr><th>Тип</th><td>Адаптивный многостраничный сайт (5 страниц)</td></tr>
+      <tr><th>Язык</th><td>Русский</td></tr>
+      <tr><th>Срок</th><td>5 рабочих дней</td></tr>
+      <tr><th>Формат сдачи</th><td>HTML, CSS, SCSS, JS, изображения, шрифты, скриншоты</td></tr>
+    </table>
+
+    <h2><span class="num">2.</span> Стек и ограничения</h2>
+    <ul>
+      <li>HTML5, SCSS/Sass (Dart Sass), CSS3, jQuery 3.3.1, Owl Carousel, Picturefill;</li>
+      <li>БЭМ с обязательным префиксом <code>va_</code> для всех проектных классов;</li>
+      <li>исходные изображения и шрифты (PT Sans) проекта сохраняются без замены;</li>
+      <li>библиотеки исходного проекта (<code>lib/</code>) используются без модификаций;</li>
+      <li>CSS собирается в <code>css/main.css</code>.</li>
+    </ul>
+
+    <h2><span class="num">3.</span> Структура страниц</h2>
+    <table>
+      <tr><th>1. Главная</th><td>Шапка с контактами и CTA, каталог техники, hero-слайдер (3 слайда), преимущества, три блока презентаций со слайдерами обложек, «Схема работы» (5 шагов), подвал</td></tr>
+      <tr><th>2. О компании</th><td>Хлебные крошки, презентация «Всегда впереди!» со слайдером, таблица технических характеристик, два aside-блока с перечнем ценностей</td></tr>
+      <tr><th>3. Запчасти</th><td>Заголовок, текстовый блок, карточки преимуществ</td></tr>
+      <tr><th>4. Импортная техника</th><td>Заголовок, блок с ценой «от 500 000 ₽» и CTA «Запросить предложение», преимущества, таблица характеристик (десктоп + мобильная)</td></tr>
+      <tr><th>5. Каталог «Зерновые сеялки»</th><td>Заголовок, сетка из 4 карточек товаров, преимущества</td></tr>
+    </table>
+
+    <h2><span class="num">4.</span> Адаптивность</h2>
+    <p style="margin-bottom:6px;">Брейкпоинты: <strong>360 / 480 / 576 / 768 / 992 / 1200 / 1400 / 1921 px</strong>.</p>
+    <ul>
+      <li>до 768 px — полноэкранное мобильное меню с раскрываемым каталогом внутри;</li>
+      <li>сохранена жидкая типографика оригинала: <code>em</code> на десктопе, <code>vw</code> на планшетах и мобильных;</li>
+      <li>сетки и слайдеры перестраиваются без горизонтального скролла (проверено на 320–1920 px);</li>
+      <li>изображения: <code>object-fit: cover</code> и сохранение пропорций;</li>
+      <li>таблица импорта на мобильных складывается в стек, дополнительно показывается мобильная таблица.</li>
+    </ul>
+
+    <h2><span class="num">5.</span> SCSS-архитектура</h2>
+    <p><code>abstracts</code> — переменные, миксины, подключение шрифтов; <code>base</code> — reset и базовые стили; <code>layout</code> — контейнер и сетка; <code>components</code> — 16 компонентов (header, navigation, hero, features, presentation, steps, page, table, footer, modal, form, breadcrumb, burger, common и др.); <code>utils</code> — утилиты; <code>style.scss</code> — точка входа.</p>
+
+    <h2><span class="num">6.</span> Интерактивность</h2>
+    <ul>
+      <li>плавные якорные переходы (включая <code>#contacts</code> в подвале);</li>
+      <li>выпадающий каталог техники (desktop) с закрытием по клику вне;</li>
+      <li>полноэкранное мобильное меню: бургер → оверлей, каталог внутри, <code>Esc</code>, блокировка скролла;</li>
+      <li>слайдеры hero и обложек (Owl Carousel, <code>rewind</code>, стрелки);</li>
+      <li>модальная форма «Заказать звонок» / «Запросить предложение»: динамический заголовок, автофокус, закрытие по <code>Esc</code> / бэкдропу / кнопке;</li>
+      <li>guard на пустых якорях <code>href="#"</code>.</li>
+    </ul>
+
+    <h2><span class="num">7.</span> Приёмка</h2>
+    <ul>
+      <li>все классы имеют префикс <code>va_</code> и соответствуют БЭМ;</li>
+      <li>SCSS компилируется без ошибок (dart-sass, без source-map);</li>
+      <li>интерактивы и формы работают на всех страницах;</li>
+      <li>нет ошибок в консоли, битых ассетов и горизонтального скролла;</li>
+      <li>проверены desktop (1920 / 1440 / 1200), tablet (992 / 768) и mobile (390 / 360 / 320);</li>
+      <li>подготовлены 4 скриншота 1200×675 (16:9) для портфолио.</li>
+    </ul>
+
+    <div class="doc-foot">
+      <span>Техническое задание — АГРОПРОСПЕКТ</span>
+      <span>2026</span>
+    </div>
+  </div>
+</body>
+</html>

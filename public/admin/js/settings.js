@@ -12,10 +12,59 @@
         var isCheckOn = function (value) {
             return value === true || value === 1 || value === '1';
         };
+        var loadedSettings = {};
+        var aboutEditor = document.getElementById('contactsAboutEditor');
+        var aboutSource = document.getElementById('contactsAboutHtml');
+        var aboutSourceToggle = document.getElementById('contactsAboutSourceToggle');
+        var aboutSourceMode = false;
+
+        function setAboutSourceMode(enabled) {
+            if (!aboutEditor || !aboutSource || !aboutSourceToggle || enabled === aboutSourceMode) return;
+            if (enabled) {
+                aboutSource.value = aboutEditor.innerHTML;
+                aboutEditor.hidden = true;
+                aboutSource.hidden = false;
+            } else {
+                aboutEditor.innerHTML = aboutSource.value;
+                aboutSource.hidden = true;
+                aboutEditor.hidden = false;
+            }
+            aboutSourceMode = enabled;
+            aboutSourceToggle.setAttribute('aria-pressed', String(enabled));
+            aboutSourceToggle.innerHTML = enabled ? '<i class="bi bi-eye"></i> Визуально' : '<i class="bi bi-code-slash"></i> HTML';
+            document.querySelectorAll('[data-about-editor-command], #contactsAboutBlockFormat').forEach(function (control) {
+                control.disabled = enabled;
+            });
+        }
+
+        function syncAboutEditor() {
+            if (aboutEditor && aboutSource && !aboutSourceMode) aboutSource.value = aboutEditor.innerHTML;
+        }
+
+        if (aboutSourceToggle) {
+            aboutSourceToggle.addEventListener('click', function () { setAboutSourceMode(!aboutSourceMode); });
+        }
+        document.querySelectorAll('[data-about-editor-command]').forEach(function (button) {
+            button.addEventListener('click', function () {
+                if (aboutSourceMode || !aboutEditor) return;
+                aboutEditor.focus();
+                document.execCommand(button.dataset.aboutEditorCommand, false, null);
+            });
+        });
+        var aboutBlockFormat = document.getElementById('contactsAboutBlockFormat');
+        if (aboutBlockFormat) {
+            aboutBlockFormat.addEventListener('change', function () {
+                if (!aboutSourceMode && aboutEditor) {
+                    aboutEditor.focus();
+                    document.execCommand('formatBlock', false, aboutBlockFormat.value);
+                }
+            });
+        }
 
         // Загружаем актуальные настройки из базы данных;
         // localStorage используется только как запасной источник значений
         var applySettings = function (settings) {
+            loadedSettings = settings || {};
             Array.from(form.elements).forEach(function (field) {
                 if (!field.id || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
                 if (field.type === 'checkbox') {
@@ -33,6 +82,7 @@
 
         // Собрать значения всех полей формы в объект key → value
         var collectFormValues = function () {
+            syncAboutEditor();
             var values = {};
             Array.from(form.elements).forEach(function (field) {
                 if (!field.id) return;
@@ -60,6 +110,28 @@
                 });
         };
 
+        fetch('../api/admin/templates?action=templates', { credentials: 'same-origin' })
+            .then(function (response) {
+                if (!response.ok) throw new Error('Не удалось загрузить список шаблонов.');
+                return response.json();
+            })
+            .then(function (result) {
+                var templates = Array.isArray(result && result.templates) ? result.templates : ['default'];
+                ['frontend', 'admin'].forEach(function (area) {
+                    var field = document.getElementById(area + 'Template');
+                    if (!field) return;
+                    var current = loadedSettings[area + 'Template'] || field.value;
+                    field.innerHTML = templates.map(function (name) {
+                        var option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        return option.outerHTML;
+                    }).join('');
+                    if (templates.indexOf(current) !== -1) field.value = current;
+                });
+            })
+            .catch(function (error) { console.error(error.message || 'Не удалось загрузить список шаблонов.'); });
+
         fetch('../api/admin/settings', { credentials: 'same-origin' })
             .then(function (response) {
                 if (!response.ok) throw new Error('Не удалось загрузить настройки.');
@@ -67,6 +139,10 @@
             })
             .then(function (result) {
                 applySettings(Object.assign({}, window.SiteSettings.load(), (result && result.settings) || {}));
+                if (aboutSource && aboutEditor) {
+                    aboutEditor.innerHTML = aboutSource.value;
+                    aboutSource.hidden = true;
+                }
             })
             .catch(function (error) {
                 console.error(error.message || 'Не удалось загрузить настройки из базы.');
@@ -169,6 +245,42 @@
                         window.AdminNotifications.show(false, error.message || 'Не удалось отправить тест.');
                     })
                     .then(function () { testBtn.disabled = false; });
+            });
+        }
+
+        // ---------- Загрузка фото блока «Обо мне» ----------
+        var aboutPhotoUpload = document.getElementById('contactsAboutPhotoUpload');
+        var aboutPhotoInput = document.getElementById('contactsAboutPhotoInput');
+        if (aboutPhotoUpload && aboutPhotoInput) {
+            aboutPhotoUpload.addEventListener('click', function () {
+                var file = aboutPhotoInput.files && aboutPhotoInput.files[0];
+                var status = document.getElementById('contactsAboutPhotoStatus');
+                if (!file) {
+                    window.AdminNotifications.show(false, 'Сначала выберите фото');
+                    return;
+                }
+                aboutPhotoUpload.disabled = true;
+                var formData = new FormData();
+                formData.append('contacts_about_photo', file);
+                fetch('../api/auth/csrf', { credentials: 'same-origin' })
+                    .then(function (r) { return r.json(); })
+                    .then(function (csrf) {
+                        return fetch('../api/admin/settings/contacts-about-photo', {
+                            method: 'POST', credentials: 'same-origin',
+                            headers: { 'X-CSRF-Token': csrf.token }, body: formData
+                        });
+                    })
+                    .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d.success) throw new Error(d.error || 'Не удалось загрузить фото'); return d; }); })
+                    .then(function (d) {
+                        document.getElementById('contactsAboutPhoto').value = d.path || '';
+                        if (status) status.textContent = 'Фото загружено';
+                        window.AdminNotifications.show(true, 'Фото блока «Обо мне» загружено');
+                    })
+                    .catch(function (error) {
+                        if (status) status.textContent = 'Ошибка загрузки';
+                        window.AdminNotifications.show(false, error.message || 'Не удалось загрузить фото');
+                    })
+                    .then(function () { aboutPhotoUpload.disabled = false; });
             });
         }
 

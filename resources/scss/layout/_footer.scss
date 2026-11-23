@@ -3,7 +3,7 @@
 // ============================================================
 
 footer {
-  background-color: $dark !important;
+  background-color: var(--theme-dark, $dark) !important;
   margin-bottom: -1px;
   color: rgba($white, 0.7);
   font-weight: $font-weight-normal;

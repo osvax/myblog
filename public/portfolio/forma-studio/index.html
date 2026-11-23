@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FORMA STUDIO — архитектура, которая создаёт пространство</title>
+  <meta name="description" content="Архитектурное бюро FORMA STUDIO: проектирование домов, дизайн интерьера, архитектурный надзор и проекты «под ключ». Киев.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <a class="va-skip-link" href="#main">Перейти к содержимому</a>
+
+  <!-- ======================= ШАПКА ======================= -->
+  <header class="va-header" id="header">
+    <div class="va-container va-header__inner">
+      <nav class="va-nav" id="nav" aria-label="Основная навигация">
+        <ul class="va-nav__list">
+          <li><a class="va-nav__link" href="#about">О студии</a></li>
+          <li><a class="va-nav__link" href="#services">Цены</a></li>
+          <li><a class="va-nav__link" href="#projects">Проекты</a></li>
+          <li><a class="va-nav__link" href="#contacts">Контакты</a></li>
+        </ul>
+        <a class="va-nav__phone" href="tel:+380682554585">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3h2.2l1.6 4-2 1.4a12 12 0 0 0 5.2 5.2l1.4-2 4 1.6v2.2a2.6 2.6 0 0 1-2.8 2.6A16.8 16.8 0 0 1 4 6.8 2.6 2.6 0 0 1 6.6 3z"/></svg>
+          +38 (068) 255 45 85
+        </a>
+      </nav>
+
+      <a class="va-logo va-header__logo" href="#top">Forma Studio</a>
+
+      <a class="va-header__phone" href="tel:+380682554585">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3h2.2l1.6 4-2 1.4a12 12 0 0 0 5.2 5.2l1.4-2 4 1.6v2.2a2.6 2.6 0 0 1-2.8 2.6A16.8 16.8 0 0 1 4 6.8 2.6 2.6 0 0 1 6.6 3z"/></svg>
+        +38 (068) 255 45 85
+      </a>
+
+      <button class="va-burger" id="burger" type="button" aria-label="Открыть меню" aria-expanded="false" aria-controls="nav">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main id="main">
+    <!-- ======================= ГЛАВНЫЙ ЭКРАН ======================= -->
+    <section class="va-hero va-section" id="top">
+      <div class="va-hero__bg">
+        <img src="images/hero.jpg" alt="Современный дом с панорамным остеклением и тёплой подсветкой ночью">
+      </div>
+      <div class="va-container va-hero__inner">
+        <h1 class="va-hero__title">Архитектура,<br>которая создаёт пространство</h1>
+        <p class="va-hero__text">Мы создаём инновационные и эстетически выверенные пространства, где комфорт и функциональность соединяются с современным дизайном.</p>
+        <a class="va-btn va-btn--light" href="#cta">Оставить заявку</a>
+      </div>
+    </section>
+
+    <!-- ======================= УСЛУГИ ======================= -->
+    <section class="va-services va-section" id="services">
+      <div class="va-container">
+        <h2 class="va-section-title va-reveal">Наши услуги</h2>
+        <ul class="va-services__list">
+          <li class="va-services__row va-reveal">
+            <h3 class="va-services__name">Архитектурное проектирование</h3>
+            <p class="va-services__desc">Спроектируем ваш дом индивидуально, объединяя эргономику и эстетику и руководствуясь видением пространства дизайнера.</p>
+          </li>
+          <li class="va-services__row va-reveal">
+            <h3 class="va-services__name">Дизайн интерьера</h3>
+            <p class="va-services__desc">Спроектируем эксклюзивный дизайн интерьера с учётом ваших пожеланий и наших задач.</p>
+          </li>
+          <li class="va-services__row va-reveal">
+            <h3 class="va-services__name">Архитектурный надзор</h3>
+            <p class="va-services__desc">Контролируем реализацию наших проектов от концепции до воплощения.</p>
+          </li>
+          <li class="va-services__row va-reveal">
+            <h3 class="va-services__name">Проекты «под ключ»</h3>
+            <p class="va-services__desc">Берём на себя всё: от разработки концепции до завершения проекта, чтобы вам не о чем было беспокоиться.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ======================= ПРОЕКТЫ ======================= -->
+    <section class="va-projects va-section" id="projects">
+      <div class="va-container">
+        <h2 class="va-section-title va-reveal">Наши проекты</h2>
+
+        <div class="va-projects__viewport">
+          <ul class="va-projects__track" id="projectsTrack">
+            <li class="va-card">
+              <div class="va-card__media">
+                <img src="images/project-1.jpg" alt="Светлая гостиная с диваном и люстрой" loading="lazy">
+              </div>
+              <div class="va-card__body">
+                <h3 class="va-card__title">Квартира 55,6 м²</h3>
+                <p class="va-card__subtitle">Для молодой семьи юристов</p>
+                <p class="va-card__text">Главная идея этого интерьера — создать светлое, лёгкое и уютное пространство. Тёплые цвета и мягкие линии используются во всём дизайне, чтобы вызвать ощущение спокойствия и гармонии.</p>
+                <a class="va-card__more" href="#cta">Подробнее</a>
+              </div>
+            </li>
+
+            <li class="va-card">
+              <div class="va-card__media">
+                <img src="images/project-2.jpg" alt="Двухэтажный дом с бассейном и террасой" loading="lazy">
+              </div>
+              <div class="va-card__body">
+                <h3 class="va-card__title">Дом</h3>
+                <p class="va-card__subtitle">Для семьи врачей</p>
+                <p class="va-card__text">Комфортное пространство для владельцев обеспечивается правильной организацией и планировкой дома. Открытая терраса объединяет бассейн, кухню и жилые зоны.</p>
+                <a class="va-card__more" href="#cta">Подробнее</a>
+              </div>
+            </li>
+
+            <li class="va-card">
+              <div class="va-card__media">
+                <img src="images/project-3.jpg" alt="Загородный дом с бассейном и вечерней подсветкой" loading="lazy">
+              </div>
+              <div class="va-card__body">
+                <h3 class="va-card__title">Загородный дом</h3>
+                <p class="va-card__subtitle">Для семьи предпринимателей</p>
+                <p class="va-card__text">В ходе разработки проекта была создана планировка с открытой кухней-гостиной, где камин по центру служит пространственным разделителем.</p>
+                <a class="va-card__more" href="#cta">Подробнее</a>
+              </div>
+            </li>
+
+            <li class="va-card">
+              <div class="va-card__media">
+                <img src="images/project-4.jpg" alt="Интерьер холла с зеркалом и диваном" loading="lazy">
+              </div>
+              <div class="va-card__body">
+                <h3 class="va-card__title">Квартира 78 м²</h3>
+                <p class="va-card__subtitle">Для семьи дизайнеров</p>
+                <p class="va-card__text">Пространство построено на контрасте графичных деталей и мягкого света: строгая геометрия мебели уравновешена натуральными материалами и спокойной палитрой.</p>
+                <a class="va-card__more" href="#cta">Подробнее</a>
+              </div>
+            </li>
+          </ul>
+        </div>
+
+        <div class="va-projects__nav">
+          <button class="va-arrow" id="prevProject" type="button" aria-label="Предыдущий проект" aria-controls="projectsTrack">
+            <svg viewBox="0 0 56 12" aria-hidden="true"><path d="M56 6H2M7 1 2 6l5 5"/></svg>
+          </button>
+          <button class="va-arrow" id="nextProject" type="button" aria-label="Следующий проект" aria-controls="projectsTrack">
+            <svg viewBox="0 0 56 12" aria-hidden="true"><path d="M0 6h54M49 1l5 5-5 5"/></svg>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= ЭТАПЫ РАБОТЫ ======================= -->
+    <section class="va-steps va-section" id="about">
+      <div class="va-container va-steps__grid">
+        <div class="va-steps__content">
+          <h2 class="va-section-title va-section-title--dark va-reveal">От заявки до&nbsp;сдачи «под ключ»</h2>
+          <ol class="va-steps__list">
+            <li class="va-step va-reveal">
+              <span class="va-step__num">1</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Мы получаем вашу заявку</h3>
+                <p class="va-step__desc">Позвоните нам или напишите через сайт.</p>
+              </div>
+            </li>
+            <li class="va-step va-reveal">
+              <span class="va-step__num">2</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Знакомимся</h3>
+                <p class="va-step__desc">На первой встрече обсудим все детали вашего проекта.</p>
+              </div>
+            </li>
+            <li class="va-step va-reveal">
+              <span class="va-step__num">3</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Выезжаем на объект</h3>
+                <p class="va-step__desc">Встречаемся на месте, чтобы снять необходимые размеры, провести фотосъёмку и заполнить подробный технический бриф.</p>
+              </div>
+            </li>
+            <li class="va-step va-reveal">
+              <span class="va-step__num">4</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Обсуждаем и согласовываем общий бюджет проекта</h3>
+                <p class="va-step__desc">Затраты на элементы интерьера, отделочные материалы, мебель и оборудование.</p>
+              </div>
+            </li>
+            <li class="va-step va-reveal">
+              <span class="va-step__num">5</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Определяем планировочное решение</h3>
+                <p class="va-step__desc">На этом этапе предлагаем несколько вариантов зонирования, расстановки мебели и оборудования.</p>
+              </div>
+            </li>
+            <li class="va-step va-reveal">
+              <span class="va-step__num">6</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Разрабатываем концепцию дизайна</h3>
+                <p class="va-step__desc">Опираясь на ваши вкусы и учитывая актуальные тенденции и направления, определяем стиль будущего интерьера.</p>
+              </div>
+            </li>
+            <li class="va-step va-reveal">
+              <span class="va-step__num">7</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Готовим рабочую документацию</h3>
+                <p class="va-step__desc">На следующем этапе готовим все необходимые рабочие чертежи.</p>
+              </div>
+            </li>
+            <li class="va-step va-reveal">
+              <span class="va-step__num">8</span>
+              <div class="va-step__body">
+                <h3 class="va-step__title">Комплектуем проект</h3>
+                <p class="va-step__desc">На финальном этапе комплектации составляем спецификации на мебель, освещение и предметы интерьера.</p>
+              </div>
+            </li>
+          </ol>
+        </div>
+
+        <div class="va-steps__media va-reveal">
+          <img src="images/steps-interior.jpg" alt="Интерьер гостиной в тёплых бежевых тонах" loading="lazy">
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= КАТАЛОГ ======================= -->
+    <section class="va-catalog va-section">
+      <div class="va-container va-catalog__grid">
+        <div class="va-catalog__main">
+          <h2 class="va-section-title va-reveal">Получите каталог наших проектов</h2>
+          <div class="va-catalog__media va-reveal">
+            <img src="images/catalog.jpg" alt="Архитектор и клиентка рассматривают каталог проектов" loading="lazy">
+          </div>
+        </div>
+
+        <div class="va-catalog__content">
+          <h3 class="va-catalog__subtitle va-reveal">Оставьте e-mail, чтобы получить каталог наших проектов</h3>
+          <p class="va-catalog__note va-reveal">Каталог поможет выбрать стиль и продумать планировку.</p>
+
+          <form class="va-form" id="catalogForm" novalidate>
+            <div class="va-field">
+              <label class="va-visually-hidden" for="catalogEmail">E-mail</label>
+              <input type="email" id="catalogEmail" name="email" placeholder="Введите ваш e-mail" autocomplete="email" required>
+              <span class="va-field__error" id="catalogEmailError"></span>
+            </div>
+
+            <label class="va-checkbox">
+              <input type="checkbox" id="catalogAgree" name="agree">
+              <span class="va-checkbox__box" aria-hidden="true"></span>
+              <span>Я согласен на обработку персональных данных</span>
+            </label>
+            <span class="va-field__error va-field__error--check" id="catalogAgreeError"></span>
+
+            <button class="va-btn va-btn--dark" type="submit">Получить каталог</button>
+            <p class="va-form__success" id="catalogSuccess" role="status" hidden>Спасибо! Каталог отправлен на указанный e-mail.</p>
+          </form>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================= ГАЛЕРЕЯ ======================= -->
+    <section class="va-gallery va-section" aria-label="Галерея интерьеров">
+      <div class="va-container va-gallery__grid">
+        <img src="images/gallery-1.jpg" alt="Кухня-гостиная с деревянным островом" loading="lazy">
+        <img src="images/gallery-2.jpg" alt="Светлый холл с зеркалом и креслом" loading="lazy">
+        <img src="images/gallery-3.jpg" alt="Кухня с обеденной зоной и панорамными окнами" loading="lazy">
+        <img src="images/gallery-4.jpg" alt="Столовая с подвесными светильниками" loading="lazy">
+        <img src="images/gallery-5.jpg" alt="Гостиная в тёмных тонах с торшером" loading="lazy">
+        <img src="images/gallery-6.jpg" alt="Спальня с картиной над кроватью" loading="lazy">
+        <img src="images/gallery-7.jpg" alt="Гостиная с камином и видом на сад" loading="lazy">
+        <img src="images/gallery-8.jpg" alt="Лаунж-зона с полками и диваном" loading="lazy">
+      </div>
+    </section>
+
+    <!-- ======================= ЗАЯВКА ======================= -->
+    <section class="va-cta va-section" id="cta">
+      <div class="va-container">
+        <div class="va-cta__panel">
+          <div class="va-cta__box">
+            <h2 class="va-cta__title">Оставьте заявку — и мы поможем с вашим проектом</h2>
+            <form class="va-cta__form" id="ctaForm" novalidate>
+              <label class="va-visually-hidden" for="ctaEmail">E-mail</label>
+              <input type="email" id="ctaEmail" name="email" placeholder="Введите ваш e-mail" autocomplete="email" required>
+              <button class="va-btn va-btn--light" type="submit">Оставить заявку</button>
+            </form>
+            <p class="va-cta__msg" id="ctaMsg" role="status"></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- ======================= ПОДВАЛ ======================= -->
+  <footer class="va-footer" id="contacts">
+    <div class="va-container va-footer__grid">
+      <div class="va-footer__brand">
+        <a class="va-footer__logo" href="#top">Forma<br>Studio</a>
+        <p class="va-footer__copy">© 2010–2025 Бюро</p>
+      </div>
+
+      <nav class="va-footer__col" aria-label="Разделы сайта">
+        <a class="va-footer__link" href="#about">О студии</a>
+        <a class="va-footer__link" href="#services">Цены</a>
+        <a class="va-footer__link" href="#projects">Проекты</a>
+        <a class="va-footer__link" href="#contacts">Контакты</a>
+      </nav>
+
+      <nav class="va-footer__col" aria-label="Услуги">
+        <a class="va-footer__link" href="#services">Дизайн интерьера</a>
+        <a class="va-footer__link" href="#services">Архитектурное проектирование</a>
+        <a class="va-footer__link" href="#services">Авторский надзор</a>
+        <a class="va-footer__link" href="#services">Проекты «под ключ»</a>
+      </nav>
+
+      <ul class="va-footer__contacts">
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="1"/><path d="m3 7 9 6 9-6"/></svg>
+          <a href="mailto:formastudio@gmail.com">formastudio@gmail.com</a>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="12" cy="12" r="4"/><circle cx="17.2" cy="6.8" r="1"/></svg>
+          <a href="#" rel="noopener">formastudio</a>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14 8h3V4h-3a5 5 0 0 0-5 5v3H6v4h3v5h4v-5h3l1-4h-4V9a1 1 0 0 1 1-1z"/></svg>
+          <a href="#" rel="noopener">forma studio</a>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21 3 3 10.5l5.5 2L20 5l-9 9.5.5 6L14 17l4 3 3-17z"/></svg>
+          <a href="#" rel="noopener">@forma.studio</a>
+        </li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M9 20c-1.5-3 0-7 1-9"/><path d="M14.5 3.5c1 4-2 7-5 7"/></svg>
+          <a href="#" rel="noopener">forma.studio</a>
+        </li>
+      </ul>
+
+      <div class="va-footer__address">
+        <p class="va-footer__row">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>
+          <span>Киев,<br>ул. Театральная, 14</span>
+        </p>
+        <a class="va-footer__row" href="tel:+380682554585">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6.6 3h2.2l1.6 4-2 1.4a12 12 0 0 0 5.2 5.2l1.4-2 4 1.6v2.2a2.6 2.6 0 0 1-2.8 2.6A16.8 16.8 0 0 1 4 6.8 2.6 2.6 0 0 1 6.6 3z"/></svg>
+          <span>+38 (068) 255 45 85</span>
+        </a>
+        <p class="va-footer__row va-footer__row--top">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.5 2"/></svg>
+          <span>Часы работы:<br>Пн–Пт<br>9:00 – 17:00</span>
+        </p>
+      </div>
+    </div>
+  </footer>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

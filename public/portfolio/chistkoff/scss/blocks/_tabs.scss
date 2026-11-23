@@ -1,0 +1,55 @@
+// Tabs Block
+.va_tabs {
+  &__nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: $va_spacing-sm;
+    margin-bottom: $va_spacing-lg;
+    border-bottom: 1px solid $va_color-border;
+    padding-bottom: $va_spacing-sm;
+  }
+}
+
+.va_tabs__btn {
+  padding: $va_spacing-sm $va_spacing-md;
+  font-size: $va_font-size-sm;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: $va_color-gray;
+  background: transparent;
+  border: none;
+  border-radius: $va_border-radius-full;
+  cursor: pointer;
+  transition: all $va_transition-base;
+  white-space: nowrap;
+  
+  &:hover {
+    color: $va_color-primary;
+    background: $va_color-gray-bg;
+  }
+  
+  &.active {
+    color: $va_color-white;
+    background: $va_color-primary;
+  }
+}
+
+.va_tabs__panel {
+  display: none;
+  animation: va_tabs-fade 0.3s ease;
+  
+  &.active {
+    display: block;
+  }
+}
+
+@keyframes va_tabs-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,40 @@
+// Counter Block
+.va_counter {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: $va_spacing-md;
+    
+    @include mq-tablet {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @include mq-mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.va_counter__item {
+  text-align: center;
+  padding: $va_spacing-lg;
+}
+
+.va_counter__value {
+  font-size: 48px;
+  font-weight: 900;
+  color: $va_color-primary;
+  line-height: 1;
+  margin-bottom: $va_spacing-xs;
+  
+  @include mq-tablet {
+    font-size: 36px;
+  }
+}
+
+.va_counter__label {
+  font-size: $va_font-size-base;
+  font-weight: 500;
+  text-transform: uppercase;
+  color: $va_color-dark;
+}

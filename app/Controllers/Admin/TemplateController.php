@@ -14,7 +14,7 @@ use SplFileInfo;
 class TemplateController extends Controller
 {
     /**
-     * Список шаблонов: пересечение папок frontend и admin templates.
+     * Список шаблонов публичной части и админки.
      */
     private function templates(): array
     {
@@ -46,15 +46,129 @@ class TemplateController extends Controller
     }
 
     /**
-     * Активный шаблон из config/views.php.
+     * Активные шаблоны из настроек сайта.
      */
     private function activeTemplates(): array
     {
-        $config = is_file(APP_ROOT . '/config/views.php') ? require APP_ROOT . '/config/views.php' : [];
+        $settings = new \App\Models\SiteSettings();
         return [
-            'frontend' => is_array($config) ? ($config['frontend_template'] ?? 'default') : 'default',
-            'admin' => is_array($config) ? ($config['admin_template'] ?? 'default') : 'default',
+            'frontend' => (string) $settings->get('frontendTemplate', 'default'),
+            'admin' => (string) $settings->get('adminTemplate', 'default'),
         ];
+    }
+
+    private function templateMetadata(string $area, string $template): array
+    {
+        $path = APP_ROOT . '/app/Views/' . $area . '/templates/' . $template . '/theme.json';
+        if (!is_file($path)) {
+            return ['name' => $template, 'description' => '', 'version' => ''];
+        }
+        $metadata = json_decode((string) file_get_contents($path), true);
+        return is_array($metadata) ? [
+            'name' => (string) ($metadata['name'] ?? $template),
+            'description' => (string) ($metadata['description'] ?? ''),
+            'version' => (string) ($metadata['version'] ?? ''),
+        ] : ['name' => $template, 'description' => '', 'version' => ''];
+    }
+
+    private function templateUpload(array $file): array
+    {
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            return ['success' => false, 'error' => 'Не удалось загрузить архив'];
+        }
+        if ((int) ($file['size'] ?? 0) > 5 * 1024 * 1024 || strtolower(pathinfo((string) ($file['name'] ?? ''), PATHINFO_EXTENSION)) !== 'zip') {
+            return ['success' => false, 'error' => 'Нужен ZIP-архив размером не более 5 МБ'];
+        }
+        if (!class_exists('ZipArchive')) {
+            return ['success' => false, 'error' => 'На сервере недоступно расширение ZipArchive'];
+        }
+
+        $archive = new \ZipArchive();
+        if ($archive->open($file['tmp_name']) !== true) {
+            return ['success' => false, 'error' => 'Архив повреждён или имеет неверный формат'];
+        }
+        if ($archive->numFiles > 500) {
+            $archive->close();
+            return ['success' => false, 'error' => 'В архиве слишком много файлов'];
+        }
+
+        $entries = [];
+        $totalSize = 0;
+        for ($i = 0; $i < $archive->numFiles; $i++) {
+            $entry = $archive->statIndex($i);
+            $name = str_replace('\\', '/', (string) ($entry['name'] ?? ''));
+            if ($name === '' || strpos($name, '/') === 0 || preg_match('#(^|/)\.\.?(/|$)#', $name)) {
+                $archive->close();
+                return ['success' => false, 'error' => 'Архив содержит небезопасный путь'];
+            }
+            if (isset($entry['size']) && (int) $entry['size'] > 2 * 1024 * 1024) {
+                $archive->close();
+                return ['success' => false, 'error' => 'Файл в архиве превышает 2 МБ'];
+            }
+            $totalSize += (int) ($entry['size'] ?? 0);
+            if ($totalSize > 20 * 1024 * 1024) {
+                $archive->close();
+                return ['success' => false, 'error' => 'Распакованный архив превышает 20 МБ'];
+            }
+            if (substr($name, -1) !== '/' && !preg_match('#^(theme\.json|layout\.php|pages/[a-z0-9_-]+\.php|components/[a-z0-9_-]+\.php|partials/[a-z0-9_-]+\.php|assets/[a-z0-9._-]+\.(css|js|svg|png|jpg|jpeg|webp))$#i', $name)) {
+                $archive->close();
+                return ['success' => false, 'error' => 'В архиве есть файл недопустимого типа или пути'];
+            }
+            $entries[] = $name;
+        }
+        if (!in_array('layout.php', $entries, true)) {
+            $archive->close();
+            return ['success' => false, 'error' => 'В архиве отсутствует обязательный layout.php'];
+        }
+
+        $metadata = json_decode((string) ($archive->getFromName('theme.json') ?: '{}'), true);
+        $slug = is_array($metadata) ? (string) ($metadata['slug'] ?? '') : '';
+        if (!preg_match('/^[a-z0-9][a-z0-9_-]{1,48}$/', $slug) || $slug === 'default') {
+            $archive->close();
+            return ['success' => false, 'error' => 'В theme.json указан некорректный slug шаблона'];
+        }
+        $targetRoot = APP_ROOT . '/app/Views/frontend/templates/' . $slug;
+        if (is_dir($targetRoot)) {
+            $archive->close();
+            return ['success' => false, 'error' => 'Шаблон с таким slug уже существует'];
+        }
+
+        $temporaryRoot = APP_ROOT . '/var/template-upload-' . bin2hex(random_bytes(8));
+        if (!mkdir($temporaryRoot, 0755, true)) {
+            $archive->close();
+            return ['success' => false, 'error' => 'Не удалось создать временную папку'];
+        }
+        if (!$archive->extractTo($temporaryRoot)) {
+            $archive->close();
+            $this->removeDirectory($temporaryRoot);
+            return ['success' => false, 'error' => 'Не удалось распаковать архив'];
+        }
+        $archive->close();
+        foreach (new RecursiveIteratorIterator(new RecursiveDirectoryIterator($temporaryRoot, RecursiveDirectoryIterator::SKIP_DOTS)) as $extracted) {
+            if ($extracted->isFile() && strtolower($extracted->getExtension()) === 'php') {
+                try {
+                    token_get_all((string) file_get_contents($extracted->getPathname()), TOKEN_PARSE);
+                } catch (\ParseError $error) {
+                    $this->removeDirectory($temporaryRoot);
+                    return ['success' => false, 'error' => 'В PHP-файле шаблона есть синтаксическая ошибка'];
+                }
+            }
+        }
+        if (!rename($temporaryRoot, $targetRoot)) {
+            $this->removeDirectory($temporaryRoot);
+            return ['success' => false, 'error' => 'Не удалось установить шаблон'];
+        }
+        return ['success' => true, 'template' => $slug, 'description' => (string) ($metadata['description'] ?? '')];
+    }
+
+    private function removeDirectory(string $directory): void
+    {
+        if (!is_dir($directory)) return;
+        $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
+        foreach ($iterator as $item) {
+            $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());
+        }
+        rmdir($directory);
     }
 
     public function handle($request)
@@ -67,10 +181,16 @@ class TemplateController extends Controller
             $action = isset($_GET['action']) && is_string($_GET['action']) ? $_GET['action'] : 'files';
 
             if ($action === 'templates') {
+                $names = $this->templates();
+                $metadata = [];
+                foreach ($names as $name) {
+                    $metadata[$name] = $this->templateMetadata('frontend', $name);
+                }
                 return $this->json([
                     'success' => true,
-                    'templates' => $this->templates(),
+                    'templates' => $names,
                     'active' => $this->activeTemplates(),
+                    'metadata' => $metadata,
                 ]);
             }
 
@@ -109,6 +229,10 @@ class TemplateController extends Controller
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
         \admin_require_csrf();
+
+        if (isset($_FILES['template_archive'])) {
+            return $this->json($this->templateUpload($_FILES['template_archive']), 201);
+        }
 
         $input = $request->json();
         if (!isset($input['template'], $input['area'], $input['path'], $input['content'], $input['expectedHash']) ||

@@ -18,6 +18,7 @@
         </div>
         <div id="loginError" class="alert alert-danger" style="display:none;"></div>
         <button type="submit" class="btn btn-orange btn-block">Войти</button>
+        <a href="/api/auth/yandex" class="btn btn-outline-dark btn-block mt-2"><i class="bi bi-yandex"></i> Войти через Яндекс</a>
         <button type="button" id="login2faBack" class="btn btn-link btn-block" hidden>← Вернуться к вводу пароля</button>
     </form>
     <div class="auth-links">

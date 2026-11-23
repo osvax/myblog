@@ -1,0 +1,26 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — контейнер
+// ==========================================================
+
+.va_container {
+  max-width: $va-container-max;
+  margin: 0 auto;
+  padding: 0 15px;
+
+  @include va-media-up($va-bp-xxl) {
+    max-width: 48.65em;
+  }
+
+  @include va-media-down(1141px) {
+    max-width: 60.938vw;
+  }
+
+  @include va-media-down($va-bp-sm) {
+    max-width: 95vw;
+  }
+
+  @include va-media-down($va-bp-xs) {
+    max-width: none;
+    width: 100%;
+  }
+}

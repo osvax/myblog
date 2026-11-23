@@ -1,0 +1,59 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Типографика: заголовки секций и кнопки
+// ============================================================
+.va-section {
+  padding: 120px 0;
+}
+
+.va-section-title {
+  font-size: clamp(30px, 2.9vw, 50px);
+  font-weight: 300;
+  line-height: 1.1;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
+  margin-bottom: 64px;
+
+  @include va-m(dark) {
+    color: var(--va-c-white);
+  }
+}
+
+.va-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 56px;
+  padding: 0 34px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 400;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background 0.25s var(--va-ease), color 0.25s var(--va-ease),
+    border-color 0.25s var(--va-ease);
+
+  @include va-m(light) {
+    background: var(--va-c-white);
+    color: var(--va-c-black);
+
+    &:hover {
+      background: var(--va-c-black);
+      color: var(--va-c-white);
+      border-color: rgba(255, 255, 255, 0.55);
+    }
+  }
+
+  @include va-m(dark) {
+    background: var(--va-c-black);
+    color: var(--va-c-white);
+
+    &:hover {
+      background: #2e2e2e;
+    }
+  }
+}

@@ -1,0 +1,32 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — вспомогательные классы
+// ==========================================================
+
+// Визуально скрыто (для доступности)
+.va_visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// Показывается только на мобильных
+.va_sm-only {
+  display: none;
+
+  @include va-media-down($va-bp-sm) {
+    display: block;
+  }
+}
+
+// Скрывается на мобильных
+.va_hide-sm {
+  @include va-media-down($va-bp-sm) {
+    display: none !important;
+  }
+}

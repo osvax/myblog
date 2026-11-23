@@ -43,7 +43,7 @@ class HomeController extends Controller
             $featuredArticles[$article['slug']] = $article;
         }
         $featuredProjects = [];
-        foreach (['project-shop', 'project-blog', 'project-landing', 'project-dashboard'] as $slug) {
+        foreach (['project-shop', 'project-blog', 'project-landing', 'project-community'] as $slug) {
             if (isset($projects[$slug])) {
                 $featuredProjects[$slug] = $projects[$slug];
             }

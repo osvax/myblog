@@ -112,16 +112,33 @@
             systemStatus.className = 'badge bg-success';
         }
 
+        // Иконка-колокольчик в плитках дашборда: при счётчике > 0
+        // иконка становится звенящим колокольчиком, появляется красный кружок с числом
+        function setDashboardBell(link, count) {
+            if (!link) return;
+            var iconBox = link.querySelector('.dashboard-bell-icon');
+            var badge = link.querySelector('.dashboard-bell-count');
+            var icon = iconBox ? iconBox.querySelector('i') : null;
+            if (iconBox) {
+                iconBox.classList.toggle('has-admin-bell', count > 0);
+            }
+            if (icon) {
+                icon.className = 'bi ' + (count > 0 ? 'bi-bell-fill' : (icon.dataset.baseIcon || 'bi-bell'));
+            }
+            if (badge) {
+                badge.textContent = count > 99 ? '99+' : String(count);
+                badge.hidden = count === 0;
+            }
+        }
+
+        var chatTileLink = document.querySelector('a.stat-card[href="consultant.html"]');
+        var commentsTileLink = document.querySelector('a.stat-card[href="messages.html"]');
+        var newOrdersTileLink = document.querySelector('a.stat-card[href="new-orders.html"]');
+
         function updateOrderCounts(orders) {
             var newCount = orders.filter(function (order) { return order.status === 'Новый'; }).length;
-            var inProgressCount = orders.filter(function (order) { return order.status === 'В работе'; }).length;
             document.getElementById('dashboardNewOrdersValue').textContent = String(newCount);
-            document.getElementById('dashboardCurrentOrdersCount').textContent = String(inProgressCount);
-            var badge = document.getElementById('dashboardNewOrdersCount');
-            badge.textContent = newCount > 99 ? '99+' : String(newCount);
-            badge.setAttribute('aria-label', newCount + ' новых заказов');
-            badge.hidden = newCount === 0;
-            document.querySelector('.dashboard-new-orders-icon').classList.toggle('has-new-orders', newCount > 0);
+            setDashboardBell(newOrdersTileLink, newCount);
         }
 
         // Пользователи — из базы (раньше брались из localStorage)
@@ -136,13 +153,32 @@
 
         function updateCommentCount() {
             window.AdminApi.get('/api/admin/messages').then(function (data) {
-                var commentCount = data.messages.filter(function (message) {
+                var comments = data.messages.filter(function (message) {
                     return message.message_type === 'comment';
+                });
+                document.getElementById('dashboardCommentsCount').textContent = String(comments.length);
+                // Бейдж плитки — новые (ещё не прочитанные в разделе «Сообщения») комментарии
+                var newCount = comments.filter(function (message) {
+                    return !Number(message.is_read);
                 }).length;
-                document.getElementById('dashboardCommentsCount').textContent = String(commentCount);
+                setDashboardBell(commentsTileLink, newCount);
             }).catch(function (error) {
                 console.error('Не удалось обновить количество комментариев.', error);
                 document.getElementById('dashboardCommentsCount').textContent = '—';
+            });
+        }
+
+        // Плитка «Чатов» — чаты консультанта, ожидающие ответа (status «new»:
+        // последнее сообщение от посетителя, админ ещё не ответил)
+        function loadChatCount() {
+            window.AdminApi.post('/api/consultant', { action: 'getState' }).then(function (data) {
+                var users = (data && data.data && data.data.users) || [];
+                var count = users.filter(function (user) { return user.status === 'new'; }).length;
+                document.getElementById('dashboardChatsCount').textContent = String(count);
+                setDashboardBell(chatTileLink, count);
+            }).catch(function (error) {
+                console.error('Не удалось обновить количество чатов.', error);
+                document.getElementById('dashboardChatsCount').textContent = '—';
             });
         }
 
@@ -153,7 +189,6 @@
             }).catch(function (error) {
                 console.error('Не удалось обновить счётчики заказов.', error);
                 document.getElementById('dashboardNewOrdersValue').textContent = '—';
-                document.getElementById('dashboardCurrentOrdersCount').textContent = '—';
             });
         }
 
@@ -343,10 +378,14 @@
         window.setInterval(updateClock, 1000);
         updateUserCount();
         updateCommentCount();
+        loadChatCount();
         loadOrderCounts();
         loadStatistics();
         // Посетители онлайн — обновляем каждые 3 секунды
         window.setInterval(loadOnlineCount, 3000);
+        // Плитки «Чатов» и «Комментарии» — фоновое обновление бейджей
+        window.setInterval(loadChatCount, 15000);
+        window.setInterval(updateCommentCount, 30000);
         window.addEventListener('admin-orders-state-changed', loadOrderCounts);
         window.addEventListener('storage', function (event) {
             if (event.key === 'myblog.admin.orders.state.v1') loadOrderCounts();

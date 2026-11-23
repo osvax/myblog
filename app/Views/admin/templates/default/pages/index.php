@@ -20,7 +20,7 @@
     </div>
     <div class="col-sm-6 col-xl-3">
         <a class="stat-card p-3 d-flex align-items-center gap-3 text-decoration-none" href="messages.html">
-            <div class="stat-icon"><i class="bi bi-chat-left-text"></i></div>
+            <div class="stat-icon dashboard-bell-icon"><i class="bi bi-chat-left-text" data-base-icon="bi-chat-left-text"></i><span class="dashboard-bell-count" hidden>0</span></div>
             <div><h3 class="fw-bold mb-0" id="dashboardCommentsCount">—</h3><p class="fw-bold text-muted mb-0">Комментарии</p></div>
         </a>
     </div>
@@ -28,14 +28,14 @@
 
 <div class="row g-4 mb-4">
     <div class="col-sm-6 col-xl-3">
-        <a class="stat-card p-3 d-flex align-items-center gap-3 text-decoration-none" href="current-orders.html">
-            <div class="stat-icon"><i class="bi bi-hourglass-split"></i></div>
-            <div><h3 class="fw-bold mb-0" id="dashboardCurrentOrdersCount">—</h3><p class="fw-bold text-muted mb-0">Текущие заказы</p></div>
+        <a class="stat-card p-3 d-flex align-items-center gap-3 text-decoration-none" href="consultant.html">
+            <div class="stat-icon dashboard-bell-icon"><i class="bi bi-headset" data-base-icon="bi-headset"></i><span class="dashboard-bell-count" hidden>0</span></div>
+            <div><h3 class="fw-bold mb-0" id="dashboardChatsCount">—</h3><p class="fw-bold text-muted mb-0">Чатов</p></div>
         </a>
     </div>
     <div class="col-sm-6 col-xl-3">
         <a class="stat-card p-3 d-flex align-items-center gap-3 text-decoration-none" href="new-orders.html">
-            <div class="stat-icon dashboard-new-orders-icon"><i class="bi bi-bell-fill" aria-hidden="true"></i><span id="dashboardNewOrdersCount" class="dashboard-new-orders-count" aria-label="Количество новых заказов">0</span></div>
+            <div class="stat-icon dashboard-bell-icon"><i class="bi bi-bell" data-base-icon="bi-bell" aria-hidden="true"></i><span id="dashboardNewOrdersCount" class="dashboard-bell-count" hidden aria-label="Количество новых заказов">0</span></div>
             <div><h3 class="fw-bold mb-0" id="dashboardNewOrdersValue">—</h3><p class="fw-bold text-muted mb-0">Новые заказы</p></div>
         </a>
     </div>

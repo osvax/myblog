@@ -1,0 +1,75 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Заявка (CTA)
+// ============================================================
+.va-cta {
+  padding: 0 0 120px;
+}
+
+.va-cta__panel {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 570px;
+  padding: 56px clamp(16px, 3vw, 40px);
+  background-image: url("../images/cta-house.jpg");
+  background-size: cover;
+  background-position: center 62%;
+}
+
+.va-cta__box {
+  width: min(100%, 1000px);
+  padding: 56px clamp(24px, 5vw, 80px) 44px;
+  background: rgba(10, 10, 10, 0.55);
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  text-align: center;
+  color: var(--va-c-white);
+}
+
+.va-cta__title {
+  max-width: 22em;
+  margin: 0 auto 36px;
+  font-size: clamp(24px, 2.5vw, 42px);
+  font-weight: 300;
+  line-height: 1.2;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--va-c-white);
+}
+
+.va-cta__form {
+  display: flex;
+  width: min(100%, 760px);
+  margin: 0 auto;
+}
+
+.va-cta__form input[type="email"] {
+  flex: 1;
+  min-width: 0;
+  height: 56px;
+  padding: 0 18px;
+  border: 0;
+  background: #fff;
+  font-size: 15px;
+  color: var(--va-c-text);
+  outline: none;
+}
+
+.va-cta__form .va-btn {
+  flex: 0 0 auto;
+  height: 56px;
+}
+
+.va-cta__msg {
+  min-height: 18px;
+  margin-top: 14px;
+  font-size: 14px;
+  color: #fff;
+}
+
+.va-cta__msg.is-error {
+  color: #ffb4a8;
+}

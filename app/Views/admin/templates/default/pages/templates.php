@@ -18,10 +18,13 @@
             </div>
             <div class="col-12 d-flex flex-wrap gap-2">
                 <button class="btn btn-orange fw-bold" type="button" id="saveTemplate"><i class="bi bi-save"></i> Сохранить</button>
+                <label class="btn btn-outline-orange fw-bold mb-0" for="templateArchiveInput"><i class="bi bi-file-earmark-zip"></i> Загрузить тему</label>
+                <input type="file" id="templateArchiveInput" accept=".zip,application/zip" hidden>
                 <button class="btn btn-outline-secondary fw-bold" type="button" id="reloadTemplate">Перезагрузить</button>
                 <button class="btn btn-outline-secondary" type="button" id="openPreview" aria-label="Предпросмотр" title="Открыть предпросмотр"><i class="bi bi-eye"></i></button>
                 <span class="ms-auto small fw-bold text-muted align-self-center" id="templateActiveBadge"></span>
             </div>
+            <div class="col-12 small text-muted" id="templateDescription"></div>
         </div>
     </div>
     <div class="card-body p-0">

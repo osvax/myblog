@@ -45,12 +45,40 @@ class SiteSettingsController extends Controller
             return $this->json(['success' => false, 'error' => 'Нет данных'], 400);
         }
 
+        if (array_key_exists('contactsAboutHtml', $input) && is_string($input['contactsAboutHtml'])) {
+            $input['contactsAboutHtml'] = \App\Core\Sanitizer::get()->purify($input['contactsAboutHtml']);
+        }
+
+        // Если меняется список разделов статистики — читаем старый список
+        // до сохранения, чтобы после удалить данные по выключенным разделам
+        $oldStatisticsSections = null;
+        if (array_key_exists('statisticsSections', $input)) {
+            $oldStatisticsSections = (new SiteSettings())->get('statisticsSections', '');
+        }
+
         $result = (new \App\Models\SiteSettings())->saveAllWithType($input);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить'], 500);
         }
 
-        return $this->json(['success' => true]);
+        $response = ['success' => true];
+        if ($oldStatisticsSections !== null) {
+            $oldAllowed = \App\Models\UserActivity::parseSections($oldStatisticsSections);
+            $newAllowed = \App\Models\UserActivity::parseSections($input['statisticsSections']);
+            $removed = array_values(array_diff($oldAllowed, $newAllowed));
+            if ($removed !== []) {
+                try {
+                    $deleted = (new \App\Models\UserActivity())->deleteSections($removed);
+                } catch (\Exception $e) {
+                    return $this->json(['success' => false, 'error' => 'Настройки сохранены, но данные по выключенным разделам не удалены: ' . $e->getMessage()], 500);
+                }
+                if ($deleted > 0) {
+                    $response['deletedRecords'] = $deleted;
+                }
+            }
+        }
+
+        return $this->json($response);
     }
 
     /**
@@ -123,6 +151,84 @@ class SiteSettingsController extends Controller
 
         $result = \App\Core\Mailer::testConnection();
         return $this->json($result);
+    }
+
+    public function serveContactsAboutPhoto($request, array $parameters = [])
+    {
+        if (!in_array($request->method(), ['GET', 'HEAD'], true)) {
+            return new \App\Core\Response('', 405, ['Allow' => 'GET, HEAD']);
+        }
+        $filename = (string) ($parameters['filename'] ?? '');
+        if (!preg_match('/^[a-f0-9]{32}\.(jpg|png|webp)$/', $filename)) {
+            return new \App\Core\Response('', 404);
+        }
+        $directory = APP_ROOT . '/public/uploads/contacts';
+        $path = $directory . '/' . $filename;
+        $realDirectory = realpath($directory);
+        $realPath = realpath($path);
+        if ($realDirectory === false || $realPath === false || dirname($realPath) !== $realDirectory || is_link($realPath) || !is_file($realPath)) {
+            return new \App\Core\Response('', 404);
+        }
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($realPath);
+        $types = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
+        $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        if (!is_string($mime) || ($types[$extension] ?? '') !== $mime) {
+            return new \App\Core\Response('', 404);
+        }
+        $body = $request->method() === 'HEAD' ? '' : file_get_contents($realPath);
+        return new \App\Core\Response($body === false ? '' : $body, 200, [
+            'Content-Type' => $mime,
+            'Content-Length' => (string) filesize($realPath),
+            'Cache-Control' => 'public, max-age=3600',
+            'X-Content-Type-Options' => 'nosniff',
+        ]);
+    }
+
+    public function contactsAboutPhoto($request)
+    {
+        if ($request->method() !== 'POST') {
+            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+        }
+        \admin_require_csrf();
+        $file = $_FILES['contacts_about_photo'] ?? null;
+        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            return $this->json(['success' => false, 'error' => 'Не передано фото'], 400);
+        }
+        if ((int) $file['size'] < 1 || (int) $file['size'] > 5 * 1024 * 1024) {
+            return $this->json(['success' => false, 'error' => 'Размер фото должен быть не больше 5 МБ'], 400);
+        }
+        if (!extension_loaded('fileinfo') || !function_exists('getimagesize')) {
+            return $this->json(['success' => false, 'error' => 'На сервере не настроена проверка изображений'], 500);
+        }
+        $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
+        $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
+        $image = @getimagesize($file['tmp_name']);
+        if (!is_string($mime) || !isset($extensions[$mime]) || $image === false || ($image['mime'] ?? '') !== $mime) {
+            return $this->json(['success' => false, 'error' => 'Разрешены только JPEG, PNG и WebP'], 400);
+        }
+        $directory = APP_ROOT . '/public/uploads/contacts';
+        if (is_link(APP_ROOT . '/public/uploads') || is_link($directory)) {
+            return $this->json(['success' => false, 'error' => 'Некорректная папка загрузки'], 500);
+        }
+        if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
+            return $this->json(['success' => false, 'error' => 'Не удалось создать папку для фото'], 500);
+        }
+        $filename = bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
+        $target = $directory . '/' . $filename;
+        if (!move_uploaded_file($file['tmp_name'], $target)) {
+            return $this->json(['success' => false, 'error' => 'Не удалось сохранить фото'], 500);
+        }
+        $settings = new SiteSettings();
+        $oldPath = (string) $settings->get('contactsAboutPhoto', '');
+        $path = 'uploads/contacts/' . $filename;
+        $settings->saveAllWithType(['contactsAboutPhoto' => $path]);
+        if (preg_match('#^uploads/contacts/[a-f0-9]{32}\.(?:jpg|png|webp)$#', $oldPath)) {
+            $oldFile = APP_ROOT . '/public/' . $oldPath;
+            if (is_file($oldFile) && !is_link($oldFile)) {
+                @unlink($oldFile);
+            }
+        }
+        return $this->json(['success' => true, 'path' => $path]);
     }
 
     /**

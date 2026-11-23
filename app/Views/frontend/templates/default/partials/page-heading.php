@@ -1,4 +1,4 @@
-<header class="page-header bg-orange text-white text-center py-5">
+<header class="page-header <?= !empty($orderHeading) ? 'page-header-order' : 'bg-orange' ?> text-white text-center py-5">
     <div class="container">
         <?php if (!empty($headingIcon)): ?>
             <i class="bi <?= htmlspecialchars($headingIcon, ENT_QUOTES, 'UTF-8') ?> display-3 mb-3"></i>

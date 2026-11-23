@@ -144,26 +144,15 @@ class UserActivity
      */
     public static function sectionCaseSql(string $alias = 't0'): string
     {
-        $content = require APP_ROOT . '/config/public-content.php';
-        $articleUrls = array_map(
-            static function ($slug) { return "'" . $slug . ".html'"; },
-            array_map(static function ($slug) { return '/' . $slug; }, array_keys(is_array($content) && isset($content['articles']) ? $content['articles'] : []))
-        );
-        $projectUrls = array_map(
-            static function ($slug) { return "'" . $slug . ".html'"; },
-            array_keys(is_array($content) && isset($content['projects']) ? $content['projects'] : [])
-        );
-        $articleIn = $articleUrls !== [] ? "{$alias}.page_url IN (" . implode(', ', $articleUrls) . ") OR " : '';
-        $projectIn = $projectUrls !== [] ? "{$alias}.page_url IN (" . implode(', ', $projectUrls) . ") OR " : '';
-
         // slug статьи = page_url без ведущего '/' и суффикса '.html' (односегментный URL)
         $articleSlugExpr = "LEFT(SUBSTRING({$alias}.page_url, 2), CHAR_LENGTH({$alias}.page_url) - 6)";
         $dbArticleExists = "({$alias}.page_url LIKE '/%.html' AND {$alias}.page_url NOT LIKE '/%/%' AND EXISTS (SELECT 1 FROM " . db_table('articles') . " a WHERE a.slug = {$articleSlugExpr}))";
+        $dbProjectExists = "({$alias}.page_url LIKE '/project-%.html' AND EXISTS (SELECT 1 FROM " . db_table('portfolio_projects') . " p WHERE CONCAT('/', p.slug, '.html') = {$alias}.page_url))";
 
         return "CASE
             WHEN {$alias}.page_url IN ('/', '/index.html', '/mvc', '/health') THEN 'home'
-            WHEN {$alias}.page_url = '/blog.html' OR {$alias}.page_url LIKE '/category/%' OR {$articleIn}{$dbArticleExists} THEN 'blog'
-            WHEN {$projectIn}{$alias}.page_url IN ('/portfolio.html', '/messages.html', '/orders.html', '/settings.html') OR {$alias}.page_url LIKE '/project-%' THEN 'portfolio'
+            WHEN {$alias}.page_url = '/blog.html' OR {$alias}.page_url LIKE '/category/%' OR {$dbArticleExists} THEN 'blog'
+            WHEN {$dbProjectExists} OR {$alias}.page_url IN ('/portfolio.html', '/messages.html', '/orders.html', '/settings.html') THEN 'portfolio'
             WHEN {$alias}.page_url IN ('/login.html', '/register.html', '/forgot-password.html', '/profile.html', '/logout.html')
                  OR {$alias}.page_url LIKE '/reset-password%' OR {$alias}.page_url LIKE '/api/auth%' OR {$alias}.page_url LIKE '/api/profile%' THEN 'auth'
             ELSE 'other'
@@ -179,12 +168,6 @@ class UserActivity
         if ($path !== '/' && substr($path, -1) === '/') {
             $path = rtrim($path, '/');
         }
-
-        $content = require APP_ROOT . '/config/public-content.php';
-        $articleFiles = array_map(
-            static function ($slug) { return '/' . $slug . '.html'; },
-            array_keys(is_array($content) && isset($content['articles']) ? $content['articles'] : [])
-        );
 
         if (in_array($path, ['/', '/index.html', '/mvc', '/health'], true)) {
             return 'home';
@@ -210,8 +193,18 @@ class UserActivity
             } catch (\Exception $e) {
                 // Таблица может отсутствовать — продолжаем по конфиги
             }
-            if (in_array($path, $articleFiles, true)) {
-                return 'blog';
+        }
+
+        if (strpos($path, '/project-') === 0 && substr($path, -5) === '.html') {
+            try {
+                $stmt = Database::connection()->prepare(
+                    "SELECT 1 FROM " . db_table('portfolio_projects') . " WHERE CONCAT('/', slug, '.html') = :path LIMIT 1"
+                );
+                $stmt->execute([':path' => $path]);
+                if ($stmt->fetch()) {
+                    return 'portfolio';
+                }
+            } catch (\Exception $e) {
             }
         }
 
@@ -227,6 +220,29 @@ class UserActivity
     }
 
     /**
+     * Разобрать значение настройки statisticsSections (JSON-массив разделов).
+     * Пустое или невалидное значение — включены все разделы.
+     *
+     * @return string[]
+     */
+    public static function parseSections($raw): array
+    {
+        if (is_array($raw)) {
+            $decoded = $raw;
+        } else {
+            $raw = trim((string) $raw);
+            if ($raw === '') {
+                return self::SECTIONS;
+            }
+            $decoded = json_decode($raw, true);
+        }
+        if (!is_array($decoded)) {
+            return self::SECTIONS;
+        }
+        return array_values(array_intersect(self::SECTIONS, $decoded));
+    }
+
+    /**
      * Разделы, по которым ведётся статистика (site_settings.statisticsSections).
      * Ключ отсутствует или значение невалидно — включены все разделы.
      *
@@ -235,18 +251,43 @@ class UserActivity
     public static function allowedSections(): array
     {
         try {
-            $raw = (string) (new SiteSettings())->get('statisticsSections', '');
+            $raw = (new SiteSettings())->get('statisticsSections', '');
         } catch (\Exception $e) {
             return self::SECTIONS;
         }
-        if ($raw === '') {
-            return self::SECTIONS;
+        return self::parseSections($raw);
+    }
+
+    /**
+     * Удалить все записи посещений по указанным разделам
+     * (вызывается, когда разделы исключают из сбора статистики —
+     * данные по выключенным разделам не должны оставаться в базе).
+     *
+     * @param string[] $sections Разделы из SECTIONS
+     * @return int количество удалённых записей
+     */
+    public function deleteSections(array $sections): int
+    {
+        $sections = array_values(array_intersect(self::SECTIONS, $sections));
+        if ($sections === []) {
+            return 0;
         }
-        $decoded = json_decode($raw, true);
-        if (!is_array($decoded)) {
-            return self::SECTIONS;
+
+        $db = Database::connection();
+        $params = [];
+        $in = [];
+        foreach ($sections as $index => $section) {
+            $name = ':stat_section_del_' . $index;
+            $in[] = $name;
+            $params[$name] = $section;
         }
-        return array_values(array_intersect(self::SECTIONS, $decoded));
+
+        $stmt = $db->prepare(
+            'DELETE t0 FROM ' . db_table('user_activities') . " t0
+             WHERE (" . self::sectionCaseSql('t0') . ') IN (' . implode(', ', $in) . ')'
+        );
+        $stmt->execute($params);
+        return (int) $stmt->rowCount();
     }
 
     /**

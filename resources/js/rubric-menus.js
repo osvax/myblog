@@ -64,6 +64,7 @@ document.addEventListener('DOMContentLoaded', () => {
             select.innerHTML = menus.map((menu) => '<option value="' + escapeHtml(menu.menu_name.replace(/^rubric_/, '')) + '">' + escapeHtml(menu.title || menu.menu_name.replace(/^rubric_/, '')) + ' (' + menu.items_count + ')</option>').join('');
             if (!menus.length) select.innerHTML = '<option value="main">Рубрики блога (основное меню)</option>';
             if (selected && Array.from(select.options).some((option) => option.value === selected)) select.value = selected;
+            updateDeleteButton();
             return loadItems();
         });
     }
@@ -130,7 +131,7 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
-    select.addEventListener('change', () => { resetForm(); loadItems(); });
+    select.addEventListener('change', () => { updateDeleteButton(); resetForm(); loadItems(); });
     createButton.addEventListener('click', () => {
         const name = nameInput.value.trim();
         if (!/^[a-z0-9_-]{1,70}$/.test(name)) {
@@ -142,8 +143,17 @@ document.addEventListener('DOMContentLoaded', () => {
             .then(() => window.AdminNotifications.show(true, 'Меню рубрик создано'))
             .catch((error) => window.AdminNotifications.show('error', error.message || 'Не удалось создать меню'));
     });
+    function updateDeleteButton() {
+        const protectedMenu = select.value === 'main';
+        deleteButton.disabled = protectedMenu;
+        deleteButton.title = protectedMenu ? 'Основное меню рубрик удалить нельзя' : 'Удалить меню';
+    }
+
     deleteButton.addEventListener('click', () => {
-        if (!select.value) return;
+        if (!select.value || select.value === 'main') {
+            if (select.value === 'main') window.AdminNotifications.show('warning', 'Основное меню рубрик удалить нельзя');
+            return;
+        }
         api('/api/admin/rubric-menus/' + encodeURIComponent(select.value) + '/delete-menu', 'DELETE')
             .then(() => loadMenus())
             .then(() => window.AdminNotifications.show(true, 'Меню рубрик удалено'))

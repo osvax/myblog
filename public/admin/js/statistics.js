@@ -61,6 +61,14 @@
     // Единый график «Посещения»: группировка и способ отображения
     var timelineView = { gran: 'day', mode: 'line' }; // gran: day/week/month/year; mode: line/bar
 
+    // Фильтр «с даты по дату» для графика «Посещения» (как в заказах):
+    // пустая граница — без ограничения по этой стороне
+    var timelineFilter = { from: '', to: '' };
+    // Полные данные по группировкам до применения фильтра (кнопки зума и смена дат работают от них)
+    var fullTimeline = null;
+    var timelineDateFromInput = document.getElementById('statDateFrom');
+    var timelineDateToInput = document.getElementById('statDateTo');
+
     // Контейнеры зумируемых графиков: id → { state, rerender }.
     // У «по часам» state переключается на уровень «по минутам» в renderHourlyChart();
     // у единого графика — на текущую группировку в renderTimelineChart()
@@ -127,6 +135,74 @@
         // key: '2026-11-05'
         var parts = String(key).split('-');
         return parts[2] + '.' + parts[1];
+    }
+
+    function isoDateValue(date) {
+        return date.getFullYear() + '-' + String(date.getMonth() + 1).padStart(2, '0') +
+            '-' + String(date.getDate()).padStart(2, '0');
+    }
+
+    // Границы периода бакета (ISO-даты): день/неделя — от ключа, месяц/год — весь период
+    function bucketPeriod(key, gran) {
+        if (gran === 'month') {
+            // key: '2026-07'; день 0 следующего месяца — последний день месяца
+            var parts = String(key).split('-');
+            return { from: key + '-01', to: isoDateValue(new Date(parseInt(parts[0], 10), parseInt(parts[1], 10), 0)) };
+        }
+        if (gran === 'year') {
+            return { from: key + '-01-01', to: key + '-12-31' };
+        }
+        if (gran === 'week') {
+            // key — понедельник недели
+            var sunday = new Date(key + 'T12:00:00');
+            sunday.setDate(sunday.getDate() + 6);
+            return { from: key, to: isoDateValue(sunday) };
+        }
+        return { from: key, to: key };
+    }
+
+    // Весь диапазон доступных данных по всем группировкам (для значений по умолчанию)
+    function fullTimelineBounds() {
+        var from = null;
+        var to = null;
+        ['day', 'week', 'month', 'year'].forEach(function (gran) {
+            var keys = fullTimeline[gran].keys;
+            if (!keys.length) return;
+            var first = bucketPeriod(keys[0], gran);
+            var last = bucketPeriod(keys[keys.length - 1], gran);
+            if (from === null || first.from < from) from = first.from;
+            if (to === null || last.to > to) to = last.to;
+        });
+        return { from: from || '', to: to || '' };
+    }
+
+    // Применяем фильтр дат ко всем группировкам; зум сбрасывается к полному отфильтрованному диапазону
+    function applyTimelineDateFilter() {
+        if (!fullTimeline) return;
+        ['day', 'week', 'month', 'year'].forEach(function (gran) {
+            var keys = fullTimeline[gran].keys;
+            var values = fullTimeline[gran].values;
+            if (!timelineFilter.from && !timelineFilter.to) {
+                chartState[gran].keys = keys;
+                chartState[gran].values = values;
+            } else {
+                var keptKeys = [];
+                var keptValues = [];
+                for (var i = 0; i < keys.length; i++) {
+                    // Период оставляем, если пересекается с выбранным диапазоном
+                    var period = bucketPeriod(keys[i], gran);
+                    if (timelineFilter.from && period.to < timelineFilter.from) continue;
+                    if (timelineFilter.to && period.from > timelineFilter.to) continue;
+                    keptKeys.push(keys[i]);
+                    keptValues.push(values[i]);
+                }
+                chartState[gran].keys = keptKeys;
+                chartState[gran].values = keptValues;
+            }
+            chartState[gran].start = 0;
+            chartState[gran].end = chartState[gran].keys.length - 1;
+        });
+        renderTimelineChart();
     }
 
     function formatDateTime(value) {
@@ -339,20 +415,67 @@
             };
         });
 
-        var line = coords.map(function (p, i) { return (i ? 'L' : 'M') + p.x + ',' + p.y; }).join(' ');
+        function smoothPath(points) {
+            if (points.length < 2) return points.length ? 'M' + points[0].x + ',' + points[0].y : '';
+            var path = 'M' + points[0].x + ',' + points[0].y;
+            for (var index = 0; index < points.length - 1; index++) {
+                var current = points[index];
+                var next = points[index + 1];
+                var previous = points[index - 1] || current;
+                var following = points[index + 2] || next;
+                var control1 = {
+                    x: current.x + (next.x - previous.x) / 6,
+                    y: current.y + (next.y - previous.y) / 6
+                };
+                var control2 = {
+                    x: next.x - (following.x - current.x) / 6,
+                    y: next.y - (following.y - current.y) / 6
+                };
+                path += ' C' + control1.x + ',' + control1.y + ' ' + control2.x + ',' + control2.y + ' ' + next.x + ',' + next.y;
+            }
+            return path;
+        }
+
+        var line = smoothPath(coords);
         var area = line + ' L' + coords[m - 1].x + ',' + (geo.pad.top + plotHeight) + ' L' + coords[0].x + ',' + (geo.pad.top + plotHeight) + ' Z';
-        svg.appendChild(svgEl('path', { d: area, fill: '#ff8c1a', 'fill-opacity': '.12' }));
+        svg.appendChild(svgEl('path', { d: area, fill: '#ff8c1a', 'fill-opacity': '.12', class: 'stat-line-area' }));
         svg.appendChild(svgEl('path', {
-            d: line, fill: 'none', stroke: '#ff8c1a', 'stroke-width': 2.5,
-            'stroke-linecap': 'round', 'stroke-linejoin': 'round'
+            d: line, fill: 'none', stroke: '#ff8c1a', 'stroke-width': 3,
+            'stroke-linecap': 'round', 'stroke-linejoin': 'round', class: 'stat-line-path'
         }));
 
-        // Точки — серые (#606060)
+        container.innerHTML = '';
+        container.appendChild(svg);
+
+        var tooltip = document.createElement('div');
+        tooltip.className = 'stat-chart-tooltip';
+        tooltip.hidden = true;
+        container.appendChild(tooltip);
+        function showTooltip(point, index) {
+            tooltip.textContent = '';
+            var period = document.createElement('strong');
+            period.textContent = labelFn(keys[index]);
+            var count = document.createElement('span');
+            count.textContent = fmt(values[index]) + ' посещений';
+            tooltip.appendChild(period);
+            tooltip.appendChild(count);
+            tooltip.hidden = false;
+            var left = point.x / geo.width * container.clientWidth;
+            var top = Math.max(4, point.y / geo.height * geo.height - 62);
+            tooltip.style.left = Math.max(4, Math.min(container.clientWidth - tooltip.offsetWidth - 4, left + 8)) + 'px';
+            tooltip.style.top = top + 'px';
+        }
+        function hideTooltip() {
+            tooltip.hidden = true;
+        }
+
+        // Точки и расширенные зоны наведения.
         coords.forEach(function (p, i) {
-            var marker = svgEl('circle', { cx: p.x, cy: p.y, r: 3, fill: '#606060' });
-            var title = svgEl('title', {});
-            title.textContent = keys[i] + ': ' + fmt(values[i]) + ' посещений';
-            marker.appendChild(title);
+            var hit = svgEl('circle', { cx: p.x, cy: p.y, r: 12, fill: 'transparent', class: 'stat-line-hit' });
+            hit.addEventListener('mouseenter', function () { showTooltip(p, i); });
+            hit.addEventListener('mouseleave', hideTooltip);
+            svg.appendChild(hit);
+            var marker = svgEl('circle', { cx: p.x, cy: p.y, r: 4, fill: '#fff', stroke: '#ff8c1a', 'stroke-width': 2, class: 'stat-line-point' });
             svg.appendChild(marker);
         });
 
@@ -370,8 +493,6 @@
 
         attachBrush(svg, m, onZoom || null, null);
 
-        container.innerHTML = '';
-        container.appendChild(svg);
     }
 
     // ---------- Единый график «Посещения»: дни/недели/месяцы/годы × линия/столбики ----------
@@ -671,8 +792,12 @@
             button.disabled = true;
             window.AdminApi.save('/api/admin/settings', 'PUT', {
                 statisticsSections: JSON.stringify(selected)
-            }).then(function () {
-                notify('success', 'Разделы статистики сохранены');
+            }).then(function (data) {
+                var message = 'Разделы статистики сохранены';
+                if (data && data.deletedRecords > 0) {
+                    message += ' — удалено записей по выключенным разделам: ' + fmt(data.deletedRecords);
+                }
+                notify('success', message);
                 loadOverview();
                 loadTraffic();
             }).catch(function (error) {
@@ -686,12 +811,14 @@
     // ---------- Сводка и графики ----------
     function renderOverview(data) {
         // Единый график: заполняем все группировки, зум — полный диапазон
+        fullTimeline = { day: null, week: null, month: null, year: null };
         var fillTimeline = function (gran, source) {
             var keys = Object.keys(source || {});
             chartState[gran].keys = keys;
             chartState[gran].values = keys.map(function (key) { return Number(source[key]) || 0; });
             chartState[gran].start = 0;
             chartState[gran].end = keys.length - 1;
+            fullTimeline[gran] = { keys: keys.slice(), values: chartState[gran].values.slice() };
             return keys;
         };
         var dateKeys = fillTimeline('day', data.byDate);
@@ -718,7 +845,16 @@
         document.getElementById('statLast30Visits').textContent = fmt(last30);
         document.getElementById('statAvgPerDay').textContent = fmt(Math.round(last30 / 30));
 
-        renderTimelineChart();
+        // Первый запуск: заполняем фильтр полным диапазоном доступных данных
+        if (timelineDateFromInput && timelineDateToInput &&
+            !timelineDateFromInput.value && !timelineDateToInput.value) {
+            var bounds = fullTimelineBounds();
+            timelineDateFromInput.value = bounds.from;
+            timelineDateToInput.value = bounds.to;
+            timelineFilter.from = bounds.from;
+            timelineFilter.to = bounds.to;
+        }
+        applyTimelineDateFilter();
         renderHourlyChart();
 
         renderDonut('statSectionChart', 'statSectionLegend', 'statSectionChartEmpty',
@@ -880,20 +1016,21 @@
                 notify('warning', 'Срок хранения «Без ограничения» — очистка недоступна. Установите срок хранения.');
                 return;
             }
-            if (!window.confirm('Удалить все записи посещений старше ' + days + ' дней? Это действие нельзя отменить.')) {
-                return;
-            }
             var button = this;
-            button.disabled = true;
-            window.AdminApi.post('/api/admin/statistics/clean', {}).then(function (data) {
-                notify('success', 'Очистка выполнена: удалено ' + fmt(data.deleted) + ' записей');
-                loadOverview();
-                loadTraffic();
-            }).catch(function (error) {
-                notify('error', error.message || 'Не удалось очистить старые записи');
-            }).then(function () {
-                button.disabled = false;
-            });
+            window.AdminConfirm.ask('Удалить все записи посещений старше ' + days + ' дней? Это действие нельзя отменить.', { title: 'Очистка статистики', confirmLabel: 'Очистить' })
+                .then(function (result) {
+                    if (!result.ok) return;
+                    button.disabled = true;
+                    window.AdminApi.post('/api/admin/statistics/clean', {}).then(function (data) {
+                        notify('success', 'Очистка выполнена: удалено ' + fmt(data.deleted) + ' записей');
+                        loadOverview();
+                        loadTraffic();
+                    }).catch(function (error) {
+                        notify('error', error.message || 'Не удалось очистить старые записи');
+                    }).then(function () {
+                        button.disabled = false;
+                    });
+                });
         });
     }
 
@@ -936,6 +1073,26 @@
             setDefaultRange(st);
             renderTimelineChart();
         });
+
+        // Фильтр «с даты по дату» для графика «Посещения» (как в заказах)
+        if (timelineDateFromInput && timelineDateToInput) {
+            var todayValue = isoDateValue(new Date());
+            timelineDateFromInput.max = todayValue;
+            timelineDateToInput.max = todayValue;
+            function applyTimelineDateInputs() {
+                var from = timelineDateFromInput.value;
+                var to = timelineDateToInput.value;
+                if (from && to && from > to) {
+                    notify('warning', 'Начальная дата не может быть позже конечной');
+                    return;
+                }
+                timelineFilter.from = from;
+                timelineFilter.to = to;
+                applyTimelineDateFilter();
+            }
+            timelineDateFromInput.addEventListener('change', applyTimelineDateInputs);
+            timelineDateToInput.addEventListener('change', applyTimelineDateInputs);
+        }
         document.getElementById('statHourlyResetBtn').addEventListener('click', function () {
             var st = (hourDrill === null) ? chartState.hourly : chartState.minutes;
             setDefaultRange(st);

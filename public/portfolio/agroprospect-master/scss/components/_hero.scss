@@ -1,0 +1,143 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — главный экран (hero-слайдер)
+// ==========================================================
+
+.va_hero {
+  color: $va-c-white;
+
+  @include va-media-down($va-bp-sm) {
+    margin-top: 1.2em;
+    text-align: center;
+  }
+
+  &__slider {
+    position: relative;
+    padding: 0 1.25em;
+
+    @include va-media-up($va-bp-xxl) {
+      left: 50%;
+      transform: translateX(-50%);
+      width: 1844px;
+    }
+
+    @include va-media-down($va-bp-sm) {
+      padding: 0;
+    }
+  }
+
+  &__title {
+    margin: 0;
+    margin-top: 2.8em;
+    margin-bottom: .79em;
+    color: $va-c-white;
+    font-size: 2.5em;
+    line-height: 1.15;
+    text-shadow: 0 .1em 1em rgba(0, 0, 0, 0.35);
+    @include va-font-bold;
+
+    @include va-media-down($va-bp-sm) {
+      margin-top: 0;
+      padding-top: 2em;
+      font-size: 1.6em;
+    }
+  }
+
+  &__btn {
+    font-size: .87em;
+  }
+}
+
+// ---------- Слайд ----------
+.va_hero-slider__item {
+  position: relative;
+  overflow: hidden;
+  height: 29em;
+
+  // Затемнение — читаемость белого текста
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    background: linear-gradient(90deg,
+      rgba(8, 26, 18, 0.55) 0%,
+      rgba(8, 26, 18, 0.28) 45%,
+      rgba(8, 26, 18, 0.05) 75%);
+  }
+
+  &-bg {
+    position: absolute;
+    z-index: -1;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  &-content {
+    position: relative;
+    z-index: 1;
+
+    @media (max-width: 1400px) {
+      padding: 0 3em;
+    }
+  }
+
+  @include va-media-down($va-bp-sm) {
+    height: 15.25em;
+
+    &::before {
+      background: linear-gradient(180deg,
+        rgba(8, 26, 18, 0.2) 0%,
+        rgba(8, 26, 18, 0.55) 100%);
+    }
+  }
+}
+
+// ---------- Корень слайдера (owl) и стрелки ----------
+.va_hero__slider {
+  // Стрелки слайдера
+  .owl-prev,
+  .owl-next {
+    visibility: hidden;
+    position: absolute;
+    z-index: 3;
+    top: 50%;
+    left: -.75em;
+    transform: translateY(-50%);
+    @include va-slider-arrow;
+  }
+
+  &:hover .owl-prev,
+  &:hover .owl-next {
+    visibility: visible;
+  }
+
+  .owl-next {
+    left: auto;
+    right: -.75em;
+    border-radius: 0 .45em .45em 0 !important;
+
+    &::before {
+      transform: rotate(180deg);
+    }
+  }
+
+  @include va-media-down($va-bp-sm) {
+    .owl-prev,
+    .owl-next {
+      visibility: visible;
+      top: .5em;
+      border-radius: .45em 0 0 .45em;
+      left: 50%;
+      transform: translate(-100%, 0);
+    }
+
+    .owl-next {
+      left: auto;
+      right: 50%;
+      border-radius: 0 .45em .45em 0 !important;
+      transform: translate(100%, 0);
+    }
+  }
+}

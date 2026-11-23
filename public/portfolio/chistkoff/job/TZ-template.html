@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ТЗ на верстку — Шаблон</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 40px 20px;
+            background: #fff;
+        }
+        @media print {
+            body { padding: 0; }
+            .no-print { display: none !important; }
+        }
+        h1 { font-size: 28px; font-weight: 700; color: #1a1a1a; border-bottom: 3px solid #00DA8B; padding-bottom: 12px; margin-bottom: 30px; }
+        h2 { font-size: 22px; font-weight: 700; color: #2c2c2c; margin-top: 40px; margin-bottom: 16px; padding-left: 12px; border-left: 4px solid #00DA8B; }
+        h3 { font-size: 18px; font-weight: 600; color: #333; margin-top: 24px; margin-bottom: 12px; }
+        h4 { font-size: 16px; font-weight: 600; color: #444; margin-top: 16px; margin-bottom: 8px; }
+        p { margin-bottom: 12px; }
+        ul, ol { margin-bottom: 16px; padding-left: 24px; }
+        li { margin-bottom: 6px; }
+        code { background: #f5f5f5; padding: 2px 6px; border-radius: 4px; font-family: 'Monaco', 'Consolas', monospace; font-size: 0.9em; }
+        pre { background: #1e1e1e; color: #d4d4d4; padding: 16px; border-radius: 8px; overflow-x: auto; margin-bottom: 16px; }
+        pre code { background: none; padding: 0; color: inherit; }
+        table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 14px; }
+        th, td { border: 1px solid #e0e0e0; padding: 10px 12px; text-align: left; }
+        th { background: #f5f5f5; font-weight: 600; }
+        tr:nth-child(even) td { background: #fafafa; }
+        .checklist { list-style: none; padding: 0; }
+        .checklist li { position: relative; padding-left: 28px; margin-bottom: 8px; }
+        .checklist li::before { content: "☐"; position: absolute; left: 0; font-size: 16px; color: #999; }
+        .checklist li.done::before { content: "☑"; color: #00DA8B; }
+        .badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; text-transform: uppercase; }
+        .badge-required { background: #fee; color: #c00; }
+        .badge-optional { background: #efe; color: #060; }
+        .badge-info { background: #eef; color: #006; }
+        .section-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 24px; font-size: 14px; color: #666; }
+        .section-meta span { background: #f5f5f5; padding: 4px 12px; border-radius: 20px; }
+        .page-break { page-break-before: always; }
+        .header-info { background: #f9f9f9; border: 1px solid #eee; border-radius: 8px; padding: 20px; margin-bottom: 30px; }
+        .header-info table { margin: 0; }
+        .footer-note { margin-top: 60px; padding-top: 20px; border-top: 1px solid #eee; font-size: 13px; color: #888; text-align: center; }
+        .btn-print { position: fixed; bottom: 20px; right: 20px; background: #00DA8B; color: #fff; border: none; padding: 12px 24px; border-radius: 50px; font-weight: 600; cursor: pointer; box-shadow: 0 4px 12px rgba(0,218,139,0.3); z-index: 1000; }
+        .btn-print:hover { background: #00B876; }
+    </style>
+</head>
+<body>
+    <button class="btn-print no-print" onclick="window.print()">🖨 Сохранить как PDF</button>
+
+    <h1>Техническое задание на верстку</h1>
+
+    <div class="header-info">
+        <table>
+            <tr><th style="width: 200px;">Название проекта</th><td><strong>[Название проекта]</strong></td></tr>
+            <tr><th>Тип проекта</th><td>[Лендинг / Многостраничный сайт / Веб-приложение / Админка]</td></tr>
+            <tr><th>Кол-во страниц</th><td>[N уникальных страниц / M уникальных блоков]</td></tr>
+            <tr><th>Дизайн-макеты</th><td>[Figma / Sketch / Adobe XD / PSD / Zeplin — ссылка]</td></tr>
+            <tr><th>Сроки выполнения</th><td>[Начало: ДД.ММ.ГГГГ — Дедлайн: ДД.ММ.ГГГГ]</td></tr>
+            <tr><th>Бюджет</th><td>[Фиксированный / Почасовый — сумма]</td></tr>
+            <tr><th>Заказчик / PM</th><td>[Имя, контакты]</td></tr>
+            <tr><th>Исполнитель</th><td>[Имя, контакты]</td></tr>
+        </table>
+    </div>
+
+    <hr style="margin: 30px 0; border-color: #eee;">
+
+    <h2>1. Технические требования</h2>
+
+    <h3>1.1 Стек технологий</h3>
+    <table>
+        <thead><tr><th>Категория</th><th>Требование</th><th>Примечание</th></tr></thead>
+        <tbody>
+            <tr><td>HTML</td><td>HTML5, семантическая разметка</td><td><span class="badge badge-required">Обязательно</span></td></tr>
+            <tr><td>CSS</td><td>SCSS (Dart Sass), БЭМ с префиксом <code>va_</code></td><td><span class="badge badge-required">Обязательно</span></td></tr>
+            <tr><td>Архитектура</td><td>7-1 паттерн (utils, blocks, vendor)</td><td><span class="badge badge-required">Обязательно</span></td></tr>
+            <tr><td>JS</td><td>Vanilla JS (ES6+) или jQuery 3.x (если legacy)</td><td><span class="badge badge-info">По согласованию</span></td></tr>
+            <tr><td>Сборка</td><td>Vite / Webpack / Gulp / только Sass CLI</td><td><span class="badge badge-info">По согласованию</span></td></tr>
+            <tr><td>Шрифты</td><td>WOFF2, preload, subsetting</td><td><span class="badge badge-required">Обязательно</span></td></tr>
+            <tr><td>Иконки</td><td>SVG-спрайт или отдельные SVG</td><td><span class="badge badge-required">Обязательно</span></td></tr>
+            <tr><td>Изображения</td><td>WebP/AVIF + fallback JPG/PNG</td><td><span class="badge badge-optional">Рекомендуется</span></td></tr>
+        </tbody>
+    </table>
+
+    <h3>1.2 Методологии и стандарты</h3>
+    <ul>
+        <li><strong>БЭМ命名</strong> — все кастомные классы с префиксом <code>va_</code> (например: <code>.va_header__logo</code>, <code>.va_btn--primary</code>)</li>
+        <li><strong>Mobile First</strong> — медиа-запросы <code>@media (min-width: ...)</code></li>
+        <li><strong>Design Tokens</strong> — все значения (цвета, отступы, шрифты, брейкпоинты) только через SCSS-переменные</li>
+        <li><strong>Доступность (a11y)</strong> — WCAG 2.1 AA: семантика, ARIA, фокус-стили, контрастность ≥ 4.5:1, alt-тексты</li>
+        <li><strong>Кроссбраузерность</strong> — Chrome 90+, Firefox 88+, Safari 14+, Edge 90+, iOS Safari 14+, Chrome Android 90+</li>
+        <li><strong>Производительность</strong> — CSS < 50 KB gzip, JS < 100 KB gzip, Critical CSS инлайн, lazy-loading изображений</li>
+    </ul>
+
+    <h3>1.3 Адаптивность / Брейкпоинты</h3>
+    <table>
+        <thead><tr><th>Название</th><th>Ширина</th><th>Устройства</th></tr></thead>
+        <tbody>
+            <tr><td>Mobile S</td><td>320–480px</td><td>iPhone SE, маленькие Android</td></tr>
+            <tr><td>Mobile L / Tablet S</td><td>481–768px</td><td>Крупные телефоны, маленькие планшеты</td></tr>
+            <tr><td>Tablet / Laptop S</td><td>769–1024px</td><td>iPad, небольшие ноутбуки</td></tr>
+            <tr><td>Desktop</td><td>1025–1200px</td><td>Стандартные десктопы (container max: 1200px)</td></tr>
+            <tr><td>Wide / X-Wide</td><td>1201–1440px+</td><td>Ультраширокие мониторы</td></tr>
+        </tbody>
+    </table>
+
+    <h2>2. Структура страниц и компонентов</h2>
+
+    <h3>2.1 Список страниц</h3>
+    <table>
+        <thead><tr><th>#</th><th>Страница (URL)</th><th>Описание</th><th>Уникальные блоки</th><th>Приоритет</th></tr></thead>
+        <tbody>
+            <tr><td>1</td><td><code>/</code> (index.html)</td><td>Главная</td><td>Promo, Services, Calculator, Benefits, Tasks, Discounts, MainWorks, Stages, Video, Reviews, ArticleList, Order</td><td><span class="badge badge-required">High</span></td></tr>
+            <tr><td>2</td><td><code>/about.html</code></td><td>О компании</td><td>AboutContent, Team, Certificates</td><td><span class="badge badge-required">High</span></td></tr>
+            <tr><td>3</td><td><code>/business.html</code></td><td>Услуги / Б2Б</td><td>Services (tabs), Calculator</td><td><span class="badge badge-required">High</span></td></tr>
+            <tr><td>4</td><td><code>/contacts.html</code></td><td>Контакты</td><td>Map, ContactForm, Requisites</td><td><span class="badge badge-required">High</span></td></tr>
+            <tr><td>5</td><td><code>/article.html</code></td><td>Детальная статья</td><td>ArticleDetail, RelatedArticles</td><td><span class="badge badge-info">Medium</span></td></tr>
+            <tr><td>6</td><td><code>/faq.html</code></td><td>FAQ</td><td>Accordion, Search</td><td><span class="badge badge-info">Medium</span></td></tr>
+            <tr><td>7</td><td><code>/individual.html</code></td><td>Индивидуальные условия</td><td>Все блоки (наиболее насыщенная)</td><td><span class="badge badge-info">Medium</span></td></tr>
+            <tr><td>8</td><td><code>/manufactory.html</code></td><td>Цеховая химчистка</td><td>Features, Prices, Video</td><td><span class="badge badge-info">Medium</span></td></tr>
+            <tr><td>9</td><td><code>/news.html</code></td><td>Новости / Блог (список)</td><td>Breadcrumbs, Filter, NewsGrid, LoadMore</td><td><span class="badge badge-info">Medium</span></td></tr>
+        </tbody>
+    </table>
+
+    <h3>2.2 Общие блоки (на всех/большинстве страниц)</h3>
+    <table>
+        <thead><tr><th>Блок</th><th>БЭМ-класс</th><th>Описание</th></tr></thead>
+        <tbody>
+            <tr><td>Wrapper</td><td><code>.va_wrapper</code></td><td>Обертка всей страницы</td></tr>
+            <tr><td>Container</td><td><code>.va_container</code></td><td>Центрированный контейнер (max-width: 1200px)</td></tr>
+            <tr><td>Header</td><td><code>.va_header</code></td><td>Шапка: лого, меню, контакты, гамбургер</td></tr>
+            <tr><td>Footer</td><td><code>.va_footer</code></td><td>Подвал: колонки, копирайт, соцсети</td></tr>
+            <tr><td>Modal (Arctic)</td><td><code>.va_modal-arctic</code></td><td>Формы заказа (callback, callback-big)</td></tr>
+            <tr><td>Modal (Fancybox)</td><td><code>.va_modal-content</code></td><td>Галереи, видео, отзывы</td></tr>
+        </tbody>
+    </table>
+
+    <h2>3. Детальное описание ключевых компонентов</h2>
+
+    <h3>3.1 Калькулятор стоимости (<code>.va_calculator</code>)</h3>
+    <ul>
+        <li>Кастомные селекты (<code>.va_select</code>) с ARIA: «Что чистим», «Количество»</li>
+        <li>Чекбоксы доп. опций (<code>.va_checkbox</code>) с ценой в лейбле</li>
+        <li>Кнопка «Добавить ещё заказ» — динамическое добавление блоков</li>
+        <li>Панель цены справа — обновляется в реальном времени</li>
+        <li>Форма справа: Имя, Телефон (маска), Адрес, Дата, Submit</li>
+        <li>Дисклеймер и примечания под формой</li>
+    </ul>
+
+    <h3>3.2 Кейсы «До/После» (<code>.va_mainworks</code>)</h3>
+    <ul>
+        <li>Slick-слайдер с 1 слайдом, fade-переход</li>
+        <li>Кастомный ползунок сравнения (CSS <code>clip-path</code> + <code>input[type="range"]</code>)</li>
+        <li>Лейблы «до чистки» / «после чистки» поверх изображений</li>
+        <li>Кнопка «Все кейсы» ведёт на портфолио</li>
+    </ul>
+
+    <h3>3.3 Слайдеры (Slick Carousel)</h3>
+    <table>
+        <thead><tr><th>Блок</th><th>Настройки</th></tr></thead>
+        <tbody>
+            <tr><td>Акции (<code>.va_discounts__slider</code>)</td><td>slidesToShow: 1, fade: true, arrows: true, autoplay: false</td></tr>
+            <tr><td>Отзывы (<code>.va_reviews__slider</code>)</td><td>slidesToShow: 3 (1024→2, 768→1), arrows: true</td></tr>
+            <tr><td>Кейсы (<code>.va_mainworks__slider</code>)</td><td>slidesToShow: 1, fade: true, custom range slider</td></tr>
+        </tbody>
+    </table>
+
+    <h3>3.4 Формы и модалки</h3>
+    <ul>
+        <li><strong>ArcticModal</strong> — формы заказа (<code>#modal-callback</code>, <code>#modal-callback-big</code>), триггеры: <code>[data-arcticmodal="..."]</code></li>
+        <li><strong>Fancybox 3</strong> — галерея отзывов, видео (YouTube iframe), увеличение фото</li>
+        <li><strong>Маска телефона</strong> — <code>+7 (999) 999 99 99</code> (jQuery Masked Input)</li>
+        <li><strong>Валидация</strong> — HTML5 (<code>required</code>, <code>type="tel/email"</code>) + JS-проверка перед отправкой</li>
+        <li><strong>Отправка</strong> — AJAX (FormData), обработка ответов, toast-уведомления</li>
+    </ul>
+
+    <h3>3.5 Анимации (AOS)</h3>
+    <ul>
+        <li>Глобальные настройки: <code>offset: 250, duration: 1000, easing: "ease-out-cubic", delay: 100, disable: "mobile", once: true</code></li>
+        <li>Атрибуты: <code>data-aos="fade-up"</code>, <code>data-aos-delay="100|200|300..."</code></li>
+        <li>На мобильных (< 768px) анимации отключены для производительности</li>
+    </ul>
+
+    <h2>4. Требования к верстке конкретных элементов</h2>
+
+    <h3>4.1 Типографика</h3>
+    <table>
+        <thead><tr><th>Элемент</th><th>Шрифт</th><th>Размер</th><th>Вес</th><th>Line-height</th></tr></thead>
+        <tbody>
+            <tr><td>H1</td><td>GothamProBlack</td><td>48px / 36px (mobile)</td><td>900</td><td>1.2</td></tr>
+            <tr><td>H2</td><td>GothamProBold</td><td>36px / 28px</td><td>700</td><td>1.3</td></tr>
+            <tr><td>H3</td><td>GothamProBold</td><td>28px / 22px</td><td>700</td><td>1.3</td></tr>
+            <tr><td>Body</td><td>GothamProRegular</td><td>16px</td><td>400</td><td>1.5</td></tr>
+            <tr><td>Small / Caption</td><td>GothamProRegular</td><td>12–14px</td><td>400</td><td>1.4</td></tr>
+            <tr><td>Btn / UI</td><td>GothamProMedium</td><td>14–16px</td><td>500</td><td>1</td></tr>
+        </tbody>
+    </table>
+
+    <h3>4.2 Кнопки (<code>.va_btn</code>)</h3>
+    <pre><code><a href="#" class="va_btn va_btn--primary va_btn--lg va_btn--icon">Текст</a>
+<button class="va_btn va_btn--outline va_btn--sm">Текст</button></code></pre>
+    <p>Модификаторы: <code>--primary</code>, <code>--outline</code>, <code>--white</code>, <code>--sm|md|lg|xl</code>, <code>--full</code>, <code>--icon</code>.</p>
+    <p>Состояния: <code>:hover</code>, <code>:focus-visible</code>, <code>:active</code>, <code>:disabled</code>.</p>
+
+    <h3>4.3 Инпуты и селекты</h3>
+    <ul>
+        <li><code>.va_form__input</code> — padding 12px 16px, border 1px solid <code>$va_color-border</code>, radius 8px, transition все 0.3s</li>
+        <li><code>:focus</code> — border <code>$va_color-primary</code>, box-shadow 0 0 0 3px rgba(primary, 0.2)</li>
+        <li><code>.va_select</code> — кастомный dropdown, полная клавиатурная навигация (Enter/Space — открыть, ArrowUp/Down — выбор, Escape — закрыть)</li>
+        <li><code>.va_checkbox</code> — CSS-only стилизация через <code>::before</code>/<code>::after</code>, анимация галочки</li>
+    </ul>
+
+    <h3>4.4 IBG паттерн (background images)</h3>
+    <pre><code><div class="va_ibg">
+  <img src="image.jpg" alt="Описание">
+</div></code></pre>
+    <p>JS копирует <code>src</code> в <code>background-image</code> контейнера. <code><img></code> скрыт через <code>opacity: 0</code> / <code>position: absolute</code>, но доступен скринридерам и поисковикам.</p>
+
+    <h2>5. Приёмка работ (Checklist)</h2>
+
+    <h3>5.1 Функциональные проверки</h3>
+    <ul class="checklist">
+        <li>Все N страниц открываются без JS-ошибок в консоли</li>
+        <li>Навигация: меню, хлебные крошки, пагинация/LoadMore работают</li>
+        <li>Гамбургер-меню: открывается/закрывается, лок скролла body, фокус в меню</li>
+        <li>Калькулятор: селекты, чекбоксы, динамическая цена, добавление заказов</li>
+        <li>Слайдеры: автоплей (если есть), стрелки, свайп на таче, клавиатура (←/→)</li>
+        <li>Модалки: открытие по триггерам, закрытие (крестик, ESC, оверлей), фокус-трап</li>
+        <li>Формы: валидация, маска телефона, отправка AJAX, обработка успеха/ошибки</li>
+        <li>Анимации AOS: срабатывают при скролле, не дергаются, отключены на мобильных</li>
+        <li>FAQ аккордеон: открытие/закрытие, только один открыт, клавиатура</li>
+        <li>Фильтр новостей: переключение табов, фильтрация карточек (JS или CSS)</li>
+        <li>Кейсы «До/После»: ползунок работает мышью и клавиатурой</li>
+    </ul>
+
+    <h3>5.2 Визуальные проверки (Pixel Perfect)</h3>
+    <ul class="checklist">
+        <li>Соответствие макету ±1px на всех брейкпоинтах (320, 480, 768, 1024, 1200, 1440)</li>
+        <li>Шрифты: начертания, размеры, межстрочные интервалы, цвет текста</li>
+        <li>Цвета: primary, secondary, background, border — точно по дизайну</li>
+        <li>Отступы: padding/margin блоков, gap в гридах/флексах</li>
+        <li>Тени, скругления, границы — согласно дизайн-системе</li>
+        <li>Ховер/фокус/актив состояния всех интерактивных элементов</li>
+        <li>Иконки: размер, цвет, выравнивание</li>
+        <li>Изображения: не растянуты, object-fit: cover где нужно, нет артефактов сжатия</li>
+    </ul>
+
+    <h3>5.3 Технические проверки</h3>
+    <ul class="checklist">
+        <li>Валидный HTML5 (W3C Validator — 0 ошибок)</li>
+        <li>CSS без ошибок (Stylelint — 0 errors, warnings по согласованию)</li>
+        <li>JS без ошибок в консоли (ESLint — 0 errors)</li>
+        <li>Один минифицированный CSS-файл (<code>styles/style.css</code>), vendor внутри</li>
+        <li>JS бандл (если есть сборка) или раздельные файлы в правильном порядке</li>
+        <li>Шрифты: WOFF2, preload в <code><head></code>, <code>font-display: swap</code></li>
+        <li>Favicon: ICO + PNG (16, 32, 48, 180px)</li>
+        <li>Meta теги: title, description, OG, viewport, charset на каждой странице</li>
+        <li>Нет внешних счетчиков (Яндекс.Метрика, GA) — только по требованию заказчика</li>
+        <li>Печатные стили: скрыты header/footer/модалки/кнопки, корректные разрывы страниц</li>
+    </ul>
+
+    <h3>5.4 Кроссбраузерность и устройства</h3>
+    <ul class="checklist">
+        <li>Chrome (последний) — Windows, macOS, Android</li>
+        <li>Firefox (последний) — Windows, macOS</li>
+        <li>Safari — macOS, iOS (iPhone, iPad)</li>
+        <li>Edge (последний) — Windows</li>
+        <li>Режим разработчика: Device Toolbar — все брейкпоинты</li>
+        <li>Реальные устройства: iPhone SE/14, iPad, Samsung Galaxy, Desktop 1920×1080</li>
+    </ul>
+
+    <h3>5.5 Доступность (a11y)</h3>
+    <ul class="checklist">
+        <li>axe DevTools / Lighthouse Accessibility — Score ≥ 95</li>
+        <li>Клавиатурная навигация: Tab порядок логичен, фокус виден везде</li>
+        <li>Скринридер (NVDA/VoiceOver): все контент доступен, ARIA корректны</li>
+        <li>Контрастность: текст ≥ 4.5:1, UI ≥ 3:1 (WCAG AA)</li>
+        <li>Alt-тексты: все <code><img></code> имеют осмысленный alt</li>
+        <li>Формы: <code><label for="id"></code> для каждого инпута</li>
+        <li>Язык страницы: <code><html lang="ru"></code></li>
+    </ul>
+
+    <h2>6. Процесс разработки и коммуникация</h2>
+
+    <h3>6.1 Этапы и дедлайны</h3>
+    <table>
+        <thead><tr><th>Этап</th><th>Срок</th><th>Результат</th></tr></thead>
+        <tbody>
+            <tr><td>1. Анализ макетов, вопросы к дизайнеру</td><td>День 1</td><td>Список уточнений, оценка сложности</td></tr>
+            <tr><td>2. Настройка окружения, SCSS-архитектура, переменные</td><td>День 1–2</td><td>Готовый <code>scss/main.scss</code>, компиляция работает</td></tr>
+            <tr><td>3. Верстка базовых блоков (Header, Footer, Button, Form, Container)</td><td>День 2–3</td><td>UI Kit готов, переиспользуемые компоненты</td></tr>
+            <tr><td>4. Верстка страниц (по приоритету: High → Medium)</td><td>День 3–N</td><td>Готовые HTML страницы</td></tr>
+            <tr><td>5. JS-логика (слайдеры, модалки, калькулятор, формы)</td><td>Параллельно с 4</td><td>Работающий <code>scripts/main.js</code></td></tr>
+            <tr><td>6. Адаптивность, кроссбраузерность, багфиксы</td><td>После всех страниц</td><td>Пиксель-перфект на всех брейкпоинтах</td></tr>
+            <tr><td>7. Аудит (a11y, perf, валидация), оптимизация</td><td>Финал</td><td>Отчёт Lighthouse, чек-лист пройден</td></tr>
+            <tr><td>8. Сдача: архив / репозиторий / деплой на тест</td><td>Дедлайн</td><td>Готовый к продакшену код</td></tr>
+        </tbody>
+    </table>
+
+    <h3>6.2 Формат сдачи</h3>
+    <ul>
+        <li><strong>Архив</strong> — <code>project.zip</code> со всей структурой (html, scss, css, js, fonts, images)</li>
+        <li><strong>Git репозиторий</strong> — приватный репо с историей коммитов (опционально)</li>
+        <li><strong>Тестовый деплой</strong> — Netlify / Vercel / GitHub Pages / собственный сервер</li>
+        <li><strong>Документация</strong> — README.md (запуск, структура, команды), этот ТЗ</li>
+    </ul>
+
+    <h3>6.3 Коммуникация</h3>
+    <ul>
+        <li>Ежедневные статусы в мессенджере (Telegram/Slack) — что сделано, планы, блокеры</li>
+        <li>Вопросы по макетам — собирать батчами, не по одному</li>
+        <li>Промежуточные демо — по запросу заказчика</li>
+        <li>Финальная демонстрация — скринкаст или живая сессия</li>
+    </ul>
+
+    <h2>7. Дополнительные требования (опционально)</h2>
+    <ul>
+        <li><span class="badge badge-optional">PWA</span> — manifest.json, Service Worker (офлайн-кэш)</li>
+        <li><span class="badge badge-optional">AMP</span> — версии статей для Google AMP</li>
+        <li><span class="badge badge-optional">i18n</span> — мультиязычность (EN, CN) с переключателем</li>
+        <li><span class="badge badge-optional">CMS</span> — интеграция с WP / Bitrix / MODX / Headless</li>
+        <li><span class="badge badge-optional">Тесты</span> — Cypress E2E для критических путей</li>
+        <li><span class="badge badge-optional">Storybook</span> — каталог UI-компонентов</li>
+    </ul>
+
+    <div class="footer-note">
+        <p><strong>Шаблон ТЗ на верстку v1.0</strong> — адаптирован под проект «Чисткофф»</p>
+        <p>Используйте как основу для новых проектов. Заполните поля в <code>[скобках]</code>, удалите неактуальные разделы.</p>
+        <p>Автор: ATOM Team — <a href="http://atom-team.ru">atom-team.ru</a></p>
+    </div>
+</body>
+</html>

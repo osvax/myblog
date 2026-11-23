@@ -1,0 +1,8 @@
+// IBG (Image Background) Block
+.va_ibg {
+  @include ibg;
+  
+  &__img {
+    display: none;
+  }
+}

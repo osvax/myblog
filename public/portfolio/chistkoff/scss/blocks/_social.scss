@@ -1,0 +1,47 @@
+// Social Block
+.va_social {
+  display: flex;
+  gap: $va_spacing-sm;
+}
+
+.va_social__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: $va_color-gray-bg;
+  color: $va_color-gray;
+  transition: all $va_transition-base;
+  
+  &:hover {
+    background: $va_color-primary;
+    color: $va_color-white;
+    transform: translateY(-2px);
+  }
+  
+  img {
+    width: 20px;
+    height: 20px;
+  }
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}
+
+// Footer Social Variant
+.va_footer-social {
+  @extend .va_social;
+  
+  .va_social__link {
+    background: rgba(255, 255, 255, 0.1);
+    color: $va_color-white;
+    
+    &:hover {
+      background: $va_color-primary;
+    }
+  }
+}

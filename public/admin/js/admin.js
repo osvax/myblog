@@ -120,6 +120,47 @@ document.addEventListener('DOMContentLoaded', function () {
     }
     window.AdminNotifications = { show: showToast };
 
+    // ---------- «Колокольчик со счётчиком» для пунктов меню ----------
+    // Паттерн «Новых заказов»: иконка раздела оборачивается в span.admin-bell,
+    // при счётчике > 0 иконка меняется на звенящий колокольчик (bi-bell-fill)
+    // с вторым мини-колокольчиком и красным кружком с числом.
+    function createLinkBell(link) {
+        const bell = link.querySelector('.admin-bell');
+        if (bell) return bell;
+        const icon = link.querySelector('i');
+        if (!icon) return null;
+        const wrapper = document.createElement('span');
+        wrapper.className = 'admin-bell';
+        icon.classList.add('admin-bell-primary');
+        icon.replaceWith(wrapper);
+        wrapper.appendChild(icon);
+        const secondBell = document.createElement('i');
+        secondBell.className = 'bi bi-bell-fill admin-bell-secondary';
+        secondBell.setAttribute('aria-hidden', 'true');
+        wrapper.appendChild(secondBell);
+        return wrapper;
+    }
+
+    function renderLinkBell(link, baseIconClass, count, labelIdle, labelActive) {
+        const bell = createLinkBell(link);
+        if (!bell) return;
+        const badge = link.querySelector('.admin-bell-count');
+        if (badge) badge.remove();
+        link.classList.toggle('has-admin-bell', count > 0);
+        const primary = bell.querySelector('.admin-bell-primary');
+        if (primary) {
+            primary.className = 'bi admin-bell-primary ' + (count > 0 ? 'bi-bell-fill' : baseIconClass);
+        }
+        link.setAttribute('aria-label', count > 0 ? labelActive(count) : labelIdle);
+        if (count > 0) {
+            const countBadge = document.createElement('span');
+            countBadge.className = 'admin-bell-count';
+            countBadge.textContent = count > 99 ? '99+' : String(count);
+            countBadge.setAttribute('aria-hidden', 'true');
+            link.appendChild(countBadge);
+        }
+    }
+
     // ---------- Индикатор новых заказов ----------
     const newOrderLinks = Array.from(document.querySelectorAll('.admin-link[href$="/new-orders.html"]'));
     if (newOrderLinks.length) {
@@ -132,37 +173,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }).length;
 
             newOrderLinks.forEach(function (link) {
-                let bell = link.querySelector('.new-orders-bell');
-                if (!bell) {
-                    const icon = link.querySelector('i');
-                    if (!icon) return;
-                    bell = document.createElement('span');
-                    bell.className = 'new-orders-bell';
-                    icon.classList.add('new-orders-bell-primary');
-                    icon.replaceWith(bell);
-                    bell.appendChild(icon);
-                    const secondBell = document.createElement('i');
-                    secondBell.className = 'bi bi-bell-fill new-orders-bell-secondary';
-                    secondBell.setAttribute('aria-hidden', 'true');
-                    bell.appendChild(secondBell);
-                }
-
-                const badge = link.querySelector('.new-orders-count');
-                if (badge) badge.remove();
-                link.classList.toggle('has-new-orders', count > 0);
-                const primaryBell = bell.querySelector('.new-orders-bell-primary');
-                if (primaryBell) {
-                    primaryBell.classList.toggle('bi-bell', count === 0);
-                    primaryBell.classList.toggle('bi-bell-fill', count > 0);
-                }
-                link.setAttribute('aria-label', count > 0 ? 'Новые заказы: ' + count : 'Новые');
-                if (count > 0) {
-                    const countBadge = document.createElement('span');
-                    countBadge.className = 'new-orders-count';
-                    countBadge.textContent = count > 99 ? '99+' : String(count);
-                    countBadge.setAttribute('aria-hidden', 'true');
-                    link.appendChild(countBadge);
-                }
+                renderLinkBell(link, 'bi-bell', count, 'Новые', function (n) {
+                    return 'Новые заказы: ' + n;
+                });
             });
         }
 
@@ -321,20 +334,18 @@ document.addEventListener('DOMContentLoaded', function () {
             }
             previousUnreadMessageKeys = unreadMessageKeys;
 
-            consultantLinks.forEach(function (link) {
-                let badge = link.querySelector('.consultant-unread-count');
-                if (!badge) {
-                    badge = document.createElement('span');
-                    badge.className = 'consultant-unread-count';
-                    badge.setAttribute('aria-hidden', 'true');
-                    link.appendChild(badge);
-                }
+            // Видимый индикатор — чаты, ожидающие ответа (status «new»:
+            // последнее сообщение от посетителя). Звук и заголовок вкладки
+            // выше реагируют на «непрочитанные в этом браузере» сообщения.
+            const awaitingReply = users.filter(function (user) {
+                return user.status === 'new';
+            }).length;
 
-                const count = unreadUsers.length;
-                badge.textContent = count > 99 ? '99+' : String(count);
-                badge.hidden = count === 0;
-                link.classList.toggle('has-consultant-requests', count > 0);
-                link.setAttribute('aria-label', count > 0 ? 'Консультант: ' + count + ' непрочитанных сообщений' : 'Консультант');
+            consultantLinks.forEach(function (link) {
+                renderLinkBell(link, 'bi-headset', awaitingReply, 'Консультант', function (n) {
+                    const suffix = n === 1 ? 'чат без ответа' : (n < 5 ? 'чата без ответа' : 'чатов без ответа');
+                    return 'Консультант: ' + n + ' ' + suffix;
+                });
             });
         }
 
@@ -365,6 +376,29 @@ document.addEventListener('DOMContentLoaded', function () {
         window.addEventListener('storage', function (event) {
             if (event.key === consultantReadStateKey) loadConsultantCount();
         });
+    }
+
+    // ---------- Индикатор новых комментариев (раздел «Комментарии») ----------
+    const commentLinks = Array.from(document.querySelectorAll('.admin-link[href$="/messages.html"]'));
+    if (commentLinks.length) {
+        function loadCommentBellCount() {
+            window.AdminApi.get('/api/admin/messages').then(function (data) {
+                // «Новые» — те, что ещё не помечены прочитанными в разделе «Сообщения»
+                const count = (data.messages || []).filter(function (message) {
+                    return message.message_type === 'comment' && !Number(message.is_read);
+                }).length;
+                commentLinks.forEach(function (link) {
+                    renderLinkBell(link, 'bi-chat-left-text', count, 'Комментарии', function (n) {
+                        return 'Комментарии: ' + n + (n === 1 ? ' новый' : ' новых');
+                    });
+                });
+            }).catch(function (error) {
+                console.error('Не удалось обновить счётчик комментариев.', error);
+            });
+        }
+
+        loadCommentBellCount();
+        window.setInterval(loadCommentBellCount, 30000);
     }
 
     // ---------- Подтверждения: модальное окно вместо нативного confirm/prompt ----------

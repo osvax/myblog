@@ -1,0 +1,3 @@
+@use "../abstracts" as *;
+body { font-family: "MuseoSansCyrl", Arial, sans-serif; }
+:focus-visible { @include va-focus; }

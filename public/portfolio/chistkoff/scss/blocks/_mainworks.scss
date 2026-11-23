@@ -1,0 +1,184 @@
+// Mainworks Block (Before/After Slider)
+.va_mainworks {
+  position: relative;
+  padding: 0 $va_spacing-xl;
+  
+  @include mq-tablet {
+    padding: 0 $va_spacing-lg;
+  }
+}
+
+.va_mainworks__slider {
+  &.va_slick-custom {
+    .slick-prev,
+    .slick-next {
+      top: 50%;
+    }
+  }
+}
+
+.va_mainworks__slide {
+  height: 100%;
+}
+
+.va_mainworks__inner {
+  position: relative;
+  display: block;
+  border-radius: $va_border-radius-md;
+  overflow: hidden;
+  box-shadow: $va_shadow-md;
+  height: 100%;
+}
+
+.va_mainworks__image {
+  position: relative;
+  width: 100%;
+  padding-top: 60%;
+  
+  @include mq-tablet {
+    padding-top: 70%;
+  }
+}
+
+.va_mainworks__before,
+.va_mainworks__after {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: opacity $va_transition-base;
+}
+
+.va_mainworks__before {
+  z-index: 2;
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
+}
+
+.va_mainworks__after {
+  z-index: 1;
+}
+
+.va_mainworks__divider {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 4px;
+  height: 100%;
+  background: $va_color-primary;
+  transform: translateX(-50%);
+  z-index: 3;
+}
+
+.va_mainworks__handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  background: $va_color-white;
+  border-radius: 50%;
+  box-shadow: $va_shadow-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: ew-resize;
+  z-index: 4;
+  transition: all $va_transition-base;
+  
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    width: 2px;
+    height: 16px;
+    background: $va_color-primary;
+  }
+  
+  &::before {
+    transform: translate(-4px, 0);
+  }
+  
+  &::after {
+    transform: translate(4px, 0);
+  }
+  
+  &:hover {
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+.va_mainworks__label {
+  position: absolute;
+  top: $va_spacing-md;
+  padding: $va_spacing-xs $va_spacing-md;
+  font-size: $va_font-size-sm;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $va_color-white;
+  background: rgba(0, 0, 0, 0.6);
+  border-radius: $va_border-radius-full;
+  z-index: 5;
+  
+  &--before {
+    left: $va_spacing-md;
+  }
+  
+  &--after {
+    right: $va_spacing-md;
+  }
+}
+
+// Mainworks Gallery (for inner pages)
+.va_mainworks-gallery {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $va_spacing-lg;
+    
+    @include mq-mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.va_mainworks-gallery__item {
+  position: relative;
+  border-radius: $va_border-radius-md;
+  overflow: hidden;
+  aspect-ratio: 1;
+}
+
+.va_mainworks-gallery__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform $va_transition-slow;
+}
+
+.va_mainworks-gallery__item:hover .va_mainworks-gallery__image {
+  transform: scale(1.05);
+}
+
+.va_mainworks-gallery__overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+  display: flex;
+  align-items: flex-end;
+  padding: $va_spacing-lg;
+  opacity: 0;
+  transition: opacity $va_transition-base;
+}
+
+.va_mainworks-gallery__item:hover .va_mainworks-gallery__overlay {
+  opacity: 1;
+}
+
+.va_mainworks-gallery__title {
+  font-size: $va_font-size-lg;
+  font-weight: 700;
+  color: $va_color-white;
+}

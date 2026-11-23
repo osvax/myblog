@@ -9,6 +9,12 @@
                 </div>
             <?php endif; ?>
         </div>
+        <form id="avatarForm" class="profile-avatar-form" enctype="multipart/form-data">
+            <label for="profileAvatar" class="btn btn-outline-orange btn-sm">Загрузить или заменить аватар</label>
+            <input type="file" id="profileAvatar" name="avatar" accept="image/jpeg,image/png,image/webp" hidden>
+            <div id="avatarError" class="alert alert-danger mt-2" hidden></div>
+            <div id="avatarSuccess" class="alert alert-success mt-2" hidden></div>
+        </form>
         <h1 class="profile-name"><?= htmlspecialchars($user['name'], ENT_QUOTES, 'UTF-8') ?></h1>
         <p class="profile-email"><?= htmlspecialchars($user['email'], ENT_QUOTES, 'UTF-8') ?></p>
         <?php if ($user['role'] === 'admin'): ?>

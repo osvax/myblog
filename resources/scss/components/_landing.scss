@@ -24,7 +24,12 @@
 
 // Portfolio section
 .lp-portfolio {
-  background-color: $dark;
+  background-color: #353535;
+
+  h2,
+  .text-white {
+    color: $white !important;
+  }
 }
 
 .lp-work {
@@ -92,6 +97,10 @@
 // Page header
 .page-header {
   background-color: var(--theme-primary, #ff8c1a);
+}
+
+.page-header-order {
+  background-color: #2cdbe8;
 }
 
 // Feature items (home page)

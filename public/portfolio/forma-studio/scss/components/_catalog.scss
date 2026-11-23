@@ -1,0 +1,52 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Каталог
+// ============================================================
+.va-catalog {
+  background: var(--va-c-white);
+}
+
+.va-catalog__grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: clamp(32px, 3.2vw, 48px);
+  align-items: start;
+}
+
+.va-catalog__main .va-section-title {
+  margin-bottom: clamp(24px, 3vw, 60px);
+}
+
+.va-catalog__media {
+  overflow: hidden;
+}
+
+.va-catalog__media img {
+  width: 100%;
+  aspect-ratio: 1.57;
+  object-fit: cover;
+}
+
+.va-catalog__content {
+  padding-top: 6px;
+}
+
+.va-catalog__subtitle {
+  max-width: 22em;
+  font-size: clamp(17px, 1.15vw, 21px);
+  font-weight: 300;
+  line-height: 1.4;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  margin-bottom: 16px;
+}
+
+.va-catalog__note {
+  max-width: 36em;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--va-c-muted);
+  margin-bottom: 28px;
+}

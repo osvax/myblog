@@ -1,0 +1,130 @@
+// Discounts Block (Slider)
+.va_discounts {
+  position: relative;
+  padding: 0 $va_spacing-xl;
+  
+  @include mq-tablet {
+    padding: 0 $va_spacing-lg;
+  }
+}
+
+.va_discounts__slider {
+  &.va_slick-custom {
+    .slick-prev,
+    .slick-next {
+      top: 50%;
+    }
+  }
+}
+
+.va_discount {
+  height: 100%;
+  display: flex;
+}
+
+.va_discount__inner {
+  display: flex;
+  width: 100%;
+  background: $va_color-white;
+  border-radius: $va_border-radius-md;
+  box-shadow: $va_shadow-sm;
+  overflow: hidden;
+  transition: all $va_transition-base;
+  height: 100%;
+  
+  &:hover {
+    box-shadow: $va_shadow-lg;
+  }
+}
+
+.va_discount__image {
+  flex: 0 0 50%;
+  position: relative;
+  overflow: hidden;
+  
+  @include mq-tablet {
+    flex: 0 0 40%;
+  }
+  
+  @include mq-mobile {
+    flex: 0 0 100%;
+    display: none;
+  }
+  
+  img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform $va_transition-slow;
+  }
+  
+  .va_discount__inner:hover & img {
+    transform: scale(1.05);
+  }
+}
+
+.va_discount__content {
+  flex: 1;
+  padding: $va_spacing-xl;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  
+  @include mq-tablet {
+    padding: $va_spacing-lg;
+  }
+}
+
+.va_discount__tag {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: $va_font-size-sm;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $va_color-white;
+  background: $va_color-primary;
+  border-radius: $va_border-radius-full;
+  margin-bottom: $va_spacing-sm;
+}
+
+.va_discount__title {
+  font-size: $va_font-size-lg;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $va_color-dark;
+  margin-bottom: $va_spacing-sm;
+}
+
+.va_discount__text {
+  font-size: $va_font-size-base;
+  color: $va_color-text;
+  line-height: 1.6;
+  margin-bottom: $va_spacing-md;
+  flex: 1;
+}
+
+.va_discount__price {
+  display: flex;
+  align-items: baseline;
+  gap: $va_spacing-sm;
+  margin-bottom: $va_spacing-md;
+}
+
+.va_discount__price-old {
+  font-size: $va_font-size-base;
+  color: $va_color-gray-light;
+  text-decoration: line-through;
+}
+
+.va_discount__price-new {
+  font-size: $va_font-size-xl;
+  font-weight: 700;
+  color: $va_color-primary;
+}
+
+.va_discount__btn {
+  @extend .va_btn;
+  @extend .va_btn--primary;
+  @extend .va_btn--icon;
+  align-self: flex-start;
+}

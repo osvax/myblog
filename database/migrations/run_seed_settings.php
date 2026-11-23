@@ -21,6 +21,9 @@ $defaults = [
     ['adminEmail', 'admin@moyblog.ru', 'email', 'general', 4, 'Email администратора'],
     ['siteLanguage', 'Русский', 'text', 'general', 5, 'Язык сайта'],
     ['footerText', '© {year} МойБлог. Все права защищены.', 'text', 'general', 6, 'Текст футера'],
+    ['adminLoginEmail', 'osvax@yandex.ru', 'email', 'authentication', 1, 'Email для входа в админ-панель'],
+    ['frontendTemplate', 'default', 'select', 'templates', 1, 'Шаблон публичной части'],
+    ['adminTemplate', 'default', 'select', 'templates', 2, 'Шаблон админ-панели'],
 
     // === home ===
     ['homePageMode', 'main', 'select', 'home', 1, 'Режим главной'],

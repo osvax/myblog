@@ -1,0 +1,150 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Проекты (карусель)
+// ============================================================
+.va-projects {
+  background: var(--va-c-white);
+  overflow: hidden;
+}
+
+.va-projects .va-section-title {
+  margin-bottom: 48px;
+}
+
+// трек шире контейнера на величину правого отступа — так край 4-й карточки
+// выглядывает из-за края, как в макете
+.va-projects__viewport {
+  width: calc(100% + var(--va-gutter) - 20px);
+  overflow: hidden;
+}
+
+.va-projects__track {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.va-projects__track::-webkit-scrollbar {
+  display: none;
+}
+
+.va-card {
+  display: flex;
+  flex: 0 0 va-card-width(3);
+  flex-direction: column;
+  scroll-snap-align: start;
+  background: #fff;
+  border: 1px solid var(--va-c-line-light);
+}
+
+.va-card__media {
+  overflow: hidden;
+  aspect-ratio: 4 / 3;
+}
+
+.va-card__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.7s var(--va-ease);
+}
+
+.va-card:hover .va-card__media img {
+  transform: scale(1.04);
+}
+
+.va-card__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  padding: 28px 24px 32px;
+}
+
+.va-card__title {
+  font-size: clamp(18px, 1.2vw, 22px);
+  font-weight: 300;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  margin-bottom: 10px;
+}
+
+.va-card__subtitle {
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--va-c-muted);
+  margin-bottom: 20px;
+}
+
+.va-card__text {
+  flex: 1;
+  margin-bottom: 28px;
+  font-size: 15px;
+  line-height: 1.55;
+  color: var(--va-c-muted);
+}
+
+.va-card__more {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 52px;
+  border: 1px solid var(--va-c-text);
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  transition: background 0.25s var(--va-ease), color 0.25s var(--va-ease);
+
+  &:hover {
+    background: var(--va-c-dark);
+    color: var(--va-c-white);
+  }
+}
+
+// Навигация карусели
+.va-projects__nav {
+  display: flex;
+  justify-content: center;
+  gap: 36px;
+  margin-top: 52px;
+}
+
+.va-arrow {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--va-c-text);
+  cursor: pointer;
+  transition: opacity 0.2s, transform 0.2s;
+}
+
+.va-arrow svg {
+  width: 56px;
+  height: 12px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.2;
+}
+
+.va-arrow:hover:not(:disabled) {
+  transform: translateX(2px);
+}
+
+.va-arrow:first-child:hover:not(:disabled) {
+  transform: translateX(-2px);
+}
+
+.va-arrow:disabled {
+  opacity: 0.25;
+  cursor: default;
+}

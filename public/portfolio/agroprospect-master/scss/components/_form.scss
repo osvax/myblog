@@ -1,0 +1,107 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — форма (в модальном окне)
+// ==========================================================
+
+.va_form {
+  width: 22.5em;
+  padding: 2.05em 2.5em;
+
+  @include va-media-down($va-bp-sm) {
+    width: 80vw;
+    max-width: 100%;
+    padding: 2.37em 1.53em;
+  }
+
+  @include va-media-down($va-bp-xxs) {
+    width: 92vw;
+  }
+
+  @include va-media-down($va-bp-mini) {
+    width: 94vw;
+    padding: 2em 1.2em;
+  }
+
+  &__title {
+    margin: 0 0 .86em;
+    color: $va-c-heading;
+    font-size: 2em;
+    line-height: 1.2;
+    text-align: center;
+    @include va-font-bold;
+
+    @include va-media-down($va-bp-sm) {
+      font-size: 1.61em;
+    }
+  }
+
+  &__btn {
+    width: 100%;
+    margin-top: .4em;
+    font-size: 1em;
+  }
+
+  &__important {
+    display: block;
+    margin-top: 1.95em;
+    color: $va-c-text;
+    font-size: .75em;
+    line-height: 1.5;
+    text-align: center;
+
+    a {
+      color: $va-c-primary;
+      text-decoration: underline;
+
+      &:hover,
+      &:focus {
+        text-decoration: none;
+      }
+    }
+
+    @include va-media-down($va-bp-sm) {
+      font-size: .5em;
+    }
+  }
+}
+
+// ---------- Строка формы ----------
+.va_form-row {
+  display: block;
+  margin-bottom: 1.09em;
+
+  &__title {
+    display: block;
+    margin-bottom: .5em;
+    color: $va-c-text;
+    font-size: .59em;
+    letter-spacing: .05em;
+    text-transform: uppercase;
+  }
+}
+
+// ---------- Поле ввода ----------
+.va_input {
+  width: 100%;
+  height: 3.4em;
+  padding: 0 1.2em;
+
+  border: .1em solid #e6e6e6;
+  border-radius: .25em;
+  background-color: $va-c-white;
+
+  color: $va-c-text;
+  @include va-font-regular;
+  font-size: .75em;
+
+  transition: border-color .2s ease, box-shadow .2s ease;
+
+  &::placeholder {
+    color: $va-c-muted;
+  }
+
+  &:focus {
+    outline: none;
+    border-color: $va-c-primary;
+    box-shadow: 0 0 0 .15em rgba($va-c-primary, 0.12);
+  }
+}

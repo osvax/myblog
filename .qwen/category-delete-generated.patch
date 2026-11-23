@@ -1,0 +1,19 @@
+diff --git "a/.qwen\\content-repository-head.php" "b/.qwen\\content-repository-base.php"
+index 4b86bf7..ce4a954 100644
+--- "a/.qwen\\content-repository-head.php"
++++ "b/.qwen\\content-repository-base.php"
+@@ -297,6 +297,14 @@ class ContentRepository
+ 
+     public function deleteCategory($id)
+     {
++        $articles = $this->db->prepare(
++            'SELECT COUNT(*) FROM ' . db_table('articles') . ' WHERE category_id = :category_id'
++        );
++        $articles->execute(['category_id' => $id]);
++        if ((int) $articles->fetchColumn() > 0) {
++            return false;
++        }
++
+         $statement = $this->db->prepare('DELETE FROM ' . db_table('categories') . ' WHERE id = :id');
+         $statement->execute(['id' => $id]);
+         return $statement->rowCount() > 0;

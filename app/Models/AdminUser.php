@@ -6,13 +6,10 @@ class AdminUser
 {
     public function verifyCredentials($email, $password)
     {
-        $config = require APP_ROOT . '/config/admin-auth.php';
-        $configuredEmail = strtolower(trim((string) ($config['email'] ?? '')));
-        $configuredHash = (string) ($config['password_hash'] ?? '');
+        $configuredEmail = strtolower(trim((string) (new \App\Models\SiteSettings())->get('adminLoginEmail', '')));
         $email = strtolower(trim((string) $email));
 
-        if (!filter_var($configuredEmail, FILTER_VALIDATE_EMAIL)
-            || !password_get_info($configuredHash)['algo']) {
+        if (!filter_var($configuredEmail, FILTER_VALIDATE_EMAIL)) {
             return ['valid' => false, 'configured' => false];
         }
 
@@ -30,11 +27,7 @@ class AdminUser
             return ['valid' => false, 'configured' => true, 'error' => 'Аккаунт заблокирован'];
         }
 
-        $passwordValid = password_verify($password, $user['password_hash']);
-        if (!$passwordValid && hash_equals($configuredEmail, $email)) {
-            $passwordValid = password_verify($password, $configuredHash);
-        }
-        if (!$passwordValid) {
+        if (!password_verify($password, $user['password_hash'])) {
             return ['valid' => false, 'configured' => true, 'error' => 'Неверный email или пароль'];
         }
 

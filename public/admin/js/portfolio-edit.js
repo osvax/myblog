@@ -18,6 +18,7 @@
         description: document.getElementById('portfolioDescription'),
         task: document.getElementById('portfolioTask'),
         solution: document.getElementById('portfolioSolution'),
+        result: document.getElementById('portfolioResult'),
         client: document.getElementById('portfolioClient'),
         year: document.getElementById('portfolioYear'),
         duration: document.getElementById('portfolioDuration'),
@@ -503,6 +504,7 @@
         fields.description.value = item.description || '';
         fields.task.value = Array.isArray(item.task) ? item.task.join('\n') : (item.task || '');
         fields.solution.value = item.solution || '';
+        fields.result.value = item.result || '';
         fields.client.value = item.client || '';
         fields.year.value = item.year || '';
         fields.duration.value = item.duration || '';
@@ -638,6 +640,7 @@
             description: fields.description.value.trim(),
             task: fields.task.value.split(/\r?\n/).map(function (line) { return line.trim(); }).filter(Boolean),
             solution: fields.solution.value.trim(),
+            result: fields.result.value.trim(),
             client: fields.client.value.trim(),
             year: fields.year.value ? Number(fields.year.value) : '',
             duration: fields.duration.value.trim(),

@@ -10,6 +10,8 @@
         var previewButton = document.getElementById('openPreview');
         var errorBox = document.getElementById('templateError');
         var activeBadge = document.getElementById('templateActiveBadge');
+        var descriptionEl = document.getElementById('templateDescription');
+        var archiveInput = document.getElementById('templateArchiveInput');
         var editor = CodeMirror.fromTextArea(document.getElementById('templateEditor'), {
             mode: 'htmlmixed',
             lineNumbers: true,
@@ -98,6 +100,9 @@
                     templateSelect.appendChild(option);
                 });
                 updateActiveBadge(data.active);
+                var selected = templateSelect.value || 'default';
+                var meta = data.metadata && data.metadata[selected];
+                if (descriptionEl) descriptionEl.textContent = meta && meta.description ? meta.description : '';
             });
         }
 
@@ -106,6 +111,26 @@
             activeBadge.textContent = active
                 ? 'Активный шаблон: ' + (active.frontend || 'default') + ' (сайт) / ' + (active.admin || 'default') + ' (админка)'
                 : '';
+        }
+
+        function uploadTemplateArchive() {
+            var file = archiveInput && archiveInput.files && archiveInput.files[0];
+            if (!file) return;
+            var formData = new FormData();
+            formData.append('template_archive', file);
+            archiveInput.disabled = true;
+            window.AdminApi.request('/api/admin/templates', {
+                method: 'POST',
+                body: formData
+            }).then(function (data) {
+                window.AdminNotifications.show('success', 'Шаблон «' + (data.template || '') + '» установлен');
+                archiveInput.value = '';
+                return loadTemplates();
+            }).catch(function (error) {
+                window.AdminNotifications.show('error', error.message || 'Не удалось установить шаблон');
+            }).then(function () {
+                archiveInput.disabled = false;
+            });
         }
 
         function optionFor(value, label) {
@@ -322,7 +347,11 @@
             return div.innerHTML;
         }
 
+        if (archiveInput) {
+            archiveInput.addEventListener('change', uploadTemplateArchive);
+        }
         templateSelect.addEventListener('change', function () {
+            loadTemplates();
             loadFiles().then(function () {
                 return loadFile();
             });

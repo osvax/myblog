@@ -1,0 +1,113 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Формы (общие стили)
+// ============================================================
+.va-form {
+  max-width: 580px;
+}
+
+.va-field {
+  position: relative;
+  margin-bottom: 20px;
+}
+
+.va-field input[type="email"] {
+  width: 100%;
+  height: 64px;
+  padding: 0 20px;
+  border: 1px solid var(--va-c-line-light);
+  background: #fff;
+  font-size: 16px;
+  color: var(--va-c-text);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.va-field input[type="email"]::placeholder {
+  color: #9a9a9a;
+}
+
+.va-field input[type="email"]:focus {
+  border-color: var(--va-c-dark);
+}
+
+.va-field.is-invalid input[type="email"] {
+  border-color: var(--va-c-error);
+}
+
+.va-field__error {
+  display: none;
+  margin-top: 6px;
+  font-size: 13px;
+  color: var(--va-c-error);
+}
+
+.va-field.is-invalid .va-field__error {
+  display: block;
+}
+
+.va-field__error--check {
+  margin: -18px 0 22px;
+}
+
+.va-field__error--check.is-visible {
+  display: block;
+}
+
+.va-checkbox {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin: 4px 0 30px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: #3a3a3a;
+  cursor: pointer;
+}
+
+.va-checkbox input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.va-checkbox__box {
+  position: relative;
+  flex: 0 0 16px;
+  width: 16px;
+  height: 16px;
+  margin-top: 1px;
+  border: 1px solid #9a9a9a;
+  background: #fff;
+  transition: background 0.2s, border-color 0.2s;
+}
+
+.va-checkbox input:checked + .va-checkbox__box {
+  background: var(--va-c-dark);
+  border-color: var(--va-c-dark);
+}
+
+.va-checkbox input:checked + .va-checkbox__box::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 8px;
+  height: 4px;
+  border-left: 1.5px solid #fff;
+  border-bottom: 1.5px solid #fff;
+  transform: translate(-50%, -65%) rotate(-45deg);
+}
+
+.va-checkbox input:focus-visible + .va-checkbox__box {
+  outline: 2px solid var(--va-c-dark);
+  outline-offset: 2px;
+}
+
+.va-form__success {
+  margin-top: 18px;
+  font-size: 14px;
+  color: #2e7d32;
+}

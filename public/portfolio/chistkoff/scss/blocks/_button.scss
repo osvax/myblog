@@ -1,0 +1,131 @@
+// Button Block
+.va_btn {
+  @include button-base;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  
+  &--primary {
+    background: $va_color-primary;
+    color: $va_color-white;
+    
+    &:hover {
+      background: $va_color-primary-dark;
+      color: $va_color-white;
+      transform: translateY(-2px);
+      box-shadow: $va_shadow-md;
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  &--secondary {
+    background: transparent;
+    color: $va_color-dark;
+    border: 2px solid $va_color-border;
+    
+    &:hover {
+      border-color: $va_color-primary;
+      color: $va_color-primary;
+    }
+  }
+  
+  &--outline {
+    background: transparent;
+    color: $va_color-primary;
+    border: 2px solid $va_color-primary;
+    
+    &:hover {
+      background: $va_color-primary;
+      color: $va_color-white;
+    }
+  }
+  
+  &--white {
+    background: $va_color-white;
+    color: $va_color-dark;
+    
+    &:hover {
+      background: $va_color-gray-bg;
+    }
+  }
+  
+  &--lg {
+    padding: 18px 40px;
+    font-size: $va_font-size-base;
+  }
+  
+  &--sm {
+    padding: 10px 20px;
+    font-size: $va_font-size-sm;
+  }
+  
+  &--full {
+    width: 100%;
+  }
+  
+  &--icon {
+    display: inline-flex;
+    align-items: center;
+    gap: $va_spacing-sm;
+    
+    &::after {
+      content: '';
+      width: 20px;
+      height: 20px;
+      background: url('../images/icon-arrow-next.png') center/contain no-repeat;
+      transition: transform $va_transition-base;
+    }
+    
+    &:hover::after {
+      transform: translateX(4px);
+    }
+  }
+  
+  &--disabled,
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+  
+  &--loading {
+    position: relative;
+    color: transparent;
+    
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      margin: -10px 0 0 -10px;
+      border: 2px solid rgba(255, 255, 255, 0.3);
+      border-top-color: $va_color-white;
+      border-radius: 50%;
+      animation: va_btn-spin 0.8s linear infinite;
+    }
+  }
+  
+  @keyframes va_btn-spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+}
+
+// Promo Button Variant
+.va_promo-btn {
+  @extend .va_btn;
+  @extend .va_btn--primary;
+  @extend .va_btn--lg;
+  @extend .va_btn--icon;
+  min-width: 260px;
+  
+  @include mq-tablet {
+    min-width: 220px;
+    padding: 16px 30px;
+  }
+}

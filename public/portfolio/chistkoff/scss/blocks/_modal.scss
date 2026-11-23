@@ -1,0 +1,79 @@
+// Modal Block (ArcticModal wrapper)
+.va_modal {
+  &__overlay {
+    @extend .arcticmodal-overlay;
+  }
+  
+  &__container {
+    @extend .arcticmodal-container;
+  }
+  
+  &__box {
+    @extend .arcticmodal-container_i;
+  }
+  
+  &__close {
+    @extend .arcticmodal-close;
+  }
+}
+
+// Custom Modal Styles
+.va_modal-custom {
+  .va_modal__box {
+    max-width: 480px;
+    padding: 40px 35px;
+    
+    @include mq-mobile {
+      padding: 30px 20px;
+      margin: 20px;
+    }
+  }
+  
+  .va_modal__close {
+    top: 10px;
+    right: 10px;
+    width: 40px;
+    height: 40px;
+    color: $va_color-gray;
+    
+    &:hover {
+      color: $va_color-primary;
+      background: transparent;
+    }
+  }
+}
+
+// Success Modal
+.va_modal-success {
+  text-align: center;
+  padding: $va_spacing-xl !important;
+  
+  .va_modal__box {
+    padding: $va_spacing-xl !important;
+  }
+}
+
+.va_modal-success__icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto $va_spacing-lg;
+  background: $va_color-success;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $va_color-white;
+  font-size: 40px;
+}
+
+.va_modal-success__title {
+  font-size: $va_font-size-h3;
+  font-weight: 700;
+  color: $va_color-dark;
+  margin-bottom: $va_spacing-sm;
+}
+
+.va_modal-success__text {
+  font-size: $va_font-size-base;
+  color: $va_color-gray;
+}

@@ -1,0 +1,178 @@
+// Form Block
+.va_form {
+  &__group {
+    margin-bottom: $va_spacing-md;
+  }
+  
+  &__row {
+    display: flex;
+    gap: $va_spacing-md;
+    margin-bottom: $va_spacing-md;
+    
+    @include mq-mobile {
+      flex-direction: column;
+      gap: 0;
+    }
+  }
+  
+  &__col {
+    flex: 1;
+  }
+  
+  &__label {
+    display: block;
+    font-size: $va_font-size-sm;
+    font-weight: 500;
+    color: $va_color-dark;
+    margin-bottom: $va_spacing-xs;
+  }
+  
+  &__input,
+  &__textarea,
+  &__select {
+    width: 100%;
+    padding: 14px 18px;
+    font-size: $va_font-size-base;
+    color: $va_color-dark;
+    background: $va_color-white;
+    border: 1px solid $va_color-border;
+    border-radius: $va_border-radius-md;
+    transition: all $va_transition-base;
+    
+    &::placeholder {
+      color: $va_color-gray-light;
+    }
+    
+    &:focus {
+      border-color: $va_color-primary;
+      box-shadow: 0 0 0 3px rgba(0, 218, 139, 0.15);
+    }
+    
+    &:hover:not(:focus) {
+      border-color: $va_color-gray;
+    }
+  }
+  
+  &__textarea {
+    min-height: 150px;
+    resize: vertical;
+  }
+  
+  &__select {
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%23666' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 16px center;
+    background-size: 20px;
+    padding-right: 48px;
+  }
+  
+  &__error {
+    & .va_form__input,
+    & .va_form__textarea,
+    & .va_form__select {
+      border-color: $va_color-error;
+    }
+  }
+  
+  &__error-text {
+    display: block;
+    margin-top: $va_spacing-xs;
+    font-size: $va_font-size-sm;
+    color: $va_color-error;
+  }
+  
+  &__success {
+    padding: $va_spacing-md;
+    background: rgba(39, 174, 96, 0.1);
+    border: 1px solid $va_color-success;
+    border-radius: $va_border-radius-md;
+    color: $va_color-success;
+    font-size: $va_font-size-base;
+  }
+  
+  &__checkbox {
+    display: flex;
+    align-items: flex-start;
+    gap: $va_spacing-sm;
+  }
+  
+  &__checkbox-input {
+    flex: 0 0 20px;
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    appearance: none;
+    border: 2px solid $va_color-border;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all $va_transition-base;
+    position: relative;
+    
+    &:checked {
+      border-color: $va_color-primary;
+      background: $va_color-primary;
+      
+      &::after {
+        content: '';
+        position: absolute;
+        left: 6px;
+        top: 2px;
+        width: 5px;
+        height: 10px;
+        border: solid $va_color-white;
+        border-width: 0 2px 2px 0;
+        transform: rotate(45deg);
+      }
+    }
+    
+    &:focus {
+      box-shadow: 0 0 0 3px rgba(0, 218, 139, 0.15);
+    }
+  }
+  
+  &__checkbox-label {
+    font-size: $va_font-size-sm;
+    color: $va_color-text;
+    line-height: 1.5;
+    cursor: pointer;
+  }
+  
+  &__checkbox-link {
+    color: $va_color-primary;
+    text-decoration: underline;
+    
+    &:hover {
+      color: $va_color-primary-dark;
+    }
+  }
+  
+  &__submit {
+    @extend .va_btn;
+    @extend .va_btn--primary;
+    @extend .va_btn--lg;
+    @extend .va_btn--full;
+    margin-top: $va_spacing-md;
+  }
+}
+
+// Callback Form (Modal)
+.va_callback-form {
+  @extend .va_form;
+  
+  &__title {
+    font-size: $va_font-size-h3;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: $va_color-dark;
+    text-align: center;
+    margin-bottom: $va_spacing-lg;
+  }
+  
+  &__text {
+    text-align: center;
+    font-size: $va_font-size-base;
+    color: $va_color-gray;
+    margin-bottom: $va_spacing-lg;
+  }
+}

@@ -15,7 +15,7 @@
         $itemKind = isset($item['kind']) && isset($projectInfoIcons[$item['kind']]) ? $item['kind'] : 'link';
         $itemValue = isset($item['value']) && is_string($item['value']) ? $item['value'] : '';
         $itemFilePath = isset($item['file_path']) && is_string($item['file_path']) ? $item['file_path'] : '';
-        $isUrl = (bool) preg_match('#^https?://#i', $itemValue);
+        $isUrl = (bool) preg_match('#^(?:https?://|/portfolio/[a-z0-9_-]+/(?:index\.html|job/TZ-template\.(?:pdf|html|docx?))$)#i', $itemValue);
         $docUrl = ($itemKind === 'document' && preg_match($projectInfoDocRegex, $itemFilePath)) ? $itemFilePath : '';
         $certUrl = ($itemKind === 'certificate' && preg_match($projectInfoCertRegex, $itemFilePath)) ? $itemFilePath : '';
     ?>

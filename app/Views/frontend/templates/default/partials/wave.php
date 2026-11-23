@@ -1,12 +1,14 @@
 <?php
-// Волна между секциями. Цвет «оранжевый» берётся из темы
-// (Настройки → Оформление), остальные — как переданы страницей.
+// Волна между секциями. Цвета синхронизированы с темой сайта.
 $waveColors = (isset($waveColors) && is_array($waveColors) && count($waveColors) === 2) ? $waveColors : ['#ff8c1a', '#fff3e6'];
-if ($waveColors[0] === '#ff8c1a') {
-    $waveColors[0] = 'var(--theme-primary, #ff8c1a)';
-}
-if ($waveColors[1] === '#fff3e6') {
-    $waveColors[1] = 'var(--theme-primary-light, #fff3e6)';
+$waveColorMap = [
+    '#ff8c1a' => 'var(--theme-primary, #ff8c1a)',
+    '#fff3e6' => 'var(--theme-primary-light, #fff3e6)',
+    '#ffffff' => 'var(--theme-bg, #ffffff)',
+    '#353535' => '#353535',
+];
+foreach ($waveColors as $index => $color) {
+    $waveColors[$index] = $waveColorMap[strtolower((string) $color)] ?? $color;
 }
 ?>
 <svg class="wave" viewBox="0 0 1440 100" preserveAspectRatio="none" aria-hidden="true">

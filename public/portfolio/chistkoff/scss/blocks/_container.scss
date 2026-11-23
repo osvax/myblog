@@ -1,0 +1,20 @@
+// Container Block
+.va_container {
+  max-width: $va_container-max;
+  margin: 0 auto;
+  padding: 0 $va_container-padding;
+  width: 100%;
+  
+  &--fluid {
+    max-width: none;
+    padding: 0 $va_spacing-xl;
+  }
+  
+  &--narrow {
+    max-width: 960px;
+  }
+  
+  &--wide {
+    max-width: 1440px;
+  }
+}

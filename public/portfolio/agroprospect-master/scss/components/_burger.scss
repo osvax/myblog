@@ -1,0 +1,57 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — бургер (анимированное меню)
+// ==========================================================
+
+.va_burger {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  width: 1em;
+  height: 1em;
+  background-color: transparent;
+  border: none;
+  padding: 0;
+  font-size: 32px; // задаёт размер кнопок
+  color: currentColor;
+  cursor: pointer;
+
+  span,
+  span::before,
+  span::after {
+    position: absolute;
+    left: 50%;
+    margin-left: -.35em;
+    width: .7em;
+    height: .1em;
+    background-color: currentColor;
+  }
+
+  span::before,
+  span::after {
+    content: '';
+    transition: .3s cubic-bezier(.75, -.5, 0, 1.75);
+  }
+
+  span::before {
+    margin-top: -.2em;
+  }
+
+  span::after {
+    margin-top: .2em;
+  }
+
+  &--active span {
+    background: transparent;
+  }
+
+  &--active span::before {
+    margin-top: 0;
+    transform: rotate(225deg);
+  }
+
+  &--active span::after {
+    margin-top: 0;
+    transform: rotate(-225deg);
+  }
+}

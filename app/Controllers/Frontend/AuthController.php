@@ -20,6 +20,7 @@ class AuthController extends Controller
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
             'includeAuthScript' => true,
+            'authPage' => true,
         ]);
     }
 
@@ -198,6 +199,7 @@ class AuthController extends Controller
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
             'includeAuthScript' => true,
+            'authPage' => true,
         ]);
     }
 
@@ -214,6 +216,7 @@ class AuthController extends Controller
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
             'includeAuthScript' => true,
+            'authPage' => true,
         ]);
     }
 
@@ -236,6 +239,7 @@ class AuthController extends Controller
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
             'includeAuthScript' => true,
+            'authPage' => true,
         ]);
     }
 

@@ -1,0 +1,41 @@
+// Image Block
+.va_image-block {
+  position: relative;
+  border-radius: $va_border-radius-md;
+  overflow: hidden;
+}
+
+.va_image-block__img {
+  width: 100%;
+  height: auto;
+  display: block;
+  transition: transform $va_transition-slow;
+}
+
+.va_image-block:hover .va_image-block__img {
+  transform: scale(1.02);
+}
+
+.va_image-block__caption {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: $va_spacing-lg;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+  color: $va_color-white;
+  font-size: $va_font-size-base;
+  line-height: 1.5;
+}
+
+.va_image-block--rounded {
+  border-radius: $va_border-radius-lg;
+}
+
+.va_image-block--circle {
+  border-radius: 50%;
+}
+
+.va_image-block--shadow {
+  box-shadow: $va_shadow-md;
+}

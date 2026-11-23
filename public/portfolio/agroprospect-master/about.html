@@ -1,0 +1,415 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#f5f5f5">
+  <meta name="description" content="ГК «Агропроспект» — о компании: миссия, принципы работы, технические характеристики техники, гарантии и сервис.">
+  <title>О компании — Агропроспект</title>
+  <link rel="icon" type="image/png" href="img/logo.png">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+  <header class="va_header">
+    <div class="va_container">
+      <div class="va_header__wrap">
+        <div class="va_header__top">
+          <a class="va_header__logo" href="index.html" aria-label="Агропроспект — на главную">
+            <picture>
+              <source srcset="img/logo-mobile.png" media="(max-width: 768px)">
+              <img src="img/logo.png" alt="Агропроспект — Официальный диллер сельхозтехники">
+            </picture>
+          </a>
+
+          <button class="va_header__burger js-burger-btn" type="button"
+                  aria-label="Меню" aria-expanded="false" aria-controls="main-nav">
+            <span class="va_burger"><span></span></span>
+          </button>
+        </div>
+        <!-- /.va_header__top -->
+
+        <div class="va_info-group">
+          <div class="va_info va_header__info va_header__info--sm-last">
+            <img class="va_info__icon" src="img/icons/clock.png" alt="">
+            <div class="va_info__content">
+              <h3 class="va_info__title">Принимаем звонки:</h3>
+              <span class="va_info__text">пн-пт с 9:00 до 20:00</span>
+            </div>
+          </div>
+
+          <div class="va_info va_header__info va_header__info--sm-first">
+            <img class="va_info__icon" src="img/icons/phone.png" alt="">
+            <div class="va_info__content">
+              <h3 class="va_info__title va_info__title--phone">
+                <a href="tel:84732111674">8 (473) 211-1674</a>
+              </h3>
+              <span class="va_info__text">Бесплатно по всей России</span>
+            </div>
+          </div>
+
+          <button class="va_btn va_header__btn js-open-popup" type="button"
+                  data-form-title="Заказать звонок">Заказать звонок</button>
+        </div>
+        <!-- /.va_info-group -->
+      </div>
+      <!-- /.va_header__wrap -->
+    </div>
+    <!-- /.va_container -->
+  </header>
+  <!-- /.va_header -->
+
+  <div class="va_navigation">
+    <div class="va_container">
+      <div class="va_navigation__wrap">
+        <button class="va_navigation__btn js-burger-btn" type="button"
+                aria-label="Каталог техники" aria-expanded="false" aria-controls="catalog-submenu">
+          <span class="va_burger"><span></span></span>
+          Каталог техники
+        </button>
+
+        
+        <ul class="va_submenu va_navigation__submenu" id="catalog-submenu">
+          <li class="va_submenu__item"><a href="catalog/zernovye-seyalki.html">Зерновые сеялки</a></li>
+          <li class="va_submenu__item"><a href="#">Пропашные сеялки</a></li>
+          <li class="va_submenu__item"><a href="#">Культиваторы пропашные</a></li>
+          <li class="va_submenu__item"><a href="#">Сцепки борон</a></li>
+          <li class="va_submenu__item"><a href="#">Плуги</a></li>
+          <li class="va_submenu__item"><a href="#">Культиваторы сплошной обработки</a></li>
+          <li class="va_submenu__item"><a href="#">Техника для no-till</a></li>
+          <li class="va_submenu__item"><a href="#">Импортная техника б/у</a></li>
+        </ul>
+        <!-- /.va_submenu -->
+        <nav class="va_nav va_nav--popup" id="main-nav" aria-label="Главное меню">
+          <button class="va_nav__close js-close-nav" type="button" aria-label="Закрыть меню">&times;</button>
+          <ul class="va_nav__list">
+            <li class="va_nav__item va_nav__item--sm-only">
+              <button class="va_nav__catalog-toggle js-open-catalog" type="button"
+                      aria-expanded="false" aria-controls="mobile-catalog">Каталог техники</button>
+            </li>
+            <li class="va_nav__item"><a href="about.html">О компании</a></li>
+            <li class="va_nav__item"><a href="#">Сервис</a></li>
+            <li class="va_nav__item"><a href="details.html">Запчасти</a></li>
+            <li class="va_nav__item"><a href="import.html">Импорт техники б/у</a></li>
+            <li class="va_nav__item"><a href="#contacts">Контактная информация</a></li>
+          </ul>
+        
+          <div class="va_nav__catalog" id="mobile-catalog">
+            <p class="va_nav__catalog-title">Каталог техники</p>
+            <a href="catalog/zernovye-seyalki.html">Зерновые сеялки</a>
+            <a href="#">Пропашные сеялки</a>
+            <a href="#">Культиваторы пропашные</a>
+            <a href="#">Сцепки борон</a>
+            <a href="#">Плуги</a>
+            <a href="#">Культиваторы сплошной обработки</a>
+            <a href="#">Техника для no-till</a>
+            <a href="#">Импортная техника б/у</a>
+          </div>
+          <!-- /.va_nav__catalog -->
+        </nav>
+        <!-- /.va_nav -->
+        
+      </div>
+      <!-- /.va_navigation__wrap -->
+    </div>
+    <!-- /.va_container -->
+  </div>
+  <!-- /.va_navigation -->
+
+
+  <div class="va_breadcrumb" aria-label="Хлебные крошки">
+    <div class="va_container">
+      <ul class="va_breadcrumb__list">
+        <li class="va_breadcrumb__item"><a href="index.html">Главная</a></li>
+        <li class="va_breadcrumb__item"><a href="#">Каталог техники</a></li>
+        <li class="va_breadcrumb__item"><a href="#" aria-current="page">О компании</a></li>
+      </ul>
+    </div>
+  </div>
+  <!-- /.va_breadcrumb -->
+
+  <main class="va_page">
+    <div class="va_container">
+      <h1 class="va_page__title">О компании</h1>
+    </div>
+    <!-- /.va_container -->
+
+    <div class="va_presentation va_presentation--mb va_container">
+      <div class="va_presentation-cover js-presentation-slider">
+        <img src="img/cover4.png" alt="Сельскохозяйственная техника Агропроспект">
+        <img src="img/cover4.png" alt="Сельхозтехника на площадке">
+      </div>
+      <div class="va_presentation-text va_card">
+        <div class="va_presentation__wrap">
+          <h3 class="va_presentation__title">Всегда впереди!</h3>
+
+          <p class="va_presentation__para">
+            Стремимся дать каждому клиенту возможность достичь<br>
+            высочайшего уровня профессионализма в области<br>
+            эксплуатации инженерного оборудования.
+          </p>
+          <p class="va_presentation__para">
+            Наша миссия — помочь клиенту получить максимальную<br>
+            отдачу и эффективность от инвестиций и эксплуатации<br>
+            инженерного оборудования, в повседневной работе.
+          </p>
+          <p class="va_presentation__para">
+            Быстро реагируем на обращения клиентов и оказываем им<br>
+            всестороннюю помощь. Ценим доверие клиентов и строим<br>
+            долгосрочные отношения.
+          </p>
+        </div>
+        <!-- /.va_presentation__wrap -->
+      </div>
+      <!-- /.va_presentation-text -->
+    </div>
+    <!-- /.va_presentation -->
+
+    <div class="va_page__block">
+      <div class="va_container">
+        <h2 class="va_page__subtitle">Технические характеристики</h2>
+
+        <div class="va_table__wrap">
+          <table class="va_table va_card">
+            <thead>
+              <tr class="va_table__row">
+                <th class="va_table__th" scope="col">Название столбика</th>
+                <th class="va_table__th" scope="col">Название столбика</th>
+                <th class="va_table__th" scope="col">Название столбика</th>
+                <th class="va_table__th" scope="col">Название столбика</th>
+                <th class="va_table__th" scope="col">Название столбика</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="va_table__row">
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+              </tr>
+              <tr class="va_table__row">
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+              </tr>
+              <tr class="va_table__row">
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+                <td class="va_table__td">Информация</td>
+              </tr>
+            </tbody>
+          </table>
+          <!-- /.va_table -->
+        </div>
+        <!-- /.va_table__wrap -->
+      </div>
+      <!-- /.va_container -->
+    </div>
+    <!-- /.va_page__block -->
+
+    <div class="va_page__block">
+      <div class="va_container va_page-aside">
+        <img class="va_page-aside__img" src="img/cover1.png" alt="Техника Агропроспект в работе">
+        <aside class="va_page-aside__content">
+          <h4 class="va_page-aside__title">Всегда впереди!</h4>
+          <ul class="va_page-aside__list">
+            <li>
+              Стремимся дать каждому клиенту возможность достичь высочайшего уровня профессионализма в области эксплуатации
+              инженерного оборудования.
+            </li>
+            <li>
+              Наша миссия — помочь клиенту получить максимальную отдачу и эффективность от инвестиций и эксплуатации инженерного
+              оборудования, в повседневной работе.
+            </li>
+            <li>
+              Быстро реагируем на обращения клиентов и оказываем им всестороннюю помощь. Ценим доверие клиентов и строим долгосрочные
+              отношения.
+            </li>
+            <li>
+              Ориентированы на творческую работу и рост профессионализма сотрудников. Создаем необходимые условия для развития
+              потенциала и получения новых знаний.
+            </li>
+          </ul>
+        </aside>
+      </div>
+      <!-- /.va_page-aside -->
+
+      <div class="va_container va_page-aside va_page-aside--reversed va_page__block">
+        <img class="va_page-aside__img" src="img/cover1.png" alt="Сельхозтехника Агропроспект крупным планом">
+        <aside class="va_page-aside__content">
+          <h4 class="va_page-aside__title">Всегда впереди!</h4>
+          <ol class="va_page-aside__list">
+            <li>
+              Стремимся дать каждому клиенту возможность достичь высочайшего уровня профессионализма в области эксплуатации
+              инженерного оборудования.
+            </li>
+            <li>
+              Наша миссия — помочь клиенту получить максимальную отдачу и эффективность от инвестиций и эксплуатации инженерного
+              оборудования, в повседневной работе.
+            </li>
+            <li>
+              Быстро реагируем на обращения клиентов и оказываем им всестороннюю помощь. Ценим доверие клиентов и строим
+              долгосрочные отношения.
+            </li>
+            <li>
+              Ориентированы на творческую работу и рост профессионализма сотрудников. Создаем необходимые условия для развития
+              потенциала и получения новых знаний.
+            </li>
+          </ol>
+        </aside>
+      </div>
+      <!-- /.va_page-aside -->
+    </div>
+    <!-- /.va_page__block -->
+  </main>
+
+  <footer class="va_footer" id="contacts">
+    <div class="va_container">
+      <div class="va_footer__wrap">
+        <div class="va_footer-col va_footer-col--sm-last">
+          <a class="va_footer__logo" href="index.html" aria-label="Агропроспект — на главную">
+            <img src="img/logo2.png" alt="Агропроспект">
+          </a>
+          <small class="va_footer__copyright">
+            © ГК «Агропроспект», 2020<br>
+            Все права защищены.
+          </small>
+        </div>
+
+        <div class="va_footer-menu-group">
+          <div class="va_footer-col va_footer-menu-group__first">
+            <h3 class="va_footer-col-title">Меню</h3>
+            <nav class="va_nav va_nav--footer" aria-label="Меню подвала">
+              <ul class="va_nav__list">
+                <li class="va_nav__item"><a href="about.html">О компании</a></li>
+                <li class="va_nav__item"><a href="#">Сервис</a></li>
+                <li class="va_nav__item"><a href="details.html">Запчасти</a></li>
+                <li class="va_nav__item"><a href="import.html">Импорт техники б/у</a></li>
+                <li class="va_nav__item">
+                  <a href="#contacts">
+                    <span class="va_hide-sm">Контактная информация</span>
+                    <span class="va_sm-only">Контакты</span>
+                  </a>
+                </li>
+              </ul>
+            </nav>
+          </div>
+
+          <div class="va_footer-col">
+            <h3 class="va_footer-col-title va_hide-sm">Мы в социальных сетях</h3>
+            <h3 class="va_footer-col-title va_sm-only">Мы в соц. сетях</h3>
+            <ul class="va_socials">
+              <li class="va_socials__item">
+                <a href="#" aria-label="Агропроспект во ВКонтакте">
+                  <img class="va_socials__icon" src="img/socials/vk.png" alt="">
+                  Вконтакте
+                </a>
+              </li>
+              <li class="va_socials__item">
+                <a href="#" aria-label="Агропроспект в Facebook">
+                  <img class="va_socials__icon" src="img/socials/fb.png" alt="">
+                  Facebook
+                </a>
+              </li>
+              <li class="va_socials__item">
+                <a href="#" aria-label="Агропроспект на YouTube">
+                  <img class="va_socials__icon" src="img/socials/yt.png" alt="">
+                  YouTube
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+        <!-- /.va_footer-menu-group -->
+
+        <div class="va_footer-col">
+          <h3 class="va_footer-col-title va_footer-col-title--sm-offset">Звоните по телефону</h3>
+
+          <div class="va_info-group va_info-group--vertical">
+            <div class="va_info">
+              <img class="va_info__icon" src="img/icons/phone.png" alt="">
+              <div class="va_info__content">
+                <h3 class="va_info__title va_info__title--phone">
+                  <a href="tel:84732111674">8 (473) 211-1674</a>
+                </h3>
+                <span class="va_info__text">Бесплатно по всей России</span>
+              </div>
+            </div>
+
+            <button class="va_btn js-open-popup" type="button" data-form-title="Заказать звонок">Заказать звонок</button>
+
+            <div class="va_info">
+              <img class="va_info__icon" src="img/icons/clock.png" alt="">
+              <div class="va_info__content">
+                <h3 class="va_info__title">Принимаем звонки:</h3>
+                <span class="va_info__text">пн-пт с 9:00 до 20:00</span>
+              </div>
+            </div>
+          </div>
+          <!-- /.va_info-group -->
+        </div>
+      </div>
+      <!-- /.va_footer__wrap -->
+    </div>
+    <!-- /.va_container -->
+  </footer>
+  <!-- /.va_footer -->
+
+  <div class="va_modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="va_modal__content va_card">
+      <button class="va_modal__close js-close-popup" type="button" aria-label="Закрыть окно">&times;</button>
+
+      <form class="va_form" action="#">
+        <div class="va_form__wrap">
+          <h2 class="va_form__title js-form-title" id="modal-title">
+            <span class="va_hide-sm">
+              Запросить<br>
+              предложение
+            </span>
+            <span class="va_sm-only">
+              Заказать звонок
+            </span>
+          </h2>
+
+          <label class="va_form-row">
+            <span class="va_form-row__title">Ваше имя:</span>
+            <input class="va_input" type="text" name="name" placeholder="Введите ваше имя..." autocomplete="name">
+          </label>
+
+          <label class="va_form-row">
+            <span class="va_form-row__title">Ваш телефон:</span>
+            <input class="va_input" type="tel" name="phone" placeholder="Введите ваш телефон..." autocomplete="tel">
+          </label>
+
+          <label class="va_form-row">
+            <span class="va_form-row__title">Ваш e-mail:</span>
+            <input class="va_input" type="email" name="email" placeholder="Введите ваш e-mail..." autocomplete="email">
+          </label>
+
+          <button class="va_btn va_form__btn js-send" type="submit">Отправить</button>
+        </div>
+        <!-- /.va_form__wrap -->
+
+        <small class="va_form__important">
+          Нажимая на кнопку, вы даете согласие на<br>
+          обработку персональных данных и соглашаетесь<br>
+          с <a href="#" target="_blank" rel="noopener">политикой конфиденциальности</a>.
+        </small>
+      </form>
+    </div>
+    <!-- /.va_modal__content -->
+  </div>
+  <!-- /.va_modal -->
+
+  <a class="va_visually-hidden" href="https://github.com/persiklover" target="_blank" rel="noopener">GitHub разработчика</a>
+
+  <script src="lib/jquery/jquery.min.js"></script>
+  <script src="lib/picturefill/picturefill.min.js"></script>
+  <script src="lib/owlcarousel/js/owl.carousel.min.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

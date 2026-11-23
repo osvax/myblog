@@ -143,6 +143,7 @@ class BlogController extends Controller
             'categoryName' => $category['name'],
             'categorySlug' => $category['slug'],
             'categoryDescription' => $category['description'] ?? '',
+            'categoryNavigation' => [],
             'pagination' => ['total' => $total, 'pages' => $pages, 'current' => $page],
             'pageScripts' => ['/js/blog-search.js'],
             'articleExcerptLength' => max(50, min(2000, (int) ($settings['articleExcerptLength'] ?? 300) ?: 300)),

@@ -24,7 +24,13 @@
                             <button class="nav-link" id="contacts-tab" data-bs-toggle="tab" data-bs-target="#contacts-pane" type="button" role="tab" aria-controls="contacts-pane" aria-selected="false" title="Контакты"><i class="bi bi-telephone"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="contacts-about-tab" data-bs-toggle="tab" data-bs-target="#contacts-about-pane" type="button" role="tab" aria-controls="contacts-about-pane" aria-selected="false" title="Обо мне"><i class="bi bi-person-vcard"></i></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
                             <button class="nav-link" id="security-tab" data-bs-toggle="tab" data-bs-target="#security-pane" type="button" role="tab" aria-controls="security-pane" aria-selected="false" title="Безопасность"><i class="bi bi-shield-lock"></i></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="authentication-tab" data-bs-toggle="tab" data-bs-target="#authentication-pane" type="button" role="tab" aria-controls="authentication-pane" aria-selected="false" title="Аутентификация"><i class="bi bi-person-badge"></i></button>
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="logs-tab" data-bs-toggle="tab" data-bs-target="#logs-pane" type="button" role="tab" aria-controls="logs-pane" aria-selected="false" title="Логи"><i class="bi bi-clock-history"></i></button>
@@ -40,6 +46,9 @@
                         </li>
                         <li class="nav-item" role="presentation">
                             <button class="nav-link" id="appearance-tab" data-bs-toggle="tab" data-bs-target="#appearance-pane" type="button" role="tab" aria-controls="appearance-pane" aria-selected="false" title="Оформление"><i class="bi bi-palette"></i></button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link" id="templates-tab" data-bs-toggle="tab" data-bs-target="#templates-pane" type="button" role="tab" aria-controls="templates-pane" aria-selected="false" title="Шаблоны"><i class="bi bi-layout-text-window-reverse"></i></button>
                         </li>
                     </ul>
                 </div>
@@ -341,37 +350,92 @@ Email: {email}
                         <section class="tab-pane fade" id="contacts-pane" role="tabpanel" aria-labelledby="contacts-tab" tabindex="0">
                             <h3 class="h5 fw-bold mb-4">Контактные данные и социальные сети</h3>
                             <div class="row g-3">
+                                <?php
+                                $contactAdminFields = [
+                                    ['contactAddress', 'contactAddressEnabled', 'contactAddressLabel', 'Адрес', 'text', 'г. Самара, ул. Примерная, 1'],
+                                    ['contactHours', 'contactHoursEnabled', 'contactHoursLabel', 'Часы работы', 'text', 'Пн-Пт: 9:00 — 18:00'],
+                                    ['contactEmail', 'contactEmailEnabled', 'contactEmailLabel', 'Email', 'email', 'hello@moyblog.ru'],
+                                    ['contactPhone', 'contactPhoneEnabled', 'contactPhoneLabel', 'Телефон', 'tel', '+7 (900) 123-45-67'],
+                                ];
+                                foreach ($contactAdminFields as [$valueId, $enabledId, $labelId, $fallbackLabel, $type, $value]):
+                                ?>
                                 <div class="col-md-6">
-                                    <label for="contactAddress" class="form-label fw-bold">Адрес</label>
-                                    <input type="text" id="contactAddress" class="form-control" maxlength="160" value="г. Самара, ул. Примерная, 1">
+                                    <div class="border rounded p-3 h-100">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="<?= $enabledId ?>" checked>
+                                            <label class="form-check-label fw-bold" for="<?= $enabledId ?>">Показывать карточку</label>
+                                        </div>
+                                        <label for="<?= $labelId ?>" class="form-label">Название поля</label>
+                                        <input type="text" id="<?= $labelId ?>" class="form-control mb-2" maxlength="80" value="<?= htmlspecialchars($fallbackLabel, ENT_QUOTES, 'UTF-8') ?>">
+                                        <label for="<?= $valueId ?>" class="form-label">Содержимое</label>
+                                        <input type="<?= $type ?>" id="<?= $valueId ?>" class="form-control" maxlength="254" value="<?= htmlspecialchars($value, ENT_QUOTES, 'UTF-8') ?>">
+                                    </div>
                                 </div>
+                                <?php endforeach; ?>
+
+                                <?php
+                                $socialAdminFields = [
+                                    ['socialTelegram', 'socialTelegramEnabled', 'socialTelegramLabel', 'Telegram', 'https://t.me/username'],
+                                    ['socialVk', 'socialVkEnabled', 'socialVkLabel', 'VK', 'https://vk.com/username'],
+                                    ['socialGithub', 'socialGithubEnabled', 'socialGithubLabel', 'GitHub', 'https://github.com/username'],
+                                    ['socialYoutube', 'socialYoutubeEnabled', 'socialYoutubeLabel', 'YouTube', 'https://youtube.com/@username'],
+                                ];
+                                foreach ($socialAdminFields as [$valueId, $enabledId, $labelId, $fallbackLabel, $placeholder]):
+                                ?>
                                 <div class="col-md-6">
-                                    <label for="contactHours" class="form-label fw-bold">Часы работы</label>
-                                    <input type="text" id="contactHours" class="form-control" maxlength="120" value="Пн-Пт: 9:00 — 18:00">
+                                    <div class="border rounded p-3 h-100">
+                                        <div class="form-check form-switch mb-2">
+                                            <input class="form-check-input" type="checkbox" id="<?= $enabledId ?>" checked>
+                                            <label class="form-check-label fw-bold" for="<?= $enabledId ?>">Показывать кнопку</label>
+                                        </div>
+                                        <label for="<?= $labelId ?>" class="form-label">Название кнопки</label>
+                                        <input type="text" id="<?= $labelId ?>" class="form-control mb-2" maxlength="80" value="<?= htmlspecialchars($fallbackLabel, ENT_QUOTES, 'UTF-8') ?>">
+                                        <label for="<?= $valueId ?>" class="form-label">Ссылка</label>
+                                        <input type="url" id="<?= $valueId ?>" class="form-control" placeholder="<?= htmlspecialchars($placeholder, ENT_QUOTES, 'UTF-8') ?>">
+                                    </div>
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="contactEmail" class="form-label fw-bold">Публичный email</label>
-                                    <input type="email" id="contactEmail" class="form-control" maxlength="254" value="hello@moyblog.ru">
+                                <?php endforeach; ?>
+                            </div>
+                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+                        </section>
+
+                        <section class="tab-pane fade" id="contacts-about-pane" role="tabpanel" aria-labelledby="contacts-about-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-4">Блок «Обо мне» на странице контактов</h3>
+                            <div class="form-check form-switch mb-4">
+                                <input class="form-check-input" type="checkbox" id="contactsAboutEnabled" checked>
+                                <label class="form-check-label fw-bold" for="contactsAboutEnabled">Показывать блок над карточками контактов</label>
+                            </div>
+                            <div class="row g-4">
+                                <div class="col-lg-5">
+                                    <label for="contactsAboutPhotoInput" class="form-label fw-bold">Большое фото</label>
+                                    <input type="file" id="contactsAboutPhotoInput" class="form-control" accept="image/jpeg,image/png,image/webp">
+                                    <button type="button" class="btn btn-orange fw-bold mt-2" id="contactsAboutPhotoUpload"><i class="bi bi-cloud-upload"></i> Загрузить фото</button>
+                                    <span id="contactsAboutPhotoStatus" class="small text-muted d-block mt-2"></span>
+                                    <input type="hidden" id="contactsAboutPhoto" value="">
                                 </div>
-                                <div class="col-md-6">
-                                    <label for="contactPhone" class="form-label fw-bold">Телефон</label>
-                                    <input type="tel" id="contactPhone" class="form-control" maxlength="40" value="+7 (900) 123-45-67">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="socialTelegram" class="form-label fw-bold">Ссылка на Telegram</label>
-                                    <input type="url" id="socialTelegram" class="form-control" placeholder="https://t.me/username" value="https://t.me/moyblog">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="socialVk" class="form-label fw-bold">Ссылка на VK</label>
-                                    <input type="url" id="socialVk" class="form-control" placeholder="https://vk.com/username" value="https://vk.com/moyblog">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="socialGithub" class="form-label fw-bold">Ссылка на GitHub</label>
-                                    <input type="url" id="socialGithub" class="form-control" placeholder="https://github.com/username" value="https://github.com/moyblog">
-                                </div>
-                                <div class="col-md-6">
-                                    <label for="socialYoutube" class="form-label fw-bold">Ссылка на YouTube</label>
-                                    <input type="url" id="socialYoutube" class="form-control" placeholder="https://youtube.com/@username" value="https://youtube.com/@moyblog">
+                                <div class="col-lg-7">
+                                    <label for="contactsAboutHtml" class="form-label fw-bold">HTML-содержимое</label>
+                                    <div class="article-editor border rounded contacts-about-editor">
+                                        <div class="article-editor-toolbar d-flex flex-wrap gap-1 p-2 border-bottom" role="toolbar" aria-label="Форматирование блока «Обо мне»">
+                                            <select class="form-select form-select-sm article-editor-block" id="contactsAboutBlockFormat" aria-label="Формат блока">
+                                                <option value="P">Обычный текст</option>
+                                                <option value="H2">Заголовок 2</option>
+                                                <option value="H3">Заголовок 3</option>
+                                                <option value="H4">Заголовок 4</option>
+                                                <option value="BLOCKQUOTE">Цитата</option>
+                                            </select>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-about-editor-command="bold" aria-label="Полужирный" title="Полужирный"><i class="bi bi-type-bold"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-about-editor-command="italic" aria-label="Курсив" title="Курсив"><i class="bi bi-type-italic"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-about-editor-command="underline" aria-label="Подчёркнутый" title="Подчёркнутый"><i class="bi bi-type-underline"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-about-editor-command="insertUnorderedList" aria-label="Маркированный список" title="Маркированный список"><i class="bi bi-list-ul"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-about-editor-command="insertOrderedList" aria-label="Нумерованный список" title="Нумерованный список"><i class="bi bi-list-ol"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-secondary" data-about-editor-command="removeFormat" aria-label="Очистить форматирование" title="Очистить форматирование"><i class="bi bi-eraser"></i></button>
+                                            <button type="button" class="btn btn-sm btn-outline-dark ms-auto" id="contactsAboutSourceToggle" aria-pressed="false"><i class="bi bi-code-slash"></i> HTML</button>
+                                        </div>
+                                        <div id="contactsAboutEditor" class="article-editor-canvas" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Визуальное содержимое блока «Обо мне»"></div>
+                                        <textarea id="contactsAboutHtml" class="form-control article-editor-source" rows="14" aria-label="HTML-код блока «Обо мне»" hidden><h2>Обо мне</h2><p>Расскажите посетителям о себе, своём опыте и подходе к работе.</p></textarea>
+                                    </div>
+                                    <div class="small text-muted mt-2">Используйте панель форматирования или включите режим HTML для редактирования кода.</div>
                                 </div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
@@ -428,6 +492,20 @@ Email: {email}
                                     <label for="adminSessionHours" class="form-label fw-bold">Срок сессии админки (часы)</label>
                                     <input type="number" id="adminSessionHours" class="form-control" min="1" max="168" value="8">
                                 </div>
+                            </div>
+                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+                        </section>
+
+                        <section class="tab-pane fade" id="authentication-pane" role="tabpanel" aria-labelledby="authentication-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-4">Аутентификация</h3>
+                            <div class="alert alert-info">Настройки сохраняются в базе данных. Для Яндекс OAuth укажите redirect URI из консоли разработчика Яндекса.</div>
+                            <div class="row g-3">
+                                <div class="col-md-6"><label for="adminLoginEmail" class="form-label fw-bold">Email входа в админ-панель</label><input type="email" id="adminLoginEmail" class="form-control" autocomplete="username"></div>
+                                <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="auth2faEnabled"><label class="form-check-label fw-bold" for="auth2faEnabled">Разрешить двухфакторную аутентификацию (TOTP)</label></div></div>
+                                <div class="col-12"><div class="form-check form-switch"><input class="form-check-input" type="checkbox" id="yandexAuthEnabled"><label class="form-check-label fw-bold" for="yandexAuthEnabled">Вход через Яндекс</label></div></div>
+                                <div class="col-md-6"><label for="yandexClientId" class="form-label fw-bold">ID приложения</label><input type="text" id="yandexClientId" class="form-control"></div>
+                                <div class="col-md-6"><label for="yandexClientSecret" class="form-label fw-bold">Секретный ключ</label><input type="password" id="yandexClientSecret" class="form-control" autocomplete="new-password"></div>
+                                <div class="col-12"><label for="yandexRedirectUri" class="form-label fw-bold">Redirect URI</label><input type="url" id="yandexRedirectUri" class="form-control"></div>
                             </div>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
@@ -713,6 +791,26 @@ Email: {email}
                                     </div>
                                 </div>
                             </div>
+                            <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
+                        </section>
+
+                        <section class="tab-pane fade" id="templates-pane" role="tabpanel" aria-labelledby="templates-tab" tabindex="0">
+                            <h3 class="h5 fw-bold mb-4">Шаблоны сайта</h3>
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label for="frontendTemplate" class="form-label fw-bold">Шаблон публичной части</label>
+                                    <select id="frontendTemplate" class="form-select" data-template-area="frontend">
+                                        <option value="default">default</option>
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="adminTemplate" class="form-label fw-bold">Шаблон админ-панели</label>
+                                    <select id="adminTemplate" class="form-select" data-template-area="admin">
+                                        <option value="default">default</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <p class="text-muted small mt-3 mb-0">Доступны только шаблоны, присутствующие в папках приложения. После смены сохраните настройки и обновите страницу.</p>
                             <button type="submit" class="btn btn-orange fw-bold mt-4"><i class="bi bi-save"></i> Сохранить</button>
                         </section>
 

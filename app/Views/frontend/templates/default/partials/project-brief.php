@@ -20,6 +20,7 @@
         }
     }
     $briefSolution = trim((string) ($project['solution'] ?? ''));
+    $briefResultText = trim((string) ($project['result'] ?? ''));
     $briefResults = [];
     if (isset($project['results']) && is_array($project['results'])) {
         foreach ($project['results'] as $briefResult) {
@@ -57,8 +58,13 @@
     <?php $briefFirstHeading = false; ?>
     <p class="fw-bold"><?= nl2br(htmlspecialchars($briefSolution, ENT_QUOTES, 'UTF-8')) ?></p>
 <?php endif; ?>
-<?php if ($briefResults): ?>
+<?php if ($briefResultText !== ''): ?>
     <h2 class="<?= $briefFirstHeading ? 'fw-bold mb-3' : 'fw-bold mt-5 mb-3' ?>">Результат</h2>
+    <p class="fw-bold"><?= nl2br(htmlspecialchars($briefResultText, ENT_QUOTES, 'UTF-8')) ?></p>
+    <?php $briefFirstHeading = false; ?>
+<?php endif; ?>
+<?php if ($briefResults): ?>
+    <h2 class="<?= $briefFirstHeading ? 'fw-bold mb-3' : 'fw-bold mt-5 mb-3' ?>">Показатели результата</h2>
     <div class="row g-3">
         <?php foreach ($briefResults as $briefResult): ?>
             <div class="col-sm-4">

@@ -1,0 +1,136 @@
+// Promo Block
+.va_promo {
+  position: relative;
+  padding: 180px 0 220px;
+  background: url('../images/bg-promo.jpg') center/cover no-repeat;
+  overflow: hidden;
+  
+  @include mq-tablet {
+    padding: 140px 0 160px;
+    background-image: url('../images/promo-mobile-image-index.jpg');
+  }
+}
+
+.va_promo__content {
+  position: relative;
+  z-index: 2;
+  max-width: 600px;
+}
+
+.va_promo__title {
+  font-size: $va_font-size-h1;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: $va_color-white;
+  line-height: 1.15;
+  margin-bottom: $va_spacing-lg;
+  
+  @include mq-tablet {
+    font-size: 36px;
+  }
+  
+  @include mq-mobile {
+    font-size: 28px;
+  }
+}
+
+.va_promo__line {
+  display: inline-block;
+  position: relative;
+  margin-bottom: $va_spacing-xl;
+}
+
+.va_promo__line::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 10px;
+  height: 6px;
+  width: 100%;
+  background: $va_color-primary;
+  z-index: -1;
+}
+
+.va_promo__text {
+  font-size: $va_font-size-xl;
+  font-weight: 500;
+  color: $va_color-white;
+  margin-bottom: $va_spacing-xl;
+  max-width: 500px;
+  
+  @include mq-tablet {
+    font-size: $va_font-size-lg;
+  }
+}
+
+.va_promo__btns {
+  display: flex;
+  gap: $va_spacing-md;
+  flex-wrap: wrap;
+  
+  @include mq-mobile {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}
+
+.va_promo__btn {
+  @extend .va_promo-btn;
+}
+
+.va_promo__btn--secondary {
+  @extend .va_btn;
+  @extend .va_btn--outline;
+  @extend .va_btn--lg;
+  border-color: $va_color-white;
+  color: $va_color-white;
+  min-width: 220px;
+  
+  &:hover {
+    background: $va_color-white;
+    color: $va_color-dark;
+  }
+}
+
+.va_promo__image {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  max-width: 60%;
+  z-index: 1;
+  
+  @include mq-tablet {
+    display: none;
+  }
+  
+  img {
+    width: 100%;
+    height: auto;
+  }
+}
+
+// Promo Inner (for inner pages)
+.va_promo-inner {
+  position: relative;
+  height: 400px;
+  background: center/cover no-repeat;
+  display: flex;
+  align-items: flex-end;
+  padding-bottom: $va_spacing-xl;
+  
+  @include mq-tablet {
+    height: 300px;
+  }
+}
+
+.va_promo-inner__title {
+  font-size: $va_font-size-h1;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: $va_color-white;
+  line-height: 1.15;
+  
+  @include mq-tablet {
+    font-size: 36px;
+  }
+}

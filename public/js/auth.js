@@ -253,6 +253,36 @@
         });
     }
 
+    // ---------- Аватар профиля ----------
+    var avatarForm = document.getElementById('avatarForm');
+    var avatarInput = document.getElementById('profileAvatar');
+    if (avatarForm && avatarInput) {
+        avatarInput.addEventListener('change', function () {
+            if (!avatarInput.files || !avatarInput.files[0]) return;
+            var formData = new FormData();
+            formData.append('avatar', avatarInput.files[0]);
+            fetch('/api/profile/avatar', { method: 'POST', body: formData })
+                .then(function (response) {
+                    return response.json().then(function (data) {
+                        if (!response.ok || !data.success) throw new Error(data.error || 'Ошибка загрузки аватара');
+                        return data;
+                    });
+                })
+                .then(function (data) {
+                    var avatar = document.querySelector('.profile-avatar img');
+                    if (avatar) avatar.src = data.avatar_path + '?v=' + Date.now();
+                    else window.location.reload();
+                    showSuccess('avatarSuccess', 'Аватар успешно обновлён');
+                })
+                .catch(function (error) {
+                    showError('avatarError', error.message);
+                })
+                .finally(function () {
+                    avatarInput.value = '';
+                });
+        });
+    }
+
     // ---------- Форма смены пароля ----------
     var passwordForm = document.getElementById('passwordForm');
     if (passwordForm) {

@@ -25,10 +25,17 @@
   width: 120px;
   height: 120px;
   border-radius: $border-radius-round;
-  object-fit: cover;
   margin: 0 auto 1rem;
   display: block;
   border: 3px solid var(--theme-primary, #ff8c1a);
+  overflow: hidden;
+
+  img {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+  }
 }
 
 .avatar-placeholder {
@@ -59,6 +66,11 @@
   font-size: 1.25rem;
   margin-bottom: 1rem;
   color: $text-main;
+}
+
+.profile-avatar-form {
+  margin: -0.35rem auto 1.5rem;
+  text-align: center;
 }
 
 .profile-form {

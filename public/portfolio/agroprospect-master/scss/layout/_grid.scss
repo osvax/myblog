@@ -1,0 +1,36 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — сетка (каталог)
+// ==========================================================
+
+.va_grid {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.va_grid__row {
+  display: flex;
+  width: 100%;
+  margin-bottom: 3.5em;
+
+  @include va-media-down($va-bp-sm) {
+    flex-direction: column;
+    margin-bottom: .5em;
+  }
+}
+
+.va_grid__col {
+  width: calc(50% - 1em);
+  margin-right: 2em;
+
+  &:nth-child(2n) {
+    margin-right: 0;
+  }
+
+  @include va-media-down($va-bp-sm) {
+    width: 100%;
+    margin-right: 0;
+    margin-bottom: 2em;
+  }
+}

@@ -176,6 +176,14 @@ class User
      * @param string $newPasswordHash
      * @return array
      */
+    public function updateAvatar(int $userId, string $avatarPath): bool
+    {
+        $stmt = Database::connection()->prepare(
+            "UPDATE " . db_table('users') . " SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id"
+        );
+        return $stmt->execute(['avatar_path' => $avatarPath, 'id' => $userId]);
+    }
+
     public function updatePassword(int $userId, string $newPasswordHash): array
     {
         $db = Database::connection();

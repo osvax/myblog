@@ -251,7 +251,9 @@ footer {
     color: #ffffff;
 }
 
-.new-orders-bell {
+/* Универсальный «колокольчик со счётчиком» для пунктов меню
+   (введён для «Новых заказов», переиспользуется для Консультанта и Комментариев) */
+.admin-bell {
     position: relative;
     display: inline-flex;
     align-items: center;
@@ -261,15 +263,15 @@ footer {
     height: 1.4rem;
 }
 
-.new-orders-bell-primary {
+.admin-bell-primary {
     transform-origin: 50% 12%;
 }
 
-.has-new-orders .new-orders-bell-primary {
-    animation: new-orders-ring .9s ease-in-out infinite;
+.has-admin-bell .admin-bell-primary {
+    animation: bell-ring .9s ease-in-out infinite;
 }
 
-.new-orders-bell-secondary {
+.admin-bell-secondary {
     position: absolute;
     top: -.1rem;
     right: -.2rem;
@@ -278,12 +280,12 @@ footer {
     transform: rotate(18deg);
 }
 
-.has-new-orders .new-orders-bell-secondary {
+.has-admin-bell .admin-bell-secondary {
     opacity: .8;
-    animation: new-orders-ring-secondary .9s ease-in-out infinite;
+    animation: bell-ring-secondary .9s ease-in-out infinite;
 }
 
-.new-orders-count {
+.admin-bell-count {
     min-width: 1.25rem;
     height: 1.25rem;
     padding: 0 .25rem;
@@ -300,43 +302,13 @@ footer {
     line-height: 1;
 }
 
-.consultant-unread-count {
-    min-width: 1.25rem;
-    height: 1.25rem;
-    padding: 0 .25rem;
-    border: 2px solid #353535;
-    border-radius: 999px;
-    background: #dc3545;
-    color: #ffffff;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    margin-left: auto;
-    font-size: .68rem;
-    font-weight: 800;
-    line-height: 1;
-}
-
-.consultant-unread-count[hidden] {
-    display: none;
-}
-
-.has-consultant-requests {
-    color: #ffffff;
-}
-
-.has-consultant-requests > i {
-    transform-origin: 50% 12%;
-    animation: new-orders-ring .9s ease-in-out infinite;
-}
-
-@keyframes new-orders-ring {
+@keyframes bell-ring {
     0%, 100% { transform: rotate(0); }
     15%, 45%, 75% { transform: rotate(16deg); }
     30%, 60%, 90% { transform: rotate(-16deg); }
 }
 
-@keyframes new-orders-ring-secondary {
+@keyframes bell-ring-secondary {
     0%, 100% { transform: rotate(18deg); }
     25%, 75% { transform: rotate(34deg); }
     50% { transform: rotate(2deg); }
@@ -500,16 +472,17 @@ footer {
     transform: translateY(-6px);
 }
 
-.dashboard-new-orders-icon {
+/* Иконка-колокольчик в плитках дашборда (новые заказы, чаты, комментарии) */
+.dashboard-bell-icon {
     position: relative;
 }
 
-.dashboard-new-orders-icon.has-new-orders > i {
+.dashboard-bell-icon.has-admin-bell > i {
     transform-origin: 50% 12%;
-    animation: new-orders-ring .9s ease-in-out infinite;
+    animation: bell-ring .9s ease-in-out infinite;
 }
 
-.dashboard-new-orders-count {
+.dashboard-bell-count {
     position: absolute;
     top: -5px;
     right: -5px;
@@ -528,7 +501,7 @@ footer {
     line-height: 1;
 }
 
-.dashboard-new-orders-count[hidden] {
+.dashboard-bell-count[hidden] {
     display: none;
 }
 
@@ -551,6 +524,12 @@ footer {
     border-radius: 1rem;
     box-shadow: 0 .5rem 1rem rgba(53, 53, 53, .08);
     border-top: 4px solid var(--orange);
+}
+
+#menuItemsList [data-item-row],
+#categoryNavigationList [data-navigation-row],
+#rubricMenuItems [data-rubric-item] {
+    cursor: pointer;
 }
 
 .admin-table thead th {
@@ -1485,15 +1464,15 @@ footer {
 }
 
 /* ---------- Адаптив сайдбара ---------- */
-body.templates-page .admin-content {
+body:has(.template-editor-card) .admin-content {
     display: flex;
     flex-direction: column;
-    min-height: 0;
+    min-height: calc(100vh - 112px);
 }
 
 .template-editor-card {
-    flex: 1;
-    min-height: 0;
+    flex: 1 1 auto;
+    min-height: calc(100vh - 190px);
     display: flex;
     flex-direction: column;
 }
@@ -1506,14 +1485,29 @@ body.templates-page .admin-content {
 }
 
 .template-editor-card .CodeMirror {
-    flex: 1;
-    height: auto;
-    min-height: 320px;
+    flex: 1 1 auto;
+    height: calc(100vh - 310px);
+    min-height: 520px;
+}
+
+@media (max-width: 991.98px) {
+    body:has(.template-editor-card) .admin-content {
+        min-height: calc(100vh - 88px);
+    }
+
+    .template-editor-card {
+        min-height: calc(100vh - 150px);
+    }
+
+    .template-editor-card .CodeMirror {
+        height: calc(100vh - 360px);
+        min-height: 360px;
+    }
 }
 
 /* Редактор тела страницы в «Страницах» — высота как у «Шаблонов» */
 .page-editor-card .CodeMirror {
-    min-height: 320px;
+    min-height: 800px;
 }
 
 /* Предпросмотр во всплывающем окне («Страницы», «Шаблоны») */
@@ -1539,8 +1533,65 @@ body.templates-page .admin-content {
 
 // Раздел «Статистика сайта»: контейнеры графиков
 .statistics-chart {
+    position: relative;
     width: 100%;
     min-height: 240px;
+}
+
+.statistics-chart svg {
+    overflow: visible;
+}
+
+.stat-line-path {
+    filter: drop-shadow(0 3px 4px rgba(255, 140, 26, .22));
+}
+
+.stat-line-hit {
+    cursor: pointer;
+}
+
+.stat-line-point {
+    transition: r .15s ease, stroke-width .15s ease;
+    pointer-events: none;
+}
+
+.stat-line-hit:hover + .stat-line-point {
+    r: 6;
+    stroke-width: 3;
+}
+
+.stat-chart-tooltip {
+    position: absolute;
+    z-index: 5;
+    display: flex;
+    flex-direction: column;
+    gap: .15rem;
+    min-width: 130px;
+    padding: .55rem .7rem;
+    border: 1px solid rgba(255, 140, 26, .3);
+    border-radius: .65rem;
+    background: rgba(35, 35, 35, .94);
+    color: #fff;
+    box-shadow: 0 .45rem 1.2rem rgba(0, 0, 0, .2);
+    font-size: .78rem;
+    line-height: 1.25;
+    pointer-events: none;
+    transform: translateY(-4px);
+    animation: stat-tooltip-in .12s ease-out;
+}
+
+.stat-chart-tooltip strong {
+    color: #ffd08a;
+    font-weight: 700;
+}
+
+.stat-chart-tooltip span {
+    color: rgba(255, 255, 255, .85);
+}
+
+@keyframes stat-tooltip-in {
+    from { opacity: 0; transform: translateY(2px); }
+    to { opacity: 1; transform: translateY(-4px); }
 }
 
 .statistics-chart svg {

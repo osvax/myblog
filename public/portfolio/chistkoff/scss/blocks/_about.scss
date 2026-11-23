@@ -1,0 +1,149 @@
+// About Block
+.va_about {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $va_spacing-xxl;
+    align-items: center;
+    
+    @include mq-tablet {
+      grid-template-columns: 1fr;
+      gap: $va_spacing-xl;
+    }
+  }
+}
+
+.va_about__image {
+  position: relative;
+  border-radius: $va_border-radius-md;
+  overflow: hidden;
+  aspect-ratio: 4/3;
+  
+  @include mq-tablet {
+    aspect-ratio: 16/9;
+  }
+}
+
+.va_about__img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform $va_transition-slow;
+}
+
+.va_about__image:hover .va_about__img {
+  transform: scale(1.03);
+}
+
+.va_about__experience {
+  position: absolute;
+  bottom: $va_spacing-lg;
+  right: $va_spacing-lg;
+  padding: $va_spacing-lg;
+  background: $va_color-primary;
+  border-radius: $va_border-radius-md;
+  text-align: center;
+  min-width: 120px;
+  
+  @include mq-mobile {
+    bottom: $va_spacing-md;
+    right: $va_spacing-md;
+    padding: $va_spacing-md;
+    min-width: 100px;
+  }
+}
+
+.va_about__years {
+  display: block;
+  font-size: 36px;
+  font-weight: 900;
+  color: $va_color-white;
+  line-height: 1;
+  
+  @include mq-mobile {
+    font-size: 28px;
+  }
+}
+
+.va_about__years-text {
+  display: block;
+  font-size: $va_font-size-sm;
+  text-transform: uppercase;
+  color: $va_color-white;
+  margin-top: 4px;
+}
+
+.va_about__content {
+  padding-right: $va_spacing-xl;
+  
+  @include mq-tablet {
+    padding-right: 0;
+  }
+}
+
+.va_about__title {
+  font-size: $va_font-size-h2;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $va_color-dark;
+  margin-bottom: $va_spacing-md;
+  position: relative;
+  padding-bottom: $va_spacing-md;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: $va_color-primary;
+  }
+  
+  @include mq-tablet {
+    font-size: $va_font-size-h3;
+  }
+}
+
+.va_about__text {
+  font-size: $va_font-size-base;
+  color: $va_color-text;
+  line-height: 1.7;
+  margin-bottom: $va_spacing-md;
+}
+
+.va_about__features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: $va_spacing-md;
+  margin-top: $va_spacing-lg;
+  
+  @include mq-mobile {
+    grid-template-columns: 1fr;
+  }
+}
+
+.va_about__feature {
+  display: flex;
+  align-items: flex-start;
+  gap: $va_spacing-sm;
+}
+
+.va_about__feature-icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  margin-top: 2px;
+  background: $va_color-primary;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: $va_color-white;
+  font-size: 12px;
+}
+
+.va_about__feature-text {
+  font-size: $va_font-size-base;
+  color: $va_color-text;
+}

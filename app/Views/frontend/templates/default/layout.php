@@ -54,6 +54,7 @@
             --theme-block-bg: <?= $themeBlockBg ?? '#ffffff' ?>;
             --theme-sidebar-bg: <?= $themeSidebarBg ?? '#ffffff' ?>;
             --theme-text: <?= $themeText ?? '#353535' ?>;
+            --theme-dark: <?= $themeText ?? '#353535' ?>;
             --theme-font-size: <?= (int) ($themeFontSize ?? 16) ?>px;
             --theme-nav-size: <?= (int) ($themeNavSize ?? 16) ?>px;
             --theme-heading-scale: <?= (float) ($themeHeadingScale ?? 1) ?>;
@@ -78,7 +79,7 @@
         <link rel="stylesheet" href="<?= asset_version('/css/style.css') ?>">
     <?php endif; ?>
 </head>
-<body id="top">
+<body id="top" class="<?= !empty($authPage) ? 'auth-page' : '' ?>">
     <nav class="navbar navbar-expand-lg navbar-dark bg-orange sticky-top shadow-sm">
         <div class="container">
             <a class="navbar-brand fw-bold" href="/"><i class="bi bi-lightning-charge-fill"></i> <?= htmlspecialchars($siteName ?? 'МойБлог', ENT_QUOTES, 'UTF-8') ?></a>

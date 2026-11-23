@@ -1,0 +1,105 @@
+// Contacts Page Block
+.va_contacts-page {
+  &__grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: $va_spacing-xl;
+    margin-bottom: $va_spacing-xl;
+
+    @include mq-tablet {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+    gap: $va_spacing-lg;
+  }
+
+  &__whatsapp {
+    @include mq-tablet {
+      order: -1;
+    }
+  }
+
+  &__form-wrapper {
+    grid-column: 1 / -1;
+  }
+
+  &__form-header {
+    text-align: center;
+    margin-bottom: $va_spacing-lg;
+
+    @include mq-tablet {
+      text-align: left;
+    }
+  }
+
+  &__form-title {
+    font-size: $va_font-size-h3;
+    font-weight: 700;
+    color: $va_color-dark;
+    margin-bottom: $va_spacing-sm;
+  }
+
+  &__form-desc {
+    font-size: $va_font-size-base;
+    color: $va_color-gray;
+    max-width: 500px;
+    margin: 0 auto;
+
+    @include mq-tablet {
+      margin: 0;
+    }
+  }
+}
+
+.va_contacts-block {
+  &__items {
+    display: flex;
+    flex-direction: column;
+    gap: $va_spacing-md;
+  }
+
+  &__item-group {
+    display: flex;
+    flex-direction: column;
+    gap: $va_spacing-xs;
+  }
+
+  &__desc {
+    font-size: $va_font-size-sm;
+    color: $va_color-gray;
+  }
+}
+
+.va_form__row {
+  display: flex;
+  gap: $va_spacing-lg;
+
+  @include mq-tablet {
+    flex-direction: column;
+    gap: 0;
+  }
+}
+
+.va_form__col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: $va_spacing-md;
+}
+
+.va_map {
+  &__wrapper {
+    border-radius: $va_border-radius-md;
+    overflow: hidden;
+    box-shadow: $va_shadow-md;
+
+    iframe {
+      display: block;
+      width: 100%;
+    }
+  }
+}

@@ -1,0 +1,332 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Адаптивность: переопределения для брейкпоинтов
+// Порядок важен: от больших к меньшим
+// ============================================================
+
+// --- до 1440 ---
+@include va-mq($va-bp-xl) {
+  .va-section,
+  .va-gallery,
+  .va-cta {
+    padding-bottom: 100px;
+  }
+
+  .va-section {
+    padding-top: 100px;
+  }
+
+  .va-steps__content {
+    padding: 72px 0;
+  }
+
+  .va-footer__grid {
+    grid-template-columns: 1.2fr 0.9fr 1.2fr 1.1fr;
+  }
+
+  .va-footer__address {
+    grid-column: 4;
+  }
+}
+
+// --- до 1200 ---
+@include va-mq($va-bp-lg) {
+  .va-header__phone span {
+    display: none;
+  }
+
+  .va-card {
+    flex-basis: va-card-width(2);
+  }
+
+  .va-steps__grid {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+
+  .va-steps__content {
+    padding: 80px 0 60px;
+  }
+
+  .va-steps__media {
+    min-height: 0;
+    height: 520px;
+  }
+
+  .va-gallery__grid {
+    gap: 14px;
+  }
+
+  .va-footer__grid {
+    grid-template-columns: 1fr 1fr;
+    row-gap: 48px;
+  }
+
+  .va-footer__brand {
+    grid-column: 1 / -1;
+  }
+
+  .va-footer__address {
+    grid-column: auto;
+  }
+}
+
+// --- до 1024: мобильное меню ---
+@include va-mq($va-bp-md) {
+  .va-header__inner {
+    grid-template-columns: 1fr auto;
+  }
+
+  .va-header__logo {
+    grid-column: 1;
+    justify-self: start;
+    font-size: 16px;
+  }
+
+  .va-header__phone {
+    display: none;
+  }
+
+  .va-burger {
+    display: flex;
+    grid-column: 2;
+    justify-self: end;
+  }
+
+  .va-nav {
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    gap: 32px;
+    padding: 120px var(--va-gutter) 60px;
+    background: #111;
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s var(--va-ease), visibility 0.3s;
+  }
+
+  .va-header.is-open .va-nav {
+    display: flex;
+    visibility: visible;
+    opacity: 1;
+  }
+
+  .va-nav__list {
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .va-nav__link {
+    font-size: 20px;
+    letter-spacing: 0.08em;
+  }
+
+  .va-nav__phone {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 14px;
+    letter-spacing: 0.06em;
+    color: rgba(255, 255, 255, 0.75);
+    text-decoration: none;
+  }
+
+  .va-hero__inner {
+    padding-top: 130px;
+  }
+
+  .va-hero__title {
+    max-width: 12em;
+  }
+
+  .va-catalog__grid {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+
+  .va-catalog__media img {
+    aspect-ratio: 16 / 9;
+  }
+
+  .va-gallery__grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .va-cta__panel {
+    min-height: 480px;
+  }
+}
+
+// --- до 768 ---
+@include va-mq($va-bp-sm) {
+  .va-section {
+    padding: 64px 0;
+  }
+
+  .va-gallery,
+  .va-cta {
+    padding-bottom: 64px;
+  }
+
+  .va-section-title {
+    margin-bottom: 36px;
+  }
+
+  .va-hero {
+    min-height: 620px;
+    max-height: none;
+    height: 100svh;
+  }
+
+  .va-hero__bg img {
+    object-position: 62% 50%;
+  }
+
+  .va-hero__inner {
+    padding-top: 110px;
+    padding-bottom: 64px;
+  }
+
+  .va-hero__title {
+    max-width: none;
+    font-size: clamp(30px, 8.6vw, 44px);
+    line-height: 1.08;
+  }
+
+  .va-hero .va-btn {
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .va-services__row {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    padding: 20px 0;
+    min-height: 0;
+  }
+
+  .va-services__desc {
+    font-size: 14px;
+  }
+
+  .va-card {
+    flex-basis: 86%;
+  }
+
+  .va-card__body {
+    padding: 22px 18px 24px;
+  }
+
+  .va-projects__nav {
+    margin-top: 32px;
+  }
+
+  .va-steps__content {
+    padding: 64px 0 40px;
+  }
+
+  .va-steps__content .va-section-title {
+    margin-bottom: 36px;
+  }
+
+  .va-step {
+    grid-template-columns: 28px 1fr;
+    gap: 16px;
+    padding-bottom: 28px;
+  }
+
+  .va-step__num {
+    width: 28px;
+    height: 28px;
+    font-size: 11px;
+  }
+
+  .va-step:not(:last-child)::before {
+    left: 13.5px;
+    top: 30px;
+  }
+
+  .va-steps__media {
+    height: 360px;
+  }
+
+  .va-catalog__content {
+    padding-top: 0;
+  }
+
+  .va-field input[type="email"] {
+    height: 56px;
+  }
+
+  .va-form .va-btn {
+    width: 100%;
+  }
+
+  .va-cta__panel {
+    min-height: 0;
+    padding: 40px 12px;
+    background-position: center 60%;
+  }
+
+  .va-cta__box {
+    padding: 32px 20px 26px;
+  }
+
+  .va-cta__title {
+    font-size: clamp(20px, 5.4vw, 26px);
+    margin-bottom: 24px;
+  }
+
+  .va-cta__form {
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .va-cta__form .va-btn {
+    width: 100%;
+  }
+
+  .va-cta__msg {
+    margin-top: 12px;
+    padding-bottom: 0;
+  }
+
+  .va-footer {
+    padding: 64px 0 48px;
+  }
+
+  .va-footer__grid {
+    grid-template-columns: 1fr;
+    gap: 34px;
+  }
+
+  .va-footer__contacts li,
+  .va-footer__row,
+  .va-footer__link {
+    font-size: 13px;
+  }
+
+  .va-footer__col {
+    gap: 14px;
+  }
+}
+
+// --- до 480 ---
+@include va-mq($va-bp-xs) {
+  .va-gallery__grid {
+    gap: 10px;
+  }
+
+  .va-card {
+    flex-basis: 92%;
+  }
+
+  .va-projects__track {
+    gap: 16px;
+  }
+}

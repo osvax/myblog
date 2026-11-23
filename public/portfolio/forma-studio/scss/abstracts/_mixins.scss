@@ -1,0 +1,50 @@
+@use "variables" as *;
+
+// ============================================================
+// Миксины
+// ============================================================
+
+/// Медиазапрос «до указанной ширины».
+/// Пример: @include va-mq($va-bp-sm) { ... }
+@mixin va-mq($max-width) {
+  @media (max-width: $max-width) {
+    @content;
+  }
+}
+
+/// Ширина карточки карусели для $count карточек в ряд.
+/// Учитывает контейнер 1720px, поля по краям и зазор $va-card-gap.
+@function va-card-width($count) {
+  @return calc(
+    (min(#{$va-container-width}, 100vw - 2 * var(--va-gutter)) - #{$va-card-gap * ($count - 1)}) /
+      #{$count}
+  );
+}
+
+/// BEM-миксин для создания элемента блока
+/// @param $block - имя блока
+/// @param $element - имя элемента
+/// @return строка-селектор элемента
+@mixin va-e($block, $element) {
+  &__#{$element} {
+    @content;
+  }
+}
+
+/// BEM-миксин для создания модификатора блока/элемента
+/// @param $name - имя модификатора
+/// @return строка-селектор модификатора
+@mixin va-m($name) {
+  &--#{$name} {
+    @content;
+  }
+}
+
+/// BEM-миксин для создания состояния
+/// @param $name - имя состояния
+/// @return строка-селектор состояния
+@mixin va-is($name) {
+  &.is-#{$name} {
+    @content;
+  }
+}

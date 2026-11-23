@@ -1,0 +1,101 @@
+// Reset & Normalize
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: $va_font-family-base;
+  font-size: $va_font-size-base;
+  line-height: $va_line-height-base;
+  color: $va_color-text;
+  background-color: $va_color-white;
+  min-width: 320px;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  vertical-align: top;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+  transition: color $va_transition-base;
+}
+
+ul,
+ol {
+  list-style: none;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+  color: inherit;
+  background: none;
+  border: none;
+  outline: none;
+}
+
+button {
+  cursor: pointer;
+}
+
+address {
+  font-style: normal;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-weight: inherit;
+  font-size: inherit;
+  line-height: $va_line-height-heading;
+}
+
+:focus-visible {
+  outline: 2px solid $va_color-primary;
+  outline-offset: 2px;
+}
+
+::selection {
+  background-color: $va_color-primary;
+  color: $va_color-white;
+}
+
+// Utility classes
+.visually-hidden {
+  @include visually-hidden;
+}
+
+.ibg {
+  @include ibg;
+}
+
+.container {
+  max-width: $va_container-max;
+  margin: 0 auto;
+  padding: 0 $va_container-padding;
+  width: 100%;
+}
+
+.clearlist {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}

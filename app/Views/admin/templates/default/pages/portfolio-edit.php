@@ -40,9 +40,13 @@
                                 <label class="form-label fw-bold" for="portfolioTask">Задача</label>
                                 <textarea id="portfolioTask" class="form-control" rows="4" placeholder="Основные задачи проекта — каждая с новой строки"></textarea>
                             </div>
-                            <div>
+                            <div class="mb-3">
                                 <label class="form-label fw-bold" for="portfolioSolution">Решение</label>
                                 <textarea id="portfolioSolution" class="form-control" rows="5" placeholder="Опишите принятое решение и ход реализации"></textarea>
+                            </div>
+                            <div>
+                                <label class="form-label fw-bold" for="portfolioResult">Результат</label>
+                                <textarea id="portfolioResult" class="form-control" rows="5" placeholder="Опишите результат проекта"></textarea>
                             </div>
                         </div>
                     </div>

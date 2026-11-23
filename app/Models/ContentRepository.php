@@ -69,6 +69,14 @@ class ContentRepository
     /**
      * Рубрика по slug.
      */
+    public function categoryById(int $id): ?array
+    {
+        $statement = $this->db->prepare('SELECT id, name, slug, description FROM ' . db_table('categories') . ' WHERE id = :id LIMIT 1');
+        $statement->execute(['id' => $id]);
+        $row = $statement->fetch();
+        return $row ?: null;
+    }
+
     public function categoryBySlug(string $slug): ?array
     {
         $statement = $this->db->prepare('SELECT id, name, slug, description FROM ' . db_table('categories') . ' WHERE slug = :slug LIMIT 1');
@@ -172,13 +180,13 @@ class ContentRepository
     {
         $statement = $this->db->prepare(
             'INSERT INTO ' . db_table('portfolio_projects') . '
-                (id, slug, title, technologies, icon, description, task_json, solution, client, project_year, duration, stack, results_json, screenshots_json, is_published)
+                (id, slug, title, technologies, icon, description, task_json, solution, result, client, project_year, duration, stack, results_json, screenshots_json, is_published)
              VALUES
-                (:id, :slug, :title, :technologies, :icon, :description, :task_json, :solution, :client, :project_year, :duration, :stack, :results_json, :screenshots_json, :is_published)
+                (:id, :slug, :title, :technologies, :icon, :description, :task_json, :solution, :result, :client, :project_year, :duration, :stack, :results_json, :screenshots_json, :is_published)
              ON DUPLICATE KEY UPDATE
                 slug = VALUES(slug), title = VALUES(title), technologies = VALUES(technologies),
                 icon = VALUES(icon), description = VALUES(description), task_json = VALUES(task_json),
-                solution = VALUES(solution), client = VALUES(client), project_year = VALUES(project_year),
+                solution = VALUES(solution), result = VALUES(result), client = VALUES(client), project_year = VALUES(project_year),
                 duration = VALUES(duration), stack = VALUES(stack), results_json = VALUES(results_json),
                 screenshots_json = VALUES(screenshots_json), is_published = VALUES(is_published)'
         );
@@ -191,6 +199,7 @@ class ContentRepository
             'description' => $project['description'],
             'task_json' => json_encode($project['task'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
             'solution' => $project['solution'],
+            'result' => $project['result'],
             'client' => $project['client'],
             'project_year' => $project['year'] ?: null,
             'duration' => $project['duration'],
@@ -269,6 +278,110 @@ class ContentRepository
         return $statement->rowCount() > 0;
     }
 
+    public function categoryNavigation(int $categoryId, bool $activeOnly = false): array
+    {
+        $sql = 'SELECT id, category_id, title, url, icon, display_order, is_active
+                FROM ' . db_table('category_navigation') . ' WHERE category_id = :category_id';
+        if ($activeOnly) {
+            $sql .= ' AND is_active = 1';
+        }
+        $sql .= ' ORDER BY display_order ASC, id ASC';
+        $statement = $this->db->prepare($sql);
+        $statement->execute(['category_id' => $categoryId]);
+        return $statement->fetchAll();
+    }
+
+    public function saveCategoryNavigation(?int $id, int $categoryId, string $title, string $url, string $icon, int $isActive): ?int
+    {
+        if ($id === null) {
+            $order = $this->db->prepare(
+                'SELECT COALESCE(MAX(display_order), 0) + 1 FROM ' . db_table('category_navigation') . ' WHERE category_id = :category_id'
+            );
+            $order->execute(['category_id' => $categoryId]);
+            $statement = $this->db->prepare(
+                'INSERT INTO ' . db_table('category_navigation') . ' (category_id, title, url, icon, display_order, is_active)
+                 VALUES (:category_id, :title, :url, :icon, :display_order, :is_active)'
+            );
+            $statement->execute([
+                'category_id' => $categoryId,
+                'title' => $title,
+                'url' => $url,
+                'icon' => $icon,
+                'display_order' => (int) $order->fetchColumn(),
+                'is_active' => $isActive,
+            ]);
+            return (int) $this->db->lastInsertId();
+        }
+
+        $statement = $this->db->prepare(
+            'UPDATE ' . db_table('category_navigation') . '
+             SET title = :title, url = :url, icon = :icon, is_active = :is_active, updated_at = CURRENT_TIMESTAMP
+             WHERE id = :id AND category_id = :category_id'
+        );
+        $statement->execute([
+            'id' => $id,
+            'category_id' => $categoryId,
+            'title' => $title,
+            'url' => $url,
+            'icon' => $icon,
+            'is_active' => $isActive,
+        ]);
+        return $statement->rowCount() > 0 || $this->navigationItemExists($id, $categoryId) ? $id : null;
+    }
+
+    public function reorderCategoryNavigation(int $categoryId, array $itemIds): bool
+    {
+        $statement = $this->db->prepare(
+            'SELECT id FROM ' . db_table('category_navigation') . ' WHERE category_id = :category_id ORDER BY display_order ASC, id ASC'
+        );
+        $statement->execute(['category_id' => $categoryId]);
+        $existingIds = array_map('intval', $statement->fetchAll(\PDO::FETCH_COLUMN));
+        $itemIds = array_values(array_unique(array_map('intval', $itemIds)));
+        $sortedExistingIds = $existingIds;
+        $sortedItemIds = $itemIds;
+        sort($sortedExistingIds);
+        sort($sortedItemIds);
+        if ($sortedExistingIds !== $sortedItemIds) {
+            return false;
+        }
+        $this->db->beginTransaction();
+        try {
+            $update = $this->db->prepare(
+                'UPDATE ' . db_table('category_navigation') . ' SET display_order = :display_order, updated_at = CURRENT_TIMESTAMP WHERE id = :id AND category_id = :category_id'
+            );
+            foreach ($itemIds as $order => $itemId) {
+                $update->execute([
+                    'display_order' => $order + 1,
+                    'id' => $itemId,
+                    'category_id' => $categoryId,
+                ]);
+            }
+            $this->db->commit();
+        } catch (\Throwable $error) {
+            $this->db->rollBack();
+            throw $error;
+        }
+        return true;
+    }
+
+    public function deleteCategoryNavigation(int $id, int $categoryId): bool
+    {
+        $statement = $this->db->prepare(
+            'DELETE FROM ' . db_table('category_navigation') . ' WHERE id = :id AND category_id = :category_id'
+        );
+        $statement->execute(['id' => $id, 'category_id' => $categoryId]);
+        return $statement->rowCount() > 0;
+    }
+
+    private function navigationItemExists(int $id, int $categoryId): bool
+    {
+        $statement = $this->db->prepare(
+            'SELECT 1 FROM ' . db_table('category_navigation') . ' WHERE id = :id AND category_id = :category_id LIMIT 1'
+        );
+        $statement->execute(['id' => $id, 'category_id' => $categoryId]);
+        return $statement->fetchColumn() !== false;
+    }
+
     public function categories()
     {
         return $this->db->query(
@@ -297,6 +410,14 @@ class ContentRepository
 
     public function deleteCategory($id)
     {
+        $articles = $this->db->prepare(
+            'SELECT COUNT(*) FROM ' . db_table('articles') . ' WHERE category_id = :category_id'
+        );
+        $articles->execute(['category_id' => $id]);
+        if ((int) $articles->fetchColumn() > 0) {
+            return false;
+        }
+
         $statement = $this->db->prepare('DELETE FROM ' . db_table('categories') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         return $statement->rowCount() > 0;
@@ -523,6 +644,7 @@ class ContentRepository
     {
         $row['active'] = (bool) $row['is_published'];
         $row['task'] = json_decode($row['task_json'] ?? '[]', true) ?: [];
+        $row['result'] = (string) ($row['result'] ?? '');
         $row['results'] = json_decode($row['results_json'] ?? '[]', true) ?: [];
         $row['screenshots'] = json_decode($row['screenshots_json'] ?? '[]', true) ?: [];
         $row['year'] = $row['project_year'] ?? '';

@@ -18,11 +18,18 @@ class View
             throw new RuntimeException('Invalid view area or page.');
         }
 
-        $configPath = APP_ROOT . '/config/views.php';
-        $config = is_file($configPath) ? require $configPath : [];
-        $theme = is_array($config) ? ($config[$area . '_template'] ?? 'default') : 'default';
-        if (!is_string($theme) || !preg_match('/^[a-z0-9_-]+$/i', $theme)) {
-            throw new RuntimeException('Invalid view template configuration.');
+        $templateKey = $area === 'frontend' ? 'frontendTemplate' : 'adminTemplate';
+        try {
+            $theme = (string) (new \App\Models\SiteSettings())->get($templateKey, 'default');
+        } catch (\Throwable $error) {
+            $theme = 'default';
+        }
+        if (!preg_match('/^[a-z0-9_-]+$/i', $theme)) {
+            $theme = 'default';
+        }
+        $templateDirectory = APP_ROOT . '/app/Views/' . $area . '/templates/' . $theme;
+        if (!is_dir($templateDirectory)) {
+            $theme = 'default';
         }
 
         $base = $area . '/templates/' . $theme;
@@ -53,7 +60,12 @@ class View
         // Vite manifest for production asset loading
         $data['viteManifest'] = \vite_manifest();
 
-        $data['content'] = self::capture($base . '/pages/' . $page, $data);
+        $pageTemplate = $base . '/pages/' . $page;
+        if (!is_file(APP_ROOT . '/app/Views/' . $pageTemplate . '.php')) {
+            $pageTemplate = $area . '/templates/default/pages/' . $page;
+        }
+        $data['content'] = self::capture($pageTemplate, $data);
+
         // Заголовок вкладки: страница передаёт свою часть, лейаут прибивает siteTitle
         $data['title'] = $data['title'] ?? ($area === 'admin' ? 'Администрирование' : (trim((string) ($data['siteTitle'] ?? '')) !== '' ? $data['siteTitle'] : 'МойБлог'));
         // Meta description: в первую очередь «Описание сайта (SEO description)» из настроек,

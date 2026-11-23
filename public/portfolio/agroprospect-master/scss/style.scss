@@ -1,0 +1,39 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — точка входа
+//  Сборка:  sass scss/style.scss css/main.css --no-source-map
+// ==========================================================
+
+// Переменные, миксины, шрифты
+@import 'abstracts/variables';
+@import 'abstracts/mixins';
+@import 'abstracts/fonts';
+
+// Внешние библиотеки
+@import '../lib/owlcarousel/scss/owl.carousel';
+
+// База
+@import 'base/reset';
+@import 'base/base';
+
+// Макет
+@import 'layout/container';
+@import 'layout/grid';
+
+// Компоненты
+@import 'components/common';
+@import 'components/burger';
+@import 'components/header';
+@import 'components/navigation';
+@import 'components/breadcrumb';
+@import 'components/hero';
+@import 'components/features';
+@import 'components/presentation';
+@import 'components/steps';
+@import 'components/page';
+@import 'components/table';
+@import 'components/footer';
+@import 'components/modal';
+@import 'components/form';
+
+// Утилиты
+@import 'utils/helpers';

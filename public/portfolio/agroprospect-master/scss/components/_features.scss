@@ -1,0 +1,79 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — преимущества (features)
+// ==========================================================
+
+.va_features {
+  &--mb {
+    margin-bottom: 2em;
+  }
+
+  &--middle {
+    position: relative;
+    z-index: 2;
+    margin-top: -2.8em;
+    margin-bottom: -2.8em;
+
+    @include va-media-down($va-bp-sm) {
+      margin-top: -2em;
+      margin-bottom: -2em;
+    }
+  }
+
+  &__list {
+    display: flex;
+    align-items: stretch;
+
+    @include va-media-down($va-bp-sm) {
+      flex-direction: column;
+    }
+  }
+
+  &__item {
+    flex: 1;
+    border-right: .1em solid $va-c-line-soft;
+
+    &:last-child {
+      border-right: none;
+    }
+
+    @include va-media-down($va-bp-sm) {
+      border-right: none;
+      border-bottom: .1em solid $va-c-line-soft;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+  }
+}
+
+.va_features-item {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  height: 100%;
+  padding: 1.7em 2.45em;
+
+  color: $va-c-text;
+  font-size: .75em;
+  line-height: 1.45;
+
+  @include va-media-down($va-bp-sm) {
+    width: 100%;
+    align-items: center;
+    justify-content: flex-start;
+    padding: .95em 1.45em;
+    font-size: .7em;
+  }
+
+  &__img {
+    flex-shrink: 0;
+    height: 3.85em;
+    width: auto;
+    margin-right: 1.25em;
+  }
+
+  &__text {
+    margin: 0;
+  }
+}

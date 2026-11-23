@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(c:\\php\\php.exe *)"
+    ]
+  },
+  "$version": 4
+}

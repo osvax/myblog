@@ -34,17 +34,6 @@ return function (Router $router) {
     $router->get('/messages.html', [$portfolio, 'index']);
     $router->get('/orders.html', [$portfolio, 'index']);
     $router->get('/settings.html', [$portfolio, 'index']);
-    $content = require dirname(__DIR__) . '/config/public-content.php';
-    foreach (array_keys($content['articles']) as $slug) {
-        $router->get('/' . $slug . '.html', function ($request) use ($blog, $slug) {
-            return $blog->article($request, $slug);
-        });
-    }
-    foreach (array_keys($content['projects']) as $slug) {
-        $router->get('/' . $slug . '.html', function ($request) use ($portfolio, $slug) {
-            return $portfolio->project($request, $slug);
-        });
-    }
     // Страница рубрики блога (важно: до catch-all /{slug}.html)
     $router->get('/category/{slug}.html', [$blog, 'category']);
 
@@ -144,6 +133,9 @@ return function (Router $router) {
     // ---------- Маршруты профиля ----------
     $router->get('/profile.html', [$profile, 'show']);
     $router->post('/api/profile/update', [$profile, 'updateProfile']);
+    $router->post('/api/profile/avatar', [$profile, 'uploadAvatar']);
+    $router->get('/uploads/profile/{filename}', [$profile, 'serveAvatar']);
+    $router->head('/uploads/profile/{filename}', [$profile, 'serveAvatar']);
     $router->post('/api/profile/change-password', [$profile, 'changePassword']);
     $router->post('/api/profile/delete', [$profile, 'deleteAccount']);
 };

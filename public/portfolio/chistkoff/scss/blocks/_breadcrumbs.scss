@@ -1,0 +1,35 @@
+// Breadcrumbs Block
+.va_breadcrumbs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: $va_spacing-xs;
+  padding: $va_spacing-md 0;
+  font-size: $va_font-size-sm;
+  color: $va_color-gray;
+}
+
+.va_breadcrumbs__item {
+  display: flex;
+  align-items: center;
+  gap: $va_spacing-xs;
+}
+
+.va_breadcrumbs__link {
+  color: $va_color-gray;
+  transition: color $va_transition-base;
+  
+  &:hover {
+    color: $va_color-primary;
+  }
+}
+
+.va_breadcrumbs__separator {
+  color: $va_color-gray-light;
+}
+
+.va_breadcrumbs__current {
+  color: $va_color-dark;
+  font-weight: 500;
+  pointer-events: none;
+}

@@ -74,6 +74,10 @@ if (strpos($request->path(), '/api/admin/') === 0) {
         App\Core\Response::json(['success' => false, 'error' => 'Требуется авторизация'], 401)->send();
         exit;
     }
+    if (\admin_is_read_only() && $request->method() !== 'GET' && $request->method() !== 'HEAD' && $request->method() !== 'OPTIONS') {
+        App\Core\Response::json(['success' => false, 'error' => 'Демонстрационная роль доступна только для просмотра'], 403)->send();
+        exit;
+    }
     $apiSection = \admin_api_required_section($request->path());
     if ($apiSection !== '' && !\admin_can_access($apiSection)) {
         App\Core\Response::json(['success' => false, 'error' => 'Нет прав на этот раздел'], 403)->send();
@@ -81,14 +85,16 @@ if (strpos($request->path(), '/api/admin/') === 0) {
     }
 }
 
+if ($request->path() === '/api/consultant' && \admin_is_authenticated() && \admin_is_read_only()) {
+    App\Core\Response::json(['success' => false, 'error' => 'Демонстрационная роль доступна только для просмотра'], 403)->send();
+    exit;
+}
+
 $response = $router->dispatch($request);
 
-// Логируем посещение для авторизованного пользователя
-if (function_exists('current_user') && current_user()) {
-    $user = current_user();
-    $pageUrl = $_SERVER['REQUEST_URI'] ?? '/';
-    $pageTitle = 'Пользовательская страница';
-    \App\Core\VisitLogger::log($pageUrl, $pageTitle);
-}
+// Логируем посещение для любого посетителя публичной части (в т. ч. гостей, user_id = 0)
+$pageUrl = $_SERVER['REQUEST_URI'] ?? '/';
+$pageTitle = 'Пользовательская страница';
+\App\Core\VisitLogger::log($pageUrl, $pageTitle);
 
 $response->send();

@@ -191,12 +191,72 @@ class ContentController extends Controller
         ]);
     }
 
+    public function categoryNavigation($request, array $params = [])
+    {
+        if (!$this->authorized()) {
+            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+        }
+        $categoryId = isset($params['id']) && ctype_digit((string) $params['id']) ? (int) $params['id'] : 0;
+        if ($categoryId < 1) {
+            return $this->json(['success' => false, 'error' => 'Рубрика не найдена'], 404);
+        }
+        $category = $this->content->categoryById($categoryId);
+        if (!$category) {
+            return $this->json(['success' => false, 'error' => 'Рубрика не найдена'], 404);
+        }
+        if ($request->method() === 'GET') {
+            return $this->json(['success' => true, 'items' => $this->content->categoryNavigation($categoryId)]);
+        }
+        if ($request->method() === 'DELETE') {
+            \admin_require_csrf();
+            $itemId = isset($params['item_id']) && ctype_digit((string) $params['item_id']) ? (int) $params['item_id'] : 0;
+            return $itemId > 0 && $this->content->deleteCategoryNavigation($itemId, $categoryId)
+                ? $this->json(['success' => true])
+                : $this->json(['success' => false, 'error' => 'Пункт навигации не найден'], 404);
+        }
+        if ($request->method() === 'PATCH') {
+            \admin_require_csrf();
+            $data = $request->json();
+            $itemIds = isset($data['item_ids']) && is_array($data['item_ids']) ? $data['item_ids'] : [];
+            return $this->content->reorderCategoryNavigation($categoryId, $itemIds)
+                ? $this->json(['success' => true])
+                : $this->json(['success' => false, 'error' => 'Некорректный порядок пунктов'], 400);
+        }
+        if ($request->method() !== 'POST' && $request->method() !== 'PUT') {
+            return $this->methodNotAllowed(['GET', 'POST', 'PUT', 'DELETE']);
+        }
+        \admin_require_csrf();
+        $data = $request->json();
+        $title = isset($data['title']) && is_string($data['title']) ? trim($data['title']) : '';
+        $url = isset($data['url']) && is_string($data['url']) ? trim($data['url']) : '';
+        $icon = isset($data['icon']) && is_string($data['icon']) ? trim($data['icon']) : '';
+        $itemId = $request->method() === 'PUT' && isset($params['item_id']) && ctype_digit((string) $params['item_id'])
+            ? (int) $params['item_id'] : null;
+        if ($title === '' || mb_strlen($title) > 160 || $url === '' || mb_strlen($url) > 255 ||
+            !preg_match('#^(?:/|https?://)#i', $url) ||
+            ($icon !== '' && !preg_match('/^[a-z0-9-]{2,80}$/', $icon))) {
+            return $this->json(['success' => false, 'error' => 'Проверьте название, ссылку и иконку'], 400);
+        }
+        $saved = $this->content->saveCategoryNavigation($itemId, $categoryId, $title, $url, $icon, !empty($data['is_active']) ? 1 : 0);
+        return $saved !== null
+            ? $this->json(['success' => true, 'id' => $saved])
+            : $this->json(['success' => false, 'error' => 'Пункт навигации не найден'], 404);
+    }
+
     public function categories($request, array $params = [])
     {
         if (!$this->authorized()) {
             return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
         }
         if ($request->method() === 'GET') {
+            if (($_GET['action'] ?? '') === 'pickers') {
+                return $this->json([
+                    'success' => true,
+                    'pages' => (new \App\Models\LandingPage())->getAll(),
+                    'categories' => $this->content->categories(),
+                    'articles' => $this->content->articles(),
+                ]);
+            }
             return $this->json(['success' => true, 'categories' => $this->content->categories()]);
         }
         if ($request->method() === 'DELETE') {
@@ -376,6 +436,7 @@ class ContentController extends Controller
             'description' => trim($data['description']),
             'task' => array_values(array_filter($task, 'is_string')),
             'solution' => is_string($data['solution'] ?? null) ? $data['solution'] : '',
+            'result' => is_string($data['result'] ?? null) ? $data['result'] : '',
             'client' => is_string($data['client'] ?? null) ? $data['client'] : '',
             'year' => ctype_digit((string) ($data['year'] ?? '')) ? (int) $data['year'] : null,
             'duration' => is_string($data['duration'] ?? null) ? $data['duration'] : '',
@@ -538,6 +599,7 @@ class ContentController extends Controller
             'description' => $project['description'] ?? '',
             'task' => $project['task'] ?? [],
             'solution' => $project['solution'] ?? '',
+            'result' => $project['result'] ?? '',
             'client' => $project['client'] ?? '',
             'year' => $project['year'] ?? null,
             'duration' => $project['duration'] ?? '',

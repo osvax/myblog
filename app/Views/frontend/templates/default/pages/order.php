@@ -5,6 +5,7 @@
 
     <!-- ================= ЗАГОЛОВОК СТРАНИЦЫ ================= -->
     <?php $heading = $orderHeading ?? 'Заказать'; $headingLead = $orderHeadingLead ?? 'Расскажите о своей задаче — я свяжусь с вами'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
+    <?php $waveColors = ['#2CDBE8', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <form action="/api/forms/order" method="POST" enctype="multipart/form-data" class="order-form">
     <!-- ================= КАЛЬКУЛЯТОР СТОИМОСТИ ================= -->

@@ -1,0 +1,61 @@
+// Contacts Block (standalone component)
+.va_contacts-block {
+  &__item {
+    display: flex;
+    align-items: flex-start;
+    gap: $va_spacing-md;
+    margin-bottom: $va_spacing-lg;
+  }
+  
+  &__icon {
+    flex: 0 0 48px;
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: $va_color-primary;
+    border-radius: 50%;
+    color: $va_color-white;
+    font-size: 20px;
+  }
+  
+  &__content {
+    flex: 1;
+  }
+  
+  &__title {
+    font-size: $va_font-size-base;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: $va_color-dark;
+    margin-bottom: $va_spacing-xs;
+  }
+  
+  &__text {
+    font-size: $va_font-size-base;
+    color: $va_color-text;
+    line-height: 1.5;
+  }
+  
+  &__link {
+    color: $va_color-text;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+  }
+  
+  &__phone {
+    font-size: $va_font-size-xl;
+    font-weight: 700;
+    color: $va_color-dark;
+    white-space: nowrap;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+  }
+}

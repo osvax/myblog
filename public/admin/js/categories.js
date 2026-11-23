@@ -33,6 +33,10 @@
             return window.AdminApi.get('/api/admin/categories').then(function (data) {
                 categories = data.categories;
                 render();
+                if (window.CategoryNavigation) {
+                    window.CategoryNavigation.setCategories(categories);
+                }
+                return Promise.resolve();
             });
         }
 

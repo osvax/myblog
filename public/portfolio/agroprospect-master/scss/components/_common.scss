@@ -1,0 +1,61 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — общие элементы (кнопка, карточка, hr)
+// ==========================================================
+
+// ---------- Кнопка ----------
+.va_btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  box-shadow: $va-shadow-btn;
+  background-color: $va-c-primary;
+  border: none;
+  border-bottom: .175em solid $va-c-primary-dark;
+  border-radius: .25em;
+  padding: 1em 2.3em;
+
+  color: $va-c-white;
+  @include va-font-bold;
+  font-size: .75em;
+  line-height: 1.2;
+  letter-spacing: .045em;
+  text-align: center;
+
+  transition: background-color .2s ease-in,
+              border-color .2s ease-in,
+              box-shadow .2s ease-in;
+
+  cursor: pointer;
+
+  &:hover,
+  &:focus {
+    background-color: $va-c-accent;
+    border-bottom-color: $va-c-accent-dark;
+    box-shadow: $va-shadow-btn-hover;
+  }
+
+  @include va-media-down($va-bp-xxs) {
+    padding: 1em 1.5em;
+  }
+}
+
+// ---------- Карточка ----------
+.va_card {
+  background-color: $va-c-white;
+  border-radius: .25em;
+  box-shadow: $va-shadow-card;
+}
+
+// ---------- Разделитель ----------
+.va_hr {
+  margin: 0;
+  border: none;
+  height: .042em;
+  background-color: #ebebeb;
+}
+
+// ---------- Панель (секция «Схема работы») ----------
+.va_board {
+  padding: 2.91em 0;
+}

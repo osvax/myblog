@@ -163,6 +163,11 @@ class SiteSettings
                 return (string) (int) $value;
             case 'color':
                 return preg_match('/^#[0-9a-fA-F]{6}$/', $value) ? $value : '';
+            case 'json':
+                if (is_array($value)) {
+                    return json_encode($value, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+                }
+                return (string) $value;
             case 'select':
                 return (string) $value;
             default:
@@ -251,6 +256,9 @@ class SiteSettings
                 return (bool) $value;
             case 'number':
                 return (int) $value;
+            case 'json':
+                $decoded = json_decode($value, true);
+                return is_array($decoded) ? $decoded : [];
             case 'select':
                 return $value;
             default:

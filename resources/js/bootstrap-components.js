@@ -145,7 +145,7 @@ backToTop.innerHTML = '<i class="bi bi-arrow-up"></i>';
 backToTop.setAttribute('aria-label', 'Наверх');
 backToTop.style.cssText = `
   position: fixed;
-  bottom: 80px;
+  bottom: 124px;
   right: 20px;
   width: 48px;
   height: 48px;

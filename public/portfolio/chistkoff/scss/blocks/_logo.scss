@@ -1,0 +1,42 @@
+// Logo Block
+.va_logo {
+  display: flex;
+  align-items: center;
+  text-decoration: none;
+  
+  &__image {
+    max-height: 68px;
+    width: auto;
+    transition: opacity $va_transition-base;
+    
+    @include mq-tablet {
+      max-height: 50px;
+    }
+  }
+  
+  &__text {
+    display: none;
+    font-size: $va_font-size-lg;
+    font-weight: 700;
+    color: $va_color-dark;
+    text-transform: uppercase;
+    margin-left: $va_spacing-sm;
+    
+    @include mq-tablet {
+      display: block;
+    }
+  }
+  
+  &:hover .va_logo__image {
+    opacity: 0.8;
+  }
+}
+
+// Footer Logo Variant
+.va_footer-logo {
+  @extend .va_logo;
+  
+  .va_logo__image {
+    max-height: 68px;
+  }
+}

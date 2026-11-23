@@ -35,6 +35,16 @@
                     <?php if (!empty($categoryDescription)): ?>
                         <p class="fw-bold text-muted mb-2"><?= htmlspecialchars($categoryDescription, ENT_QUOTES, 'UTF-8') ?></p>
                     <?php endif; ?>
+                    <?php if (!empty($categoryNavigation)): ?>
+                        <nav class="category-navigation d-flex flex-wrap justify-content-center gap-2 mb-3" aria-label="Навигация рубрики">
+                            <?php foreach ($categoryNavigation as $navigationItem): ?>
+                                <a href="<?= htmlspecialchars($navigationItem['url'], ENT_QUOTES, 'UTF-8') ?>" class="btn btn-sm btn-outline-orange fw-bold">
+                                    <?php if (!empty($navigationItem['icon'])): ?><i class="bi <?= htmlspecialchars($navigationItem['icon'], ENT_QUOTES, 'UTF-8') ?> me-1"></i><?php endif; ?>
+                                    <?= htmlspecialchars($navigationItem['title'], ENT_QUOTES, 'UTF-8') ?>
+                                </a>
+                            <?php endforeach; ?>
+                        </nav>
+                    <?php endif; ?>
                     <a href="/blog.html" class="fw-bold text-orange link-orange text-decoration-none"><i class="bi bi-arrow-left"></i> Все статьи блога</a>
                 </div>
             <?php endif; ?>

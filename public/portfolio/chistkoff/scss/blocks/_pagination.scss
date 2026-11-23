@@ -1,0 +1,58 @@
+// Pagination Block
+.va_pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: $va_spacing-xs;
+  margin-top: $va_spacing-xl;
+}
+
+.va_pagination__item {
+  display: flex;
+}
+
+.va_pagination__link {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  height: 44px;
+  padding: 0 $va_spacing-md;
+  font-size: $va_font-size-base;
+  font-weight: 500;
+  color: $va_color-dark;
+  background: $va_color-white;
+  border: 1px solid $va_color-border;
+  border-radius: $va_border-radius-sm;
+  transition: all $va_transition-base;
+  
+  &:hover {
+    border-color: $va_color-primary;
+    color: $va_color-primary;
+  }
+}
+
+.va_pagination__item--active .va_pagination__link {
+  background: $va_color-primary;
+  border-color: $va_color-primary;
+  color: $va_color-white;
+  
+  &:hover {
+    background: $va_color-primary-dark;
+  }
+}
+
+.va_pagination__item--disabled .va_pagination__link {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.va_pagination__link--prev,
+.va_pagination__link--next {
+  padding: 0 $va_spacing-md;
+  
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+}

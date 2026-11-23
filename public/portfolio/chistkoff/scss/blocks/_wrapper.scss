@@ -1,0 +1,16 @@
+// Wrapper Block
+.va_wrapper {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  overflow: hidden;
+  position: relative;
+  
+  &__main {
+    flex: 1 0 auto;
+  }
+  
+  &__footer {
+    flex: 0 0 auto;
+  }
+}

@@ -1,0 +1,66 @@
+// Benefits Block
+.va_benefits {
+  &__grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $va_spacing-lg;
+    
+    @include mq-tablet {
+      grid-template-columns: repeat(2, 1fr);
+    }
+    
+    @include mq-mobile {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+.va_benefit {
+  padding: $va_spacing-xl;
+  background: $va_color-white;
+  border-radius: $va_border-radius-md;
+  box-shadow: $va_shadow-sm;
+  transition: all $va_transition-base;
+  text-align: center;
+  
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: $va_shadow-lg;
+  }
+  
+  @include mq-tablet {
+    padding: $va_spacing-lg;
+  }
+}
+
+.va_benefit__icon {
+  width: 80px;
+  height: 80px;
+  margin: 0 auto $va_spacing-md;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  
+  img {
+    max-width: 100%;
+    max-height: 100%;
+  }
+}
+
+.va_benefit__title {
+  font-size: $va_font-size-lg;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $va_color-dark;
+  margin-bottom: $va_spacing-sm;
+  
+  @include mq-tablet {
+    font-size: $va_font-size-base;
+  }
+}
+
+.va_benefit__text {
+  font-size: $va_font-size-base;
+  color: $va_color-text;
+  line-height: 1.6;
+}

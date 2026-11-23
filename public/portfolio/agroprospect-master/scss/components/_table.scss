@@ -1,0 +1,78 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — таблицы
+// ==========================================================
+
+.va_table {
+  width: 100%;
+  border-collapse: collapse;
+  border-top: .2em solid $va-c-primary;
+  text-align: left;
+
+  thead {
+    position: relative;
+    z-index: 2;
+    box-shadow: $va-shadow-table;
+  }
+
+  &__row {
+    border-bottom: .1em solid #f0f0f0;
+
+    &:last-child {
+      border-bottom: none;
+    }
+  }
+
+  &__th {
+    padding: .85em 1.6em;
+    background-color: $va-c-white;
+    color: $va-c-text;
+    font-size: .75em;
+    white-space: nowrap;
+  }
+
+  &__td {
+    padding: .85em 1.6em;
+    background-color: $va-c-table-body;
+    color: $va-c-muted;
+    font-size: .75em;
+  }
+
+  &__wrap {
+    @include va-media-down($va-bp-sm) {
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+  }
+
+  // Если рядом есть мобильная (стопка) версия —
+  // на мобильных показываем её
+  &--stacked-mobile {
+    @include va-media-down($va-bp-sm) {
+      display: none;
+    }
+  }
+
+  // Мобильная «стопка»
+  &--mobile {
+    display: none;
+
+    @include va-media-down($va-bp-sm) {
+      display: block;
+      width: 100%;
+    }
+
+    .va_table__row {
+      display: block;
+      border-bottom: .1em solid #f0f0f0;
+
+      &:last-child {
+        border-bottom: none;
+      }
+    }
+
+    .va_table__th,
+    .va_table__td {
+      width: 100%;
+    }
+  }
+}

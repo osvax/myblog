@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ТЗ — Перевёрстка FORMA STUDIO (SCSS, BEM, va_)</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: "Inter", "Helvetica Neue", Helvetica, Arial, sans-serif; line-height: 1.6; color: #1a1a1a; max-width: 900px; margin: 0 auto; padding: 40px 20px; font-size: 14px; }
+    h1 { font-size: 28px; font-weight: 300; text-transform: uppercase; letter-spacing: 0.02em; border-bottom: 2px solid #141414; padding-bottom: 12px; margin-bottom: 32px; }
+    h2 { font-size: 20px; font-weight: 300; text-transform: uppercase; letter-spacing: 0.02em; margin-top: 40px; margin-bottom: 16px; color: #141414; }
+    h3 { font-size: 16px; font-weight: 500; margin-top: 24px; margin-bottom: 12px; }
+    h4 { font-size: 14px; font-weight: 500; margin-top: 16px; margin-bottom: 8px; color: #333; }
+    p { margin: 8px 0; }
+    ul, ol { padding-left: 24px; margin: 8px 0; }
+    li { margin: 4px 0; }
+    table { width: 100%; border-collapse: collapse; margin: 16px 0; font-size: 13px; }
+    th, td { border: 1px solid #e3e3e3; padding: 8px 12px; text-align: left; vertical-align: top; }
+    th { background: #f5f5f5; font-weight: 500; text-transform: uppercase; font-size: 12px; letter-spacing: 0.05em; }
+    code { background: #f5f5f5; padding: 2px 6px; border-radius: 3px; font-family: "Consolas", "Monaco", monospace; font-size: 13px; }
+    pre { background: #141414; color: #e3e3e3; padding: 16px; border-radius: 4px; overflow-x: auto; font-size: 12px; line-height: 1.5; }
+    pre code { background: none; padding: 0; color: inherit; }
+    .toc { background: #fafafa; border: 1px solid #e3e3e3; padding: 20px; border-radius: 4px; margin-bottom: 32px; }
+    .toc h2 { margin-top: 0; font-size: 16px; }
+    .toc ul { list-style: none; padding: 0; }
+    .toc li { margin: 6px 0; }
+    .toc a { color: #141414; text-decoration: none; }
+    .toc a:hover { text-decoration: underline; }
+    .badge { display: inline-block; background: #141414; color: #fff; padding: 2px 8px; border-radius: 3px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.05em; margin-left: 8px; }
+    .checklist { list-style: none; padding: 0; }
+    .checklist li { position: relative; padding-left: 28px; margin: 8px 0; }
+    .checklist li::before { content: "☐"; position: absolute; left: 0; font-size: 16px; color: #7c7c7c; }
+    @media print {
+      body { padding: 0; font-size: 12px; }
+      h1 { page-break-after: avoid; }
+      h2, h3, h4 { page-break-after: avoid; }
+      table { page-break-inside: avoid; }
+      .no-print { display: none; }
+      a { text-decoration: none; color: inherit; }
+    }
+    .print-btn { position: fixed; top: 20px; right: 20px; background: #141414; color: #fff; border: none; padding: 10px 20px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.1em; cursor: pointer; border-radius: 3px; z-index: 100; }
+    .print-btn:hover { background: #333; }
+  </style>
+</head>
+<body>
+  <button class="print-btn no-print" onclick="window.print()">Сохранить как PDF</button>
+
+  <div class="toc no-print">
+    <h2>Содержание</h2>
+    <ul>
+      <li><a href="#1">1. Общие сведения</a></li>
+      <li><a href="#2">2. Входные данные</a></li>
+      <li><a href="#3">3. Требования к реализации</a></li>
+      <li><a href="#4">4. Критерии приёмки</a></li>
+      <li><a href="#5">5. Стек технологий</a></li>
+      <li><a href="#6">6. План работ</a></li>
+      <li><a href="#7">7. Риски и митигация</a></li>
+      <li><a href="#8">8. Сдаваемые артефакты</a></li>
+      <li><a href="#9">9. Подписи</a></li>
+    </ul>
+  </div>
+
+  <h1>ТЕХНИЧЕСКОЕ ЗАДАНИЕ (ТЗ) <span class="badge">v1.0</span></h1>
+  <p><strong>Проект:</strong> Перевёрстка лендинга FORMA STUDIO с внедрением SCSS, BEM, префикса va_</p>
+
+  <hr style="margin: 32px 0; border: none; border-top: 1px solid #e3e3e3;">
+
+  <h2 id="1">1. ОБЩИЕ СВЕДЕНИЯ</h2>
+  <table>
+    <tr><th>Параметр</th><th>Значение</th></tr>
+    <tr><td>Название проекта</td><td>FORMA STUDIO — лендинг архитектурной студии</td></tr>
+    <tr><td>Тип проекта</td><td>Одностраничный сайт (Landing Page)</td></tr>
+    <tr><td>Цель</td><td>Перевёрстка существующего проекта с модернизацией кодовой базы</td></tr>
+    <tr><td>Заказчик</td><td>Внутренний / Портфолио</td></tr>
+    <tr><td>Исполнитель</td><td>Senior Frontend-разработчик / UI-инженер</td></tr>
+    <tr><td>Срок выполнения</td><td>5 рабочих дней</td></tr>
+    <tr><td>Дата начала</td><td>2025</td></tr>
+    <tr><td>Дата сдачи</td><td>2025</td></tr>
+  </table>
+
+  <h2 id="2">2. ВХОДНЫЕ ДАННЫЕ</h2>
+
+  <h3>2.1. Исходные материалы</h3>
+  <ul>
+    <li>Готовый лендинг в папке <code>forma-studio/</code> (index.html, css/style.css, js/app.js, images/, scss/)</li>
+    <li>Макет в PDF: <code>Architecture.pdf</code> (десктоп 1920px)</li>
+    <li>Изображения: вырезаны из макета в исходном качестве (hero.jpg, project-1..4.jpg, steps-interior.jpg, catalog.jpg, gallery-1..8.jpg, cta-house.jpg)</li>
+    <li>Шрифт: <strong>Inter</strong> (Google Fonts, веса 300, 400, 500)</li>
+    <li>Тексты: полностью на русском языке (переведены с украинского)</li>
+  </ul>
+
+  <h3>2.2. Существующая функциональность (обязательно к сохранению)</h3>
+  <ol>
+    <li><strong>Шапка</strong> — фиксированная, фон при скролле, бургер-меню (< 1024px)</li>
+    <li><strong>Hero</strong> — фоновое изображение с градиентом, H1, текст, CTA-кнопка</li>
+    <li><strong>Услуги</strong> — 4 строки в тёмной теме с разделителями</li>
+    <li><strong>Проекты</strong> — карусель 4 карточек (стрелки, свайп, drag мышью, scroll-snap)</li>
+    <li><strong>Этапы работы</strong> — 8 шагов с нумерацией и вертикальной линией + фото справа</li>
+    <li><strong>Каталог</strong> — фото + форма с e-mail и чекбоксом согласия</li>
+    <li><strong>Галерея</strong> — сетка 4×2 изображений</li>
+    <li><strong>CTA-баннер</strong> — фоновое фото, полупрозрачная панель, форма заявки</li>
+    <li><strong>Подвал</strong> — логотип, 2 колонки навигации, контакты, адрес, часы работы</li>
+  </ol>
+
+  <h3>2.3. Интерактивные сценарии</h3>
+  <ul>
+    <li>Плавный скролл к якорям с учётом высоты шапки</li>
+    <li>Бургер-меню (открытие/закрытие, ESC, клик по ссылке, фокус-ловушка)</li>
+    <li>Карусель проектов: кнопки prev/next, drag-события, touch-свайп, обновление стрелок</li>
+    <li>Reveal-анимации при скролле (IntersectionObserver, каскадная задержка)</li>
+    <li>Валидация форм: email regex, чекбокс, инлайн-ошибки, сообщение об успехе</li>
+    <li>Подсветка активного пункта меню при скролле</li>
+  </ul>
+
+  <h2 id="3">3. ТРЕБОВАНИЯ К РЕАЛИЗАЦИИ</h2>
+
+  <h3>3.1. Методология и архитектура</h3>
+  <ul>
+    <li>✅ <strong>SCSS</strong> — препроцессор (Dart Sass), компиляция в <code>css/style.css</code></li>
+    <li>✅ <strong>BEM</strong> — именование классов: <code>.va-block__element--modifier</code></li>
+    <li>✅ <strong>Префикс уникальности <code>va_</code></strong> — во всех CSS-классах, CSS-переменных (<code>--va-*</code>), Sass-переменных (<code>$va-*</code>), миксинах (<code>va-*</code>)</li>
+    <li>✅ <strong>Модульная архитектура 7-1</strong>:
+      <pre><code>scss/
+├── abstracts/   # переменные, миксины, функции
+├── base/        # reset, typography, animations, root variables
+├── components/  # независимые UI-блоки
+└── utils/       # responsive (все @media в одном файле)</code></pre>
+    </li>
+  </ul>
+
+  <h3>3.2. Дизайн-токены (<code>abstracts/_variables.scss</code>)</h3>
+  <table>
+    <tr><th>Категория</th><th>Переменные (примеры)</th></tr>
+    <tr><td>Цвета</td><td><code>$va-c-dark</code>, <code>$va-c-black</code>, <code>$va-c-white</code>, <code>$va-c-text</code>, <code>$va-c-muted</code>, <code>$va-c-line-light</code>, <code>$va-c-line-dark</code>, <code>$va-c-error</code></td></tr>
+    <tr><td>Сетка</td><td><code>$va-container-width: 1720px</code>, <code>$va-gutter: clamp(20px, 5.2vw, 100px)</code>, <code>$va-card-gap: 20px</code></td></tr>
+    <tr><td>Типографика</td><td><code>$va-font-family: "Inter", ...</code></td></tr>
+    <tr><td>Анимации</td><td><code>$va-ease: cubic-bezier(0.4, 0, 0.2, 1)</code></td></tr>
+    <tr><td>Брейкпоинты</td><td><code>$va-bp-xl: 1440px</code>, <code>$va-bp-lg: 1200px</code>, <code>$va-bp-md: 1024px</code>, <code>$va-bp-sm: 768px</code>, <code>$va-bp-xs: 480px</code></td></tr>
+  </table>
+
+  <h3>3.3. CSS-переменные (<code>base/_root.scss</code>)</h3>
+  <p>Все токены продублированы в <code>:root</code> с префиксом <code>--va-*</code> для runtime-доступа из JS.</p>
+
+  <h3>3.4. Базовые утилиты (<code>base/</code>)</h3>
+  <ul>
+    <li><code>.va-container</code> — резиновый контейнер с <code>max-width: var(--va-container)</code>, <code>padding: 0 var(--va-gutter)</code></li>
+    <li><code>.va-section</code> — вертикальные отступы секций (<code>padding: 120px 0</code>)</li>
+    <li><code>.va-section-title</code> — заголовок секции (clamp, uppercase, weight 300)</li>
+    <li><code>.va-btn</code> — базовая кнопка с модификаторами <code>--light</code> / <code>--dark</code></li>
+    <li><code>.va-reveal</code> / <code>.is-visible</code> — анимация появления (opacity + translateY)</li>
+    <li><code>.va-visually-hidden</code>, <code>.va-skip-link</code> — a11y-утилиты</li>
+  </ul>
+
+  <h3>3.5. Компоненты (<code>components/</code>)</h3>
+  <table>
+    <tr><th>Файл</th><th>Блок</th><th>Ключевые элементы/модификаторы</th></tr>
+    <tr><td><code>_header.scss</code></td><td><code>.va-header</code></td><td><code>__inner</code>, <code>__logo</code>, <code>__phone</code>, <code>.va-nav</code>, <code>__list</code>, <code>__link</code>, <code>__phone</code>, <code>.va-burger</code>, <code>.va-logo</code></td></tr>
+    <tr><td><code>_hero.scss</code></td><td><code>.va-hero</code></td><td><code>__bg</code>, <code>__inner</code>, <code>__title</code>, <code>__text</code></td></tr>
+    <tr><td><code>_services.scss</code></td><td><code>.va-services</code></td><td><code>__list</code>, <code>__row</code>, <code>__name</code>, <code>__desc</code></td></tr>
+    <tr><td><code>_projects.scss</code></td><td><code>.va-projects</code></td><td><code>__viewport</code>, <code>__track</code>, <code>__nav</code>, <code>.va-card</code>, <code>__media</code>, <code>__body</code>, <code>__title</code>, <code>__subtitle</code>, <code>__text</code>, <code>__more</code>, <code>.va-arrow</code></td></tr>
+    <tr><td><code>_steps.scss</code></td><td><code>.va-steps</code></td><td><code>__grid</code>, <code>__content</code>, <code>__list</code>, <code>.va-step</code>, <code>__num</code>, <code>__body</code>, <code>__title</code>, <code>__desc</code>, <code>__media</code></td></tr>
+    <tr><td><code>_catalog.scss</code></td><td><code>.va-catalog</code></td><td><code>__grid</code>, <code>__main</code>, <code>__media</code>, <code>__content</code>, <code>__subtitle</code>, <code>__note</code></td></tr>
+    <tr><td><code>_forms.scss</code></td><td><code>.va-form</code></td><td><code>.va-field</code>, <code>__error</code>, <code>.va-checkbox</code>, <code>__box</code>, <code>.va-form__success</code></td></tr>
+    <tr><td><code>_gallery.scss</code></td><td><code>.va-gallery</code></td><td><code>__grid</code></td></tr>
+    <tr><td><code>_cta.scss</code></td><td><code>.va-cta</code></td><td><code>__panel</code>, <code>__box</code>, <code>__title</code>, <code>__form</code>, <code>__msg</code></td></tr>
+    <tr><td><code>_footer.scss</code></td><td><code>.va-footer</code></td><td><code>__grid</code>, <code>__brand</code>, <code>__logo</code>, <code>__copy</code>, <code>__col</code>, <code>__link</code>, <code>__contacts</code>, <code>__address</code>, <code>__row</code></td></tr>
+  </table>
+
+  <h3>3.6. Адаптивность (<code>utils/_responsive.scss</code>)</h3>
+  <p>Все <code>@media (max-width: ...)</code> в одном файле, порядок: <strong>1440 → 1200 → 1024 → 768 → 480</strong>.</p>
+  <table>
+    <tr><th>Брейкпоинт</th><th>Ключевые изменения</th></tr>
+    <tr><td>≤1440</td><td>Уменьшенные отступы секций, футер 4 колонки</td></tr>
+    <tr><td>≤1200</td><td>Карточки проектов 2 в ряд, шаги — в 1 колонку, галерея gap 14px, футер 2 колонки</td></tr>
+    <tr><td>≤1024</td><td><strong>Бургер-меню</strong>, скрытие телефона в шапке, каталог/галерея/ктa — мобильный layout</td></tr>
+    <tr><td>≤768</td><td>Секции 64px, hero min-height 620px, услуги в 1 колонку, карточки 86%, шаги компактнее, формы на всю ширину</td></tr>
+    <tr><td>≤480</td><td>Галерея gap 10px, карточки 92%, gap карусели 16px</td></tr>
+  </table>
+
+  <h3>3.7. JavaScript (<code>js/app.js</code>)</h3>
+  <ul>
+    <li><strong>Паттерн:</strong> IIFE, <code>"use strict"</code>, кэширование DOM-элементов</li>
+    <li><strong>Нет зависимостей</strong> — чистый Vanilla JS (ES6+)</li>
+    <li><strong>Модули:</strong> header scroll, burger, smooth scroll, carousel, reveal, forms, active nav</li>
+    <li><strong>Доступность:</strong> aria-expanded/label/controls, focus management, ESC, passive listeners</li>
+    <li><strong>Производительность:</strong> <code>passive: true</code> для scroll, <code>IntersectionObserver</code> вместо scroll-листенеров для ревеала</li>
+  </ul>
+
+  <h3>3.8. Качество кода</h3>
+  <ul>
+    <li>Семантическая HTML5-разметка</li>
+    <li><code>alt</code> на всех изображениях (описательные)</li>
+    <li><code>loading="lazy"</code> для изображений ниже фолда</li>
+    <li><code>aspect-ratio</code> на медиа-контейнерах (предотвращение CLS)</li>
+    <li><code>prefers-reduced-motion</code> — отключение анимаций</li>
+    <li><code>:focus-visible</code> — видимый фокус для клавиатуры</li>
+    <li>Контрастность текста ≥ 4.5:1 (WCAG AA)</li>
+  </ul>
+
+  <h2 id="4">4. КРИТЕРИИ ПРИЁМКИ (Definition of Done)</h2>
+  <ul class="checklist">
+    <li>Проект открывается двойным кликом по <code>index.html</code></li>
+    <li>SCSS компилируется без ошибок в <code>css/style.css</code></li>
+    <li>Все классы имеют префикс <code>va-</code> (BEM)</li>
+    <li>Нет конфликтов имен (префикс работает)</li>
+    <li>Адаптивность: 320/375/768/1024/1440/1920 без горизонтального скролла</li>
+    <li>Бургер-меню: открытие/закрытие, ESC, клик по ссылке, фокус</li>
+    <li>Карусель проектов: стрелки, drag мышью, touch-свайп, snap</li>
+    <li>Reveal-анимации: плавное появление, каскадная задержка</li>
+    <li>Формы: валидация email, чекбокс, ошибки, успех</li>
+    <li>Плавный скролл к якорям с учётом шапки</li>
+    <li>Активный пункт меню подсвечивается при скролле</li>
+    <li><code>prefers-reduced-motion</code> отключает анимации</li>
+    <li><code>:focus-visible</code> работает на всех интерактивных элементах</li>
+    <li>Skip-link виден при фокусе</li>
+    <li>Консоль без ошибок (JS, CSS, 404)</li>
+    <li>Изображения оптимизированы, <code>loading="lazy"</code> где нужно</li>
+    <li>README.md в корне с инструкцией по запуску и структуре</li>
+    <li>Папка <code>job/</code> с <code>description.md</code> и <code>TZ-template.md</code></li>
+  </ul>
+
+  <h2 id="5">5. СТЕК ТЕХНОЛОГИЙ</h2>
+  <table>
+    <tr><th>Категория</th><th>Инструменты</th></tr>
+    <tr><td>Разметка</td><td>HTML5 (семантика)</td></tr>
+    <tr><td>Стили</td><td>SCSS (Dart Sass), BEM, CSS Custom Properties</td></tr>
+    <tr><td>Скрипты</td><td>Vanilla JS (ES6+), IIFE, IntersectionObserver, Pointer Events</td></tr>
+    <tr><td>Шрифты</td><td>Google Fonts: Inter (300, 400, 500)</td></tr>
+    <tr><td>Сборка</td><td><code>npx sass --watch scss/style.scss:css/style.css</code></td></tr>
+    <tr><td>Локальный сервер</td><td><code>npx http-server</code> / <code>live-server</code> (только для разработки)</td></tr>
+    <tr><td>Качество</td><td>Lighthouse, axe DevTools (a11y), W3C Validator</td></tr>
+  </table>
+
+  <h2 id="6">6. ПЛАН РАБОТ (5 РАБОЧИХ ДНЕЙ)</h2>
+  <table>
+    <tr><th>День</th><th>Задачи</th></tr>
+    <tr><td>День 1</td><td>Аудит исходного кода, проектирование SCSS-архитектуры, создание <code>abstracts/</code> (variables, mixins), настройка сборки</td></tr>
+    <tr><td>День 2</td><td>Реализация <code>base/</code> (reset, root, typography, animations), базовые утилиты, контейнер</td></tr>
+    <tr><td>День 3</td><td>Вёрстка компонентов <code>components/</code> (header, hero, services, projects, steps) с BEM и префиксом</td></tr>
+    <tr><td>День 4</td><td>Вёрстка оставшихся компонентов (catalog, forms, gallery, cta, footer), адаптивность <code>utils/_responsive.scss</code></td></tr>
+    <tr><td>День 5</td><td>Интеграция JS (обновление селекторов под <code>va-</code>), полное тестирование на 6 брейкпоинтах, a11y-аудит, документация</td></tr>
+  </table>
+
+  <h2 id="7">7. РИСКИ И МИТИГАЦИЯ</h2>
+  <table>
+    <tr><th>Риск</th><th>Вероятность</th><th>Влияние</th><th>Митигация</th></tr>
+    <tr><td>Конфликт имен при интеграции</td><td>Низкая</td><td>Высокое</td><td>Префикс <code>va_</code> на всех уровнях (CSS, Sass, JS-переменные)</td></tr>
+    <tr><td>Регрессия интерактивов при смене классов</td><td>Средняя</td><td>Высокое</td><td>Поэтапное обновление JS параллельно с CSS, чек-лист приёмки</td></tr>
+    <tr><td>Проблемы с <code>scroll-snap</code> в Safari</td><td>Низкая</td><td>Среднее</td><td>Тестирование в Safari, фолбэк через JS при необходимости</td></tr>
+    <tr><td>CLS от изображений</td><td>Низкая</td><td>Среднее</td><td><code>aspect-ratio</code> на всех медиа-контейнерах, <code>loading="lazy"</code></td></tr>
+    <tr><td>Производительность на мобильных</td><td>Низкая</td><td>Среднее</td><td>Минимальный JS, пассивные лисенеры, <code>IntersectionObserver</code></td></tr>
+  </table>
+
+  <h2 id="8">8. СДАВАЕМЫЕ АРТЕФАКТЫ</h2>
+  <ol>
+    <li><strong>Исходный код</strong> в папке <code>forma-studio/</code>:
+      <ul>
+        <li><code>index.html</code> — обновлённая разметка с классами <code>va-*</code></li>
+        <li><code>scss/</code> — полная SCSS-архитектура (7-1 pattern)</li>
+        <li><code>css/style.css</code> — скомпилированные стили (expanded, без source-map)</li>
+        <li><code>js/app.js</code> — обновлённый JS под новые селекторы</li>
+        <li><code>images/</code> — неизменённые изображения</li>
+        <li><code>README.md</code> — инструкция по запуску и структура проекта</li>
+      </ul>
+    </li>
+    <li><strong>Документация для портфолио</strong> в папке <code>forma-studio/job/</code>:
+      <ul>
+        <li><code>description.md</code> — описание работы (О проекте, Задача, Решение, Результат, стек, год, сроки)</li>
+        <li><code>TZ-template.md</code> — данный технический заказ (шаблон)</li>
+        <li><code>TZ-template.html</code> — HTML-версия для печати в PDF (этот файл)</li>
+        <li><code>screenshots/</code> — 4 качественных скриншота (создаются вручную)</li>
+      </ul>
+    </li>
+    <li><strong>Чек-лист приёмки</strong> — выполненный по пунктам раздела 4.</li>
+  </ol>
+
+  <h2 id="9">9. ПОДПИСИ</h2>
+  <table style="margin-top: 32px;">
+    <tr><th style="width: 20%;">Роль</th><th style="width: 30%;">ФИО</th><th style="width: 20%;">Дата</th><th>Подпись</th></tr>
+    <tr><td>Заказчик</td><td></td><td></td><td></td></tr>
+    <tr><td>Исполнитель</td><td></td><td></td><td></td></tr>
+    <tr><td>QA / Code Review</td><td></td><td></td><td></td></tr>
+  </table>
+
+  <hr style="margin: 48px 0 16px; border: none; border-top: 1px solid #e3e3e3;">
+  <p style="font-size: 12px; color: #7c7c7c;">
+    Документ версии 1.0. Создан как шаблон для повторного использования в подобных задачах перевёрстки
+    с внедрением SCSS/BEM/префикса уникальности.
+  </p>
+
+  <script>
+    // Auto-print on load if ?print=1 in URL
+    if (new URLSearchParams(window.location.search).get('print') === '1') {
+      window.onload = function() { window.print(); };
+    }
+  </script>
+</body>
+</html>

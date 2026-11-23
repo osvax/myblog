@@ -1,0 +1,272 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — презентационные блоки
+// ==========================================================
+
+// Обёртка (несколько презентаций на странице)
+.va_presentations {
+  overflow: hidden;
+  margin: 2em 0 0;
+
+  .va_presentation {
+    margin-top: 2.5em;
+    margin-bottom: 7.15em;
+
+    @include va-media-down($va-bp-sm) {
+      margin-top: 2.5em;
+      margin-bottom: 1.2em;
+    }
+  }
+}
+
+.va_presentation {
+  position: relative;
+  z-index: 0;
+
+  // Зелёная рамка, смещённая за изображением
+  &::before {
+    content: '';
+    position: absolute;
+    z-index: -1;
+    left: 22.8em;
+    top: 4.4em;
+    width: 68.3em;
+    height: 53.7em;
+    font-size: .427em;
+
+    box-shadow: $va-shadow-card;
+    border: 0.8em solid $va-c-primary;
+    border-radius: .25em;
+
+    @include va-media-down($va-bp-sm) {
+      display: none;
+    }
+  }
+
+  &--mb {
+    margin-bottom: 8em;
+
+    @include va-media-down($va-bp-sm) {
+      margin-bottom: 4em;
+    }
+  }
+
+  &--reversed {
+    .va_presentation-text {
+      right: auto;
+      left: 0;
+    }
+
+    .va_presentation-cover {
+      margin-left: auto;
+    }
+
+    &::before {
+      left: auto;
+      right: 22.8em;
+    }
+  }
+
+  @include va-media-down($va-bp-sm) {
+    display: flex;
+    flex-direction: column;
+    gap: 1.4em;
+  }
+
+  // ---------- Компактные карточки каталога ----------
+  &--small {
+    font-size: .5em;
+
+    .va_presentation-cover {
+      width: 100%;
+
+      img {
+        aspect-ratio: 5 / 4;
+      }
+    }
+
+    .va_presentation-text {
+      position: relative;
+      z-index: 1;
+      right: auto;
+      top: auto;
+      margin-top: -1.6em;
+      padding: 1.6em 2.4em;
+    }
+
+    .va_presentation__wrap {
+      padding: 0;
+    }
+
+    a {
+      color: $va-c-primary;
+      font-size: 1.4em;
+      line-height: 1.4;
+      text-decoration: underline;
+      transition: color .2s ease-in-out;
+
+      &:hover,
+      &:focus {
+        color: $va-c-muted;
+        text-decoration: none;
+      }
+    }
+
+    @include va-media-down($va-bp-sm) {
+      .va_presentation-cover {
+        img {
+          aspect-ratio: 4 / 3;
+        }
+      }
+
+      .va_presentation-text {
+        margin-top: -1.2em;
+        padding: 1.2em 1.4em;
+      }
+
+      a {
+        font-size: 1.2em;
+      }
+    }
+  }
+}
+
+// ---------- Обложка (слайдер) ----------
+.va_presentation-cover {
+  position: relative;
+  z-index: 1;
+  width: 28.46em;
+
+  img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1.28;
+    object-fit: cover;
+    border-radius: .25em;
+  }
+
+  // Стрелки слайдера обложек
+  .owl-prev,
+  .owl-next {
+    position: absolute;
+    z-index: 3;
+    bottom: 0;
+    left: 0;
+    @include va-slider-arrow;
+  }
+
+  .owl-next {
+    border-radius: 0 .45em .45em 0 !important;
+    transform: translateX(100%);
+
+    &::before {
+      transform: rotate(180deg);
+    }
+  }
+
+  @include va-media-down($va-bp-sm) {
+    width: 100%;
+
+    img {
+      aspect-ratio: 4 / 3;
+    }
+
+    .owl-prev,
+    .owl-next {
+      top: 0;
+      bottom: auto;
+      border-radius: .45em 0 0 .45em;
+      left: 50%;
+      transform: translate(-100%, -50%);
+    }
+
+    .owl-next {
+      border-radius: 0 .45em .45em 0 !important;
+      left: auto;
+      right: 50%;
+      transform: translate(100%, -50%);
+    }
+  }
+}
+
+// ---------- Текстовая карточка ----------
+.va_presentation-text {
+  position: absolute;
+  z-index: 2;
+  right: 0;
+  top: 3.4em;
+  padding: 2.59em 0;
+
+  @include va-media-down($va-bp-sm) {
+    position: relative;
+    right: auto;
+    top: auto;
+    width: 100%;
+    padding: 1.26em 0;
+    text-align: center;
+  }
+}
+
+// ---------- Шапка карточки (цена + CTA) ----------
+.va_presentation-header {
+  position: relative;
+  margin-top: -1em;
+  margin-bottom: 1em;
+  padding-bottom: 2.5em;
+  text-align: center;
+
+  &::after {
+    content: '';
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    height: 1em;
+    background: url("../img/header-separator.png") no-repeat center / cover;
+  }
+
+  &__title {
+    margin: 0 0 .6em;
+    font-size: 1.5em;
+    color: $va-c-heading;
+    @include va-font-regular;
+  }
+
+  &__price {
+    font-size: 1.35em;
+    @include va-font-bold;
+  }
+}
+
+// ---------- Контент карточки ----------
+.va_presentation__wrap {
+  padding-left: 4.05em;
+  padding-right: 4.05em;
+
+  @include va-media-down($va-bp-sm) {
+    padding-left: 1em;
+    padding-right: 1em;
+  }
+}
+
+.va_presentation__title {
+  margin: 0 0 .57em;
+  color: $va-c-heading;
+  font-size: 2.5em;
+  line-height: 1.15;
+  @include va-font-bold;
+
+  @include va-media-down($va-bp-sm) {
+    font-size: 1.7em;
+  }
+}
+
+.va_presentation__para {
+  margin: 0 0 1.73em;
+  color: $va-c-text;
+  font-size: .75em;
+  line-height: 1.55;
+}
+
+.va_presentation__btn {
+  display: inline-flex;
+}

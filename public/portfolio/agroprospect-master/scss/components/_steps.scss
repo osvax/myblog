@@ -1,0 +1,125 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — схема работы (шаги)
+// ==========================================================
+
+.va_steps {
+  padding: 2.84em 4.1em 3.47em;
+
+  &__title {
+    margin: 0 0 .92em;
+    color: $va-c-heading;
+    font-size: 2.5em;
+    line-height: 1.2;
+    @include va-font-bold;
+
+    @include va-media-down($va-bp-sm) {
+      margin-bottom: .59em;
+      font-size: 1.7em;
+      text-align: center;
+    }
+  }
+
+  &__list {
+    display: flex;
+    justify-content: space-between;
+
+    @include va-media-down($va-bp-sm) {
+      flex-wrap: wrap;
+    }
+  }
+
+  @include va-media-down($va-bp-sm) {
+    margin: 0;
+    padding: 1.4em;
+    max-width: 100%;
+  }
+}
+
+.va_steps-item {
+  position: relative;
+  width: 7em;
+
+  // Стрелка между шагами
+  &::after {
+    content: '';
+    position: absolute;
+    z-index: 2;
+    right: -.7em;
+    top: 1.1em;
+    width: 1.75em;
+    height: 1.75em;
+    transform: rotate(180deg);
+    background: url("../img/arrow-active.png") no-repeat center / cover;
+  }
+
+  &:last-child::after {
+    display: none;
+  }
+
+  &__img-wrap {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 4em;
+
+    @include va-media-down($va-bp-sm) {
+      height: 3em;
+    }
+  }
+
+  &__img {
+    height: 100%;
+    width: auto;
+  }
+
+  &__text {
+    margin: 0;
+    margin-top: 1.56em;
+    color: $va-c-text;
+    font-size: .75em;
+    line-height: 1.4;
+    text-align: center;
+
+    @include va-media-down($va-bp-sm) {
+      margin-top: .5em;
+    }
+  }
+
+  @include va-media-down($va-bp-sm) {
+    width: 50%;
+    margin-bottom: 2.4em;
+
+    // Стрелки: вправо по строкам, вниз между строками
+    &::after {
+      right: 0;
+      top: 50%;
+      width: 1.4em;
+      height: 1.4em;
+      transform: translateY(-50%) rotate(180deg);
+    }
+
+    &:nth-child(2) {
+      &::after {
+        right: auto;
+        top: auto;
+        bottom: -.2em;
+        left: 50%;
+        transform: translateX(-50%) rotate(-90deg);
+      }
+    }
+
+    &:nth-child(3) {
+      // стрелка вправо к шагу 4 — базовое положение
+    }
+
+    &:nth-child(4) {
+      &::after {
+        right: auto;
+        top: auto;
+        bottom: -.2em;
+        left: 50%;
+        transform: translateX(-50%) rotate(-90deg);
+      }
+    }
+  }
+}

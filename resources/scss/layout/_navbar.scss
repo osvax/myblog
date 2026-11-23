@@ -3,18 +3,25 @@
 // ============================================================
 
 .navbar {
+  background-color: #353535 !important;
+
   .nav-link {
+    color: rgba($white, 0.82);
     transition: color $transition-base, opacity $transition-base;
     font-weight: $font-weight-normal;
+    text-decoration: none;
 
-    &:hover {
-      color: $text-main;
+    &:hover,
+    &:focus {
+      color: $white;
+      text-decoration: none;
     }
   }
 
   .nav-link.active {
-    color: $text-main;
-    border-bottom: 3px solid $text-main;
+    color: $white;
+    border-bottom: none;
+    text-decoration: none;
   }
 }
 

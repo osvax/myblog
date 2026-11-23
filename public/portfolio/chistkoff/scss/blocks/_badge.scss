@@ -1,0 +1,58 @@
+// Badge Block
+.va_badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 4px 12px;
+  font-size: $va_font-size-sm;
+  font-weight: 700;
+  text-transform: uppercase;
+  border-radius: $va_border-radius-full;
+  white-space: nowrap;
+}
+
+.va_badge--primary {
+  background: $va_color-primary;
+  color: $va_color-white;
+}
+
+.va_badge--secondary {
+  background: $va_color-gray-bg;
+  color: $va_color-dark;
+}
+
+.va_badge--success {
+  background: $va_color-success;
+  color: $va_color-white;
+}
+
+.va_badge--warning {
+  background: #F39C12;
+  color: $va_color-white;
+}
+
+.va_badge--error {
+  background: $va_color-error;
+  color: $va_color-white;
+}
+
+.va_badge--outline {
+  background: transparent;
+  border: 1px solid currentColor;
+}
+
+.va_badge--dot {
+  position: relative;
+  padding-left: 20px;
+  
+  &::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+}

@@ -33,6 +33,14 @@
             <div class="card-header bg-white d-flex flex-wrap align-items-center justify-content-between gap-2">
                 <h2 class="h5 fw-bold mb-0"><i class="bi bi-graph-up me-2"></i>Посещения</h2>
                 <div class="d-flex flex-wrap align-items-center gap-2">
+                    <div class="d-flex flex-wrap align-items-end gap-2">
+                        <div>                        
+                            <input class="form-control form-control-sm" type="date" id="statDateFrom">
+                        </div>
+                        <div>
+                            <input class="form-control form-control-sm" type="date" id="statDateTo">
+                        </div>
+                    </div>
                     <div class="btn-group btn-group-sm" role="group" aria-label="Группировка">
                         <button type="button" class="btn btn-outline-secondary stat-gran-btn active" data-gran="day">Дни</button>
                         <button type="button" class="btn btn-outline-secondary stat-gran-btn" data-gran="week">Недели</button>

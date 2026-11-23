@@ -1,0 +1,93 @@
+// FAQ Block (Accordion)
+.va_faq {
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $va_spacing-md;
+  }
+}
+
+.va_faq__item {
+  border: 1px solid $va_color-border;
+  border-radius: $va_border-radius-md;
+  overflow: hidden;
+  background: $va_color-white;
+  transition: all $va_transition-base;
+  
+  &.active {
+    border-color: $va_color-primary;
+    box-shadow: $va_shadow-sm;
+  }
+}
+
+.va_faq__question {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: $va_spacing-lg;
+  background: transparent;
+  border: none;
+  font-size: $va_font-size-lg;
+  font-weight: 500;
+  color: $va_color-dark;
+  text-align: left;
+  cursor: pointer;
+  transition: all $va_transition-base;
+  
+  @include mq-tablet {
+    padding: $va_spacing-md;
+    font-size: $va_font-size-base;
+  }
+  
+  &:hover {
+    background: $va_color-gray-bg;
+  }
+  
+  .active & {
+    background: $va_color-gray-bg;
+    color: $va_color-primary;
+  }
+}
+
+.va_faq__icon {
+  flex: 0 0 24px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: $va_color-gray-bg;
+  border-radius: 50%;
+  color: $va_color-primary;
+  font-size: 16px;
+  transition: transform $va_transition-base;
+  
+  .active & {
+    transform: rotate(45deg);
+    background: $va_color-primary;
+    color: $va_color-white;
+  }
+}
+
+.va_faq__answer {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height $va_transition-base, padding $va_transition-base;
+  
+  .active & {
+    max-height: 500px;
+    padding: 0 $va_spacing-lg $va_spacing-lg;
+  }
+}
+
+.va_faq__answer-text {
+  font-size: $va_font-size-base;
+  color: $va_color-text;
+  line-height: 1.7;
+  padding: 0 $va_spacing-lg;
+  
+  @include mq-tablet {
+    padding: 0 $va_spacing-md;
+  }
+}

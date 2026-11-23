@@ -1,0 +1,41 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Услуги
+// ============================================================
+.va-services {
+  background: var(--va-c-dark);
+  color: var(--va-c-white);
+}
+
+.va-services .va-section-title {
+  margin-bottom: 54px;
+}
+
+.va-services__list {
+  border-top: 1px solid var(--va-c-line-dark);
+}
+
+.va-services__row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  align-items: center;
+  min-height: 96px;
+  padding: 26px 0;
+  border-bottom: 1px solid var(--va-c-line-dark);
+}
+
+.va-services__name {
+  font-size: clamp(17px, 1.15vw, 21px);
+  font-weight: 300;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.va-services__desc {
+  max-width: 40em;
+  font-size: 15px;
+  line-height: 1.55;
+  color: rgba(255, 255, 255, 0.66);
+}

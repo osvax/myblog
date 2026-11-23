@@ -67,6 +67,7 @@
                     categories: data.categories || [],
                     articles: data.articles || []
                 };
+                return;
             });
         }
 
@@ -88,7 +89,7 @@
         // ---------- Отрисовка пунктов ----------
         function itemRow(item, isChild) {
             var active = Number(item.is_active) === 1;
-            return '<div class="border rounded p-2 mb-2' + (isChild ? ' ms-4' : '') + '" data-item-row="' + item.id + '">' +
+            return '<div class="border rounded p-2 mb-2' + (isChild ? ' ms-4' : '') + '" data-item-row="' + item.id + '" data-parent-id="' + (item.parent_id || '') + '" draggable="true">' +
                 '<div class="d-flex align-items-center gap-2 flex-wrap">' +
                 (item.icon ? '<i class="bi ' + escapeHtml(item.icon) + ' text-orange"></i>' : '<i class="bi bi-link-45deg text-muted"></i>') +
                 '<strong class="fw-bold">' + escapeHtml(item.title) + '</strong>' +
@@ -96,8 +97,6 @@
                 (item.css_class ? '<span class="badge bg-secondary">' + escapeHtml(item.css_class) + '</span>' : '') +
                 '<span class="badge ' + (active ? 'bg-success' : 'bg-secondary') + '">' + (active ? 'Активен' : 'Скрыт') + '</span>' +
                 '<span class="ms-auto d-flex gap-1">' +
-                '<button type="button" class="btn btn-sm btn-outline-secondary" data-item-move="up" data-item-id="' + item.id + '" title="Выше" aria-label="Выше"><i class="bi bi-arrow-up"></i></button>' +
-                '<button type="button" class="btn btn-sm btn-outline-secondary" data-item-move="down" data-item-id="' + item.id + '" title="Ниже" aria-label="Ниже"><i class="bi bi-arrow-down"></i></button>' +
                 '<button type="button" class="btn btn-sm btn-outline-dark" data-item-edit="' + item.id + '" title="Редактировать" aria-label="Редактировать"><i class="bi bi-pencil"></i></button>' +
                 '<button type="button" class="btn btn-sm btn-outline-danger" data-item-delete="' + item.id + '" title="Удалить" aria-label="Удалить пункт с подчинёнными"><i class="bi bi-trash"></i></button>' +
                 '</span></div>' +
@@ -129,6 +128,56 @@
             });
             itemsList.innerHTML = html;
             itemsInfo.textContent = '(' + currentItems.length + ')';
+            bindDragAndDrop();
+        }
+
+        function bindDragAndDrop() {
+            var dragged = null;
+            itemsList.querySelectorAll('[data-item-row]').forEach(function (row) {
+                row.addEventListener('dragstart', function (event) {
+                    dragged = row;
+                    row.classList.add('opacity-50');
+                    event.dataTransfer.effectAllowed = 'move';
+                });
+                row.addEventListener('dragend', function () {
+                    row.classList.remove('opacity-50');
+                    dragged = null;
+                });
+                row.addEventListener('dragover', function (event) {
+                    if (!dragged || dragged === row || dragged.dataset.parentId !== row.dataset.parentId) return;
+                    event.preventDefault();
+                    row.classList.add('border-orange');
+                });
+                row.addEventListener('dragleave', function () {
+                    row.classList.remove('border-orange');
+                });
+                row.addEventListener('drop', function (event) {
+                    event.preventDefault();
+                    row.classList.remove('border-orange');
+                    if (!dragged || dragged === row || dragged.dataset.parentId !== row.dataset.parentId) return;
+                    var rows = Array.prototype.slice.call(itemsList.querySelectorAll('[data-item-row][data-parent-id="' + dragged.dataset.parentId + '"]'));
+                    var from = rows.indexOf(dragged);
+                    var to = rows.indexOf(row);
+                    if (from < 0 || to < 0) return;
+                    if (from < to) row.after(dragged); else row.before(dragged);
+                    saveDraggedOrder(dragged.dataset.parentId);
+                });
+            });
+        }
+
+        function saveDraggedOrder(parentId) {
+            var rows = Array.prototype.slice.call(itemsList.querySelectorAll('[data-item-row][data-parent-id="' + parentId + '"]'));
+            window.AdminApi.save('/api/admin/menus', 'POST', {
+                action: 'reorder',
+                menu_name: menuSelect.value,
+                parent_id: parentId === '' ? null : Number(parentId),
+                item_ids: rows.map(function (row) { return Number(row.dataset.itemRow); })
+            }).then(loadItems).then(function () {
+                window.AdminNotifications.show(true, 'Порядок пунктов сохранён');
+            }).catch(function (error) {
+                showError(error.message || 'Не удалось сохранить порядок пунктов');
+                loadItems();
+            });
         }
 
         // ---------- Формы ----------
@@ -263,17 +312,6 @@
                 return;
             }
 
-            var move = event.target.closest('[data-item-move]');
-            if (move) {
-                window.AdminApi.save('/api/admin/menus', 'POST', {
-                    action: 'move',
-                    id: Number(move.dataset.itemId),
-                    direction: move.dataset.itemMove
-                }).then(loadItems).catch(function (error) {
-                    showError(error.message || 'Не удалось переместить пункт');
-                });
-                return;
-            }
 
             var remove = event.target.closest('[data-item-delete]');
             if (remove) {

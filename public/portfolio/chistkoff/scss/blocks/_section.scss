@@ -1,0 +1,98 @@
+// Section Block
+.va_section {
+  padding: $va_spacing-xxxl 0;
+  position: relative;
+  
+  &--sm {
+    padding: $va_spacing-xxl 0;
+  }
+  
+  &--lg {
+    padding: calc(#{$va_spacing-xxxl} * 1.5) 0;
+  }
+  
+  &--no-pt {
+    padding-top: 0;
+  }
+  
+  &--no-pb {
+    padding-bottom: 0;
+  }
+  
+  &--bg-gray {
+    background: $va_color-gray-bg;
+  }
+  
+  &--bg-dark {
+    background: #1A1A1A;
+    color: $va_color-white;
+  }
+  
+  &--bg-primary {
+    background: $va_color-primary;
+    color: $va_color-white;
+  }
+  
+  @include mq-tablet {
+    padding: $va_spacing-xxl 0;
+    
+    &--sm {
+      padding: $va_spacing-xl 0;
+    }
+    
+    &--lg {
+      padding: $va_spacing-xxxl 0;
+    }
+  }
+}
+
+.va_section__header {
+  text-align: center;
+  margin-bottom: $va_spacing-xxl;
+  
+  @include mq-tablet {
+    margin-bottom: $va_spacing-xl;
+  }
+}
+
+.va_section__title {
+  font-size: $va_font-size-h2;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: $va_color-dark;
+  margin-bottom: $va_spacing-sm;
+  position: relative;
+  display: inline-block;
+  
+  &::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 60px;
+    height: 4px;
+    background: $va_color-primary;
+    border-radius: 2px;
+  }
+  
+  @include mq-tablet {
+    font-size: $va_font-size-h3;
+  }
+}
+
+.va_section__subtitle {
+  font-size: $va_font-size-lg;
+  color: $va_color-gray;
+  max-width: 600px;
+  margin: 0 auto;
+  
+  @include mq-tablet {
+    font-size: $va_font-size-base;
+  }
+}
+
+.va_section__content {
+  position: relative;
+  z-index: 1;
+}

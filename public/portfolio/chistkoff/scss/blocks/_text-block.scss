@@ -1,0 +1,103 @@
+// Text Block
+.va_text-block {
+  font-size: $va_font-size-base;
+  line-height: 1.8;
+  color: $va_color-text;
+}
+
+.va_text-block p {
+  margin-bottom: $va_spacing-md;
+}
+
+.va_text-block p:last-child {
+  margin-bottom: 0;
+}
+
+.va_text-block h2 {
+  font-size: $va_font-size-h3;
+  font-weight: 700;
+  color: $va_color-dark;
+  margin: $va_spacing-xl 0 $va_spacing-md;
+}
+
+.va_text-block h3 {
+  font-size: $va_font-size-lg;
+  font-weight: 700;
+  color: $va_color-dark;
+  margin: $va_spacing-lg 0 $va_spacing-sm;
+}
+
+.va_text-block h4 {
+  font-size: $va_font-size-base;
+  font-weight: 700;
+  color: $va_color-dark;
+  margin: $va_spacing-md 0 $va_spacing-sm;
+}
+
+.va_text-block ul,
+.va_text-block ol {
+  margin: $va_spacing-md 0;
+  padding-left: $va_spacing-xl;
+}
+
+.va_text-block ul {
+  list-style: disc;
+}
+
+.va_text-block ol {
+  list-style: decimal;
+}
+
+.va_text-block li {
+  margin-bottom: $va_spacing-xs;
+}
+
+.va_text-block strong {
+  font-weight: 700;
+  color: $va_color-dark;
+}
+
+.va_text-block a {
+  color: $va_color-primary;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  
+  &:hover {
+    color: $va_color-primary-dark;
+  }
+}
+
+.va_text-block blockquote {
+  padding: $va_spacing-lg $va_spacing-xl;
+  border-left: 4px solid $va_color-primary;
+  background: $va_color-gray-bg;
+  font-style: italic;
+  color: $va_color-text;
+  margin: $va_spacing-lg 0;
+}
+
+.va_text-block img {
+  max-width: 100%;
+  height: auto;
+  border-radius: $va_border-radius-md;
+  margin: $va_spacing-md 0;
+}
+
+.va_text-block table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: $va_spacing-lg 0;
+}
+
+.va_text-block th,
+.va_text-block td {
+  padding: $va_spacing-sm $va_spacing-md;
+  border: 1px solid $va_color-border;
+  text-align: left;
+}
+
+.va_text-block th {
+  background: $va_color-gray-bg;
+  font-weight: 700;
+  color: $va_color-dark;
+}

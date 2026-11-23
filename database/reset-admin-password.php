@@ -27,8 +27,11 @@ function read_hidden_password(string $prompt): string
     return is_string($password) ? rtrim($password, "\r\n") : '';
 }
 
-$config = require APP_ROOT . '/config/admin-auth.php';
-$email = $argc >= 2 ? trim((string) $argv[1]) : trim((string) ($config['email'] ?? ''));
+$email = $argc >= 2 ? trim((string) $argv[1]) : '';
+if ($email === '') {
+    require APP_ROOT . '/app/bootstrap.php';
+    $email = trim((string) (new \App\Models\SiteSettings())->get('adminLoginEmail', ''));
+}
 
 if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     fwrite(STDERR, "Ошибка: укажите корректный email администратора.\n");

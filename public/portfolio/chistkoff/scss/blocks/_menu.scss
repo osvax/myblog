@@ -1,0 +1,140 @@
+// Menu Block (extracted from header for modularity)
+// This file contains additional menu styles not in header
+// Main menu styles are in _header.scss
+
+// Mobile Menu Panel
+.va_mobile-menu {
+  position: fixed;
+  top: 0;
+  right: -100%;
+  width: 300px;
+  height: 100vh;
+  background: $va_color-white;
+  z-index: $va_z-index-header;
+  padding: 100px $va_spacing-lg $va_spacing-lg;
+  overflow-y: auto;
+  transition: right $va_transition-base;
+  box-shadow: $va_shadow-lg;
+  
+  &.active {
+    right: 0;
+  }
+  
+  &__close {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: transparent;
+    border-radius: 50%;
+    color: $va_color-gray;
+    font-size: 24px;
+    cursor: pointer;
+    transition: all $va_transition-base;
+    
+    &:hover {
+      background: $va_color-gray-bg;
+      color: $va_color-primary;
+    }
+    
+    &::before,
+    &::after {
+      content: '';
+      position: absolute;
+      width: 20px;
+      height: 2px;
+      background: currentColor;
+    }
+    &::before {
+      transform: rotate(45deg);
+    }
+    &::after {
+      transform: rotate(-45deg);
+    }
+  }
+  
+  &__list {
+    display: flex;
+    flex-direction: column;
+    gap: $va_spacing-sm;
+  }
+  
+  &__item {
+    width: 100%;
+  }
+  
+  &__link {
+    display: block;
+    padding: $va_spacing-sm 0;
+    font-size: $va_font-size-lg;
+    font-weight: 500;
+    text-transform: uppercase;
+    color: $va_color-dark;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+    
+    &.active {
+      color: $va_color-primary;
+    }
+  }
+  
+  &__submenu {
+    padding-left: $va_spacing-md;
+    margin-top: $va_spacing-xs;
+    display: none;
+    
+    &.active {
+      display: block;
+    }
+  }
+  
+  &__sublink {
+    display: block;
+    padding: $va_spacing-xs 0;
+    font-size: $va_font-size-base;
+    color: $va_color-text;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+  }
+  
+  &__contacts {
+    margin-top: $va_spacing-xl;
+    padding-top: $va_spacing-xl;
+    border-top: 1px solid $va_color-border;
+  }
+  
+  &__callback {
+    @extend .va_btn;
+    @extend .va_btn--primary;
+    @extend .va_btn--full;
+    margin-bottom: $va_spacing-md;
+  }
+  
+  &__phone {
+    display: block;
+    font-size: $va_font-size-xl;
+    font-weight: 700;
+    color: $va_color-dark;
+    margin-bottom: $va_spacing-xs;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+  }
+  
+  &__schedule {
+    font-size: $va_font-size-sm;
+    color: $va_color-gray;
+  }
+}

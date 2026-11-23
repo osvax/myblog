@@ -1,0 +1,115 @@
+// Order Block
+.va_order {
+  &__row {
+    display: flex;
+    gap: $va_spacing-xl;
+    
+    @include mq-tablet {
+      flex-direction: column;
+    }
+  }
+}
+
+.va_contacts-block {
+  flex: 1;
+  max-width: 400px;
+  
+  @include mq-tablet {
+    max-width: none;
+  }
+  
+  &__title {
+    font-size: $va_font-size-lg;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: $va_color-dark;
+    margin-bottom: $va_spacing-sm;
+  }
+  
+  &__phone {
+    display: block;
+    font-size: $va_font-size-xl;
+    font-weight: 700;
+    color: $va_color-dark;
+    margin-bottom: $va_spacing-lg;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+  }
+  
+  &__item {
+    margin-bottom: $va_spacing-lg;
+  }
+  
+  &__address {
+    font-size: $va_font-size-base;
+    color: $va_color-text;
+    line-height: 1.6;
+  }
+  
+  &__mail {
+    font-size: $va_font-size-base;
+    color: $va_color-text;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+  }
+}
+
+.va_callback-form {
+  flex: 1;
+  background: $va_color-white;
+  padding: $va_spacing-xl;
+  border-radius: $va_border-radius-md;
+  box-shadow: $va_shadow-sm;
+  
+  @include mq-tablet {
+    padding: $va_spacing-lg;
+  }
+  
+  &__title {
+    font-size: $va_font-size-h3;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: $va_color-dark;
+    text-align: center;
+    margin-bottom: $va_spacing-lg;
+  }
+  
+  &__phone {
+    display: block;
+    text-align: center;
+    font-size: $va_font-size-xl;
+    font-weight: 700;
+    color: $va_color-dark;
+    margin-bottom: $va_spacing-sm;
+    transition: color $va_transition-base;
+    
+    &:hover {
+      color: $va_color-primary;
+    }
+  }
+  
+  &__text {
+    text-align: center;
+    font-size: $va_font-size-base;
+    color: $va_color-gray;
+    margin-bottom: $va_spacing-lg;
+  }
+}
+
+.va_form__form {
+  display: flex;
+  flex-direction: column;
+  gap: $va_spacing-md;
+}
+
+.va_form__group {
+  display: flex;
+  flex-direction: column;
+  gap: $va_spacing-xs;
+}

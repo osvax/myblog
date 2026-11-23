@@ -58,6 +58,12 @@ function admin_get_user_id()
     return (int) ($_SESSION['admin_user_id'] ?? 0);
 }
 
+function admin_is_read_only()
+{
+    admin_start_session();
+    return admin_get_user_role() === 'readonly_demo';
+}
+
 function admin_require_authentication()
 {
     if (admin_is_authenticated()) {

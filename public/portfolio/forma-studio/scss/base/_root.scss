@@ -1,0 +1,24 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// CSS-переменные (префикс va_)
+// Продублированы в :root, чтобы их можно было менять из JS
+// и переопределять точечно, не пересобирая Sass.
+// ============================================================
+:root {
+  --va-c-dark: #{$va-c-dark};
+  --va-c-black: #{$va-c-black};
+  --va-c-white: #{$va-c-white};
+  --va-c-text: #{$va-c-text};
+  --va-c-muted: #{$va-c-muted};
+  --va-c-line-light: #{$va-c-line-light};
+  --va-c-line-dark: #{$va-c-line-dark};
+  --va-c-error: #{$va-c-error};
+
+  --va-container: calc(#{$va-container-width} + 2 * var(--va-gutter));
+  --va-gutter: #{$va-gutter};
+
+  --va-font: #{$va-font-family};
+
+  --va-ease: #{$va-ease};
+}

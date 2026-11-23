@@ -1,0 +1,135 @@
+@use "../abstracts" as *;
+
+// ============================================================
+// Шапка
+// ============================================================
+.va-header {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 100;
+  padding: 26px 0;
+  transition: background 0.35s var(--va-ease), padding 0.35s var(--va-ease),
+    box-shadow 0.35s var(--va-ease);
+
+  @include va-is(scrolled) {
+    padding: 14px 0;
+    background: rgba(16, 16, 16, 0.93);
+    box-shadow: 0 1px 0 rgba(255, 255, 255, 0.08);
+    -webkit-backdrop-filter: blur(10px);
+    backdrop-filter: blur(10px);
+  }
+
+  @include va-is(open) {
+    .va-burger span:nth-child(1) {
+      transform: translateY(7px) rotate(45deg);
+    }
+
+    .va-burger span:nth-child(2) {
+      opacity: 0;
+    }
+
+    .va-burger span:nth-child(3) {
+      transform: translateY(-7px) rotate(-45deg);
+    }
+  }
+}
+
+.va-header__inner {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 24px;
+}
+
+.va-nav {
+  display: flex;
+  align-items: center;
+}
+
+.va-nav__list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: clamp(18px, 1.9vw, 36px);
+}
+
+.va-nav__link {
+  font-size: 12px;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--va-c-white);
+  text-decoration: none;
+  opacity: 0.92;
+  transition: opacity 0.2s;
+
+  &:hover,
+  &.is-active {
+    opacity: 0.55;
+  }
+}
+
+.va-nav__phone {
+  display: none;
+}
+
+.va-logo {
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.va-header__logo {
+  color: var(--va-c-white);
+  justify-self: center;
+}
+
+.va-header__phone {
+  justify-self: end;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.06em;
+  color: var(--va-c-white);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: opacity 0.2s;
+
+  &:hover {
+    opacity: 0.65;
+  }
+}
+
+.va-header__phone svg,
+.va-nav__phone svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.4;
+  stroke-linejoin: round;
+}
+
+// Бургер
+.va-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+}
+
+.va-burger span {
+  display: block;
+  width: 26px;
+  height: 1px;
+  background: var(--va-c-white);
+  transition: transform 0.3s var(--va-ease), opacity 0.2s;
+}

@@ -1,0 +1,156 @@
+// ==========================================================
+//  АГРОПРОСПЕКТ — внутренние страницы
+// ==========================================================
+
+.va_page {
+  &__title,
+  &__subtitle {
+    margin: 0 0 .5em;
+    color: $va-c-heading;
+    font-size: 2.5em;
+    line-height: 1.2;
+    @include va-font-bold;
+
+    @include va-media-down($va-bp-sm) {
+      margin-bottom: 1.5em;
+      font-size: 1.7em;
+      text-align: center;
+    }
+  }
+
+  &__title {
+    margin-top: .4em;
+
+    &--sm-small-margin {
+      @include va-media-down($va-bp-sm) {
+        margin-bottom: .5em;
+      }
+    }
+  }
+
+  &__subtitle {
+    margin-bottom: .7em;
+    font-size: 1.75em;
+
+    @include va-media-down($va-bp-sm) {
+      margin-bottom: .6em;
+    }
+  }
+
+  &__block {
+    margin-top: 2em;
+    margin-bottom: 2em;
+  }
+
+  &__para {
+    margin: 0 0 1.4em;
+    color: $va-c-text;
+    font-size: .75em;
+    line-height: 1.6;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+}
+
+// ---------- Блок «изображение + текст» ----------
+.va_page-aside {
+  display: flex;
+  align-items: flex-start;
+
+  &--reversed .va_page-aside__img {
+    order: 1;
+  }
+
+  &--reversed .va_page-aside__content {
+    margin-left: 0;
+    margin-right: 2.7em;
+  }
+
+  &__img {
+    width: 29em;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: .25em;
+    box-shadow: $va-shadow-card;
+
+    @include va-media-down($va-bp-sm) {
+      width: 100%;
+    }
+  }
+
+  &__content {
+    margin-left: 2.7em;
+
+    @include va-media-down($va-bp-sm) {
+      width: 100%;
+      margin-left: 0;
+      margin-right: 0;
+      margin-top: 1.4em;
+      padding: 0;
+    }
+  }
+
+  &__title {
+    margin: 0 0 .5em;
+    color: $va-c-heading;
+    font-size: 1.5em;
+    line-height: 1.3;
+    @include va-font-bold;
+  }
+
+  &__list {
+    li {
+      margin-bottom: 1em;
+      display: flex;
+      align-items: flex-start;
+      color: $va-c-text;
+      font-size: .75em;
+      line-height: 1.6;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+    }
+  }
+
+  ul li::before {
+    content: '';
+    display: block;
+    flex-shrink: 0;
+    margin-top: .3em;
+    margin-right: .7em;
+    width: .84em;
+    height: .84em;
+    background-color: $va-c-primary;
+    border-radius: 50%;
+  }
+
+  ol {
+    counter-reset: va-counter;
+
+    li::before {
+      display: block;
+      margin-right: .7em;
+      counter-increment: va-counter;
+      content: counter(va-counter) '.';
+      color: $va-c-primary;
+      @include va-font-bold;
+    }
+  }
+
+  @include va-media-down($va-bp-sm) {
+    flex-direction: column;
+    align-items: center;
+
+    &--reversed .va_page-aside__img {
+      order: initial;
+    }
+
+    &--reversed .va_page-aside__content {
+      margin-left: 0;
+      margin-right: 0;
+    }
+  }
+}
