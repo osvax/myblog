@@ -5,7 +5,6 @@
 
 # Dependencies
 vendor/
-composer.lock
 
 # Node / Vite
 node_modules/
@@ -56,6 +55,9 @@ var/cache/*
 !/public/uploads/portfolio/
 /public/uploads/portfolio/*
 !/public/uploads/portfolio/.htaccess
+!/public/uploads/contacts/
+/public/uploads/contacts/*
+!/public/uploads/contacts/.htaccess
 
 # Конфигурация с паролем БД — в репозиторий не попадает
 /config/database.php
