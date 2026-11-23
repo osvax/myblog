@@ -15,13 +15,25 @@ class Menu
      */
     public function menus(): array
     {
+        return $this->menusByPrefix('');
+    }
+
+    public function menusByPrefix(string $prefix): array
+    {
         $db = Database::connection();
-        return $db->query(
+        $where = $prefix === '' ? ' WHERE LEFT(m.menu_name, 7) <> :rubric_prefix' : ' WHERE LEFT(m.menu_name, 7) = :prefix';
+        $stmt = $db->prepare(
             'SELECT m.id, m.menu_name, m.title, m.css_class,
                     COUNT(i.id) AS items_count
-             FROM ' . db_table('menus') . ' m LEFT JOIN ' . db_table('menu_items') . ' i ON i.menu_id = m.id AND i.parent_id IS NULL
+             FROM ' . db_table('menus') . ' m LEFT JOIN ' . db_table('menu_items') . ' i ON i.menu_id = m.id AND i.parent_id IS NULL' . $where . '
              GROUP BY m.id ORDER BY m.id'
-        )->fetchAll();
+        );
+        if ($prefix === '') {
+            $stmt->execute(['rubric_prefix' => 'rubric_']);
+        } else {
+            $stmt->execute(['prefix' => rtrim($prefix, '_') . '_']);
+        }
+        return $stmt->fetchAll();
     }
 
     public function menuByName(string $name): ?array
@@ -29,6 +41,15 @@ class Menu
         $db = Database::connection();
         $stmt = $db->prepare('SELECT * FROM ' . db_table('menus') . ' WHERE menu_name = :name LIMIT 1');
         $stmt->execute(['name' => $name]);
+        $row = $stmt->fetch();
+        return $row ?: null;
+    }
+
+    public function menuById(int $id): ?array
+    {
+        $db = Database::connection();
+        $stmt = $db->prepare('SELECT * FROM ' . db_table('menus') . ' WHERE id = :id LIMIT 1');
+        $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
         return $row ?: null;
     }
@@ -138,6 +159,39 @@ class Menu
             'id' => $id,
         ]);
         return ['success' => true, 'id' => $id];
+    }
+
+    /**
+     * Сохранить порядок пунктов одного уровня меню.
+     */
+    public function reorderItems(int $menuId, ?int $parentId, array $itemIds): array
+    {
+        $db = Database::connection();
+        $sql = 'SELECT id FROM ' . db_table('menu_items') . ' WHERE menu_id = :menu_id AND ' . ($parentId === null ? 'parent_id IS NULL' : 'parent_id = :parent_id');
+        $stmt = $db->prepare($sql);
+        $stmt->execute(array_filter(['menu_id' => $menuId, 'parent_id' => $parentId], static function ($value): bool {
+            return $value !== null;
+        }));
+        $allowed = array_map('intval', $stmt->fetchAll(\PDO::FETCH_COLUMN));
+        $itemIds = array_values(array_unique(array_map('intval', $itemIds)));
+        sort($allowed);
+        $sortedIds = $itemIds;
+        sort($sortedIds);
+        if ($allowed !== $sortedIds) {
+            return ['success' => false, 'error' => 'Некорректный порядок пунктов'];
+        }
+        $db->beginTransaction();
+        try {
+            $update = $db->prepare('UPDATE ' . db_table('menu_items') . ' SET display_order = :display_order WHERE id = :id AND menu_id = :menu_id');
+            foreach ($itemIds as $order => $itemId) {
+                $update->execute(['display_order' => $order + 1, 'id' => $itemId, 'menu_id' => $menuId]);
+            }
+            $db->commit();
+        } catch (\Throwable $error) {
+            $db->rollBack();
+            throw $error;
+        }
+        return ['success' => true];
     }
 
     /**

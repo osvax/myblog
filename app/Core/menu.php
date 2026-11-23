@@ -28,7 +28,11 @@ function menu_tree(string $name): array
  */
 function menu_items_html(string $name): string
 {
-    $tree = menu_tree($name);
+    return menu_items_html_from_tree(menu_tree($name), $name);
+}
+
+function menu_items_html_from_tree(array $tree, string $name): string
+{
     if (empty($tree['roots'])) {
         if ($name !== 'main') {
             return '';
@@ -89,9 +93,28 @@ function menu_items_html(string $name): string
  * @param string $itemClass класс пункта (li) верхнего уровня
  * @param string $linkClass класс ссылки (a) пункта
  */
+function menu_rubric_tree(string $name): array
+{
+    return menu_tree('rubric_' . $name);
+}
+
+function menu_rubric_items_html(string $name): string
+{
+    return menu_items_html_from_tree(menu_rubric_tree($name), 'rubric_' . $name);
+}
+
+function render_menu_rubric(string $name, string $class = 'navbar-nav', string $itemClass = 'nav-item', string $linkClass = 'nav-link'): string
+{
+    return render_menu_tree(menu_rubric_tree($name), $class, $itemClass, $linkClass);
+}
+
 function render_menu(string $name, string $class = 'navbar-nav', string $itemClass = 'nav-item', string $linkClass = 'nav-link'): string
 {
-    $tree = menu_tree($name);
+    return render_menu_tree(menu_tree($name), $class, $itemClass, $linkClass);
+}
+
+function render_menu_tree(array $tree, string $class = 'navbar-nav', string $itemClass = 'nav-item', string $linkClass = 'nav-link'): string
+{
     if (empty($tree['roots'])) {
         return '';
     }

@@ -118,6 +118,7 @@ function admin_api_required_section(string $path): string
         '#^/api/admin/custom-fields#' => 'custom-fields',
         '#^/api/admin/templates#' => 'templates',
         '#^/api/admin/menus#' => 'menus',
+        '#^/api/admin/rubric-menus#' => 'categories',
         '#^/api/admin/calculator#' => 'calculator',
         '#^/api/admin/files#' => 'files',
         '#^/api/admin/articles#' => 'blog',

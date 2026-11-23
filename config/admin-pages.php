@@ -47,12 +47,13 @@ return array (
       1 => '../js/calculator-admin.js',
     ),
   ),
-  'categories' => 
+  'categories' =>
   array (
     'title' => 'Рубрики блога',
-    'scripts' => 
+    'scripts' =>
     array (
       0 => 'js/categories.js',
+      1 => '../js/rubric-menus.js',
     ),
   ),
   'consultant' => 

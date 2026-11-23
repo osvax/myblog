@@ -10,7 +10,7 @@
 // - $showArticleCategories / $showRelatedArticles — тумблеры настроек
 ?>
 <div class="article-sidebar">
-    <?php if (!empty($showArticleCategories) && !empty($sidebarCategories)): ?>
+    <?php if (!empty($showArticleCategories)): ?>
         <?php require APP_ROOT . '/app/Views/frontend/templates/default/components/categories-sidebar.php'; ?>
     <?php endif; ?>
 

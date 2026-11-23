@@ -13,6 +13,37 @@ use App\Models\Menu;
  */
 class MenuController extends Controller
 {
+    private string $menuPrefix = '';
+
+    private function scopedMenuName(string $name): string
+    {
+        return $this->menuPrefix . $name;
+    }
+
+    private function scopedMenu(string $name, Menu $model): ?array
+    {
+        $scopedName = $this->scopedMenuName($name);
+        return preg_match('/^[a-z0-9_-]{1,80}$/', $scopedName) ? $model->menuByName($scopedName) : null;
+    }
+
+    public function handleRubric($request)
+    {
+        $this->menuPrefix = 'rubric_';
+        return $this->handle($request);
+    }
+
+    public function deleteRubricItem($request, $parameters)
+    {
+        $this->menuPrefix = 'rubric_';
+        return $this->deleteItem($request, $parameters);
+    }
+
+    public function deleteRubricMenu($request, $parameters)
+    {
+        $this->menuPrefix = 'rubric_';
+        return $this->deleteMenu($request, $parameters);
+    }
+
     public function handle($request)
     {
         if (!\admin_is_authenticated()) {
@@ -22,15 +53,16 @@ class MenuController extends Controller
         if ($request->method() === 'GET') {
             $action = isset($_GET['action']) && is_string($_GET['action']) ? $_GET['action'] : 'items';
             if ($action === 'menus') {
-                return $this->json(['success' => true, 'menus' => (new Menu())->menus()]);
+                return $this->json(['success' => true, 'menus' => (new Menu())->menusByPrefix($this->menuPrefix)]);
             }
             if ($action === 'items') {
                 $menuName = isset($_GET['menu']) && is_string($_GET['menu']) ? $_GET['menu'] : 'main';
-                if (!preg_match('/^[a-z0-9_-]{1,80}$/', $menuName)) {
+                $scopedMenuName = $this->scopedMenuName($menuName);
+                if (!preg_match('/^[a-z0-9_-]{1,80}$/', $scopedMenuName)) {
                     return $this->json(['success' => false, 'error' => 'Некорректный идентификатор меню'], 400);
                 }
                 $model = new Menu();
-                $menu = $model->menuByName($menuName);
+                $menu = $model->menuByName($scopedMenuName);
                 return $this->json([
                     'success' => true,
                     'menu' => $menu,
@@ -46,6 +78,9 @@ class MenuController extends Controller
                     'pages' => $pages,
                     'categories' => $content->categories(),
                     'articles' => $content->articles(),
+                    'menuItems' => $this->menuPrefix === 'rubric_' ? array_merge([], ...array_map(static function (array $menu): array {
+                        return (new Menu())->items((int) $menu['id']);
+                    }, (new Menu())->menus())) : [],
                 ]);
             }
             return $this->json(['success' => false, 'error' => 'Некорректный запрос'], 400);
@@ -67,7 +102,11 @@ class MenuController extends Controller
             if (!preg_match('/^[a-z0-9_-]{1,80}$/', $name)) {
                 return $this->json(['success' => false, 'error' => 'Идентификатор: латиница, цифры, - и _ (до 80)'], 400);
             }
-            $result = $model->createMenu($name, $title !== '' ? $title : ucfirst($name));
+            $scopedName = $this->scopedMenuName($name);
+            if (!preg_match('/^[a-z0-9_-]{1,80}$/', $scopedName)) {
+                return $this->json(['success' => false, 'error' => 'Слишком длинный идентификатор меню'], 400);
+            }
+            $result = $model->createMenu($scopedName, $title !== '' ? $title : ucfirst($name));
             if (!$result['success']) {
                 return $this->json(['success' => false, 'error' => $result['error']], 400);
             }
@@ -76,7 +115,25 @@ class MenuController extends Controller
 
         // Создать меню из заготовки
         if ($action === 'preset') {
+            if ($this->menuPrefix !== '') {
+                return $this->json(['success' => false, 'error' => 'Заготовки доступны только для обычных меню'], 400);
+            }
             return $this->createPreset($model, $input);
+        }
+
+        // Сохранить порядок пунктов перетаскиванием.
+        if ($action === 'reorder') {
+            $menuName = isset($input['menu_name']) && is_string($input['menu_name']) ? $input['menu_name'] : '';
+            $menu = $this->scopedMenu($menuName, $model);
+            $itemIds = isset($input['item_ids']) && is_array($input['item_ids']) ? $input['item_ids'] : [];
+            $parentId = isset($input['parent_id']) && $input['parent_id'] !== null ? (int) $input['parent_id'] : null;
+            if (!$menu || !$itemIds) {
+                return $this->json(['success' => false, 'error' => 'Некорректный порядок пунктов'], 400);
+            }
+            $result = $model->reorderItems((int) $menu['id'], $parentId, $itemIds);
+            return $result['success']
+                ? $this->json(['success' => true])
+                : $this->json(['success' => false, 'error' => $result['error']], 400);
         }
 
         // Переместить пункт
@@ -104,7 +161,11 @@ class MenuController extends Controller
         if ($action === 'save') {
             $id = isset($input['id']) ? (int) $input['id'] : 0;
             $menuName = isset($input['menu_name']) && is_string($input['menu_name']) ? $input['menu_name'] : '';
-            $menu = preg_match('/^[a-z0-9_-]{1,80}$/', $menuName) ? $model->menuByName($menuName) : null;
+            $menu = $this->scopedMenu($menuName, $model);
+            if (!$menu && $this->menuPrefix === 'rubric_' && $menuName === 'main' && !$model->menusByPrefix('rubric_')) {
+                $model->createMenu('rubric_main', 'Рубрики блога');
+                $menu = $model->menuByName('rubric_main');
+            }
             if (!$menu) {
                 return $this->json(['success' => false, 'error' => 'Меню не найдено'], 404);
             }
@@ -116,6 +177,9 @@ class MenuController extends Controller
             // По умолчанию пункт активен, если поле не передано
             $isActive = isset($input['is_active']) ? (!empty($input['is_active']) ? 1 : 0) : 1;
 
+            if ($this->menuPrefix === 'rubric_' && !preg_match('#^(?:/(?!/)|https?://|\#)#i', $url)) {
+                return $this->json(['success' => false, 'error' => 'Укажите локальную ссылку, якорь или URL с http/https'], 400);
+            }
             if (mb_strlen($title) < 1 || mb_strlen($title) > 160) {
                 return $this->json(['success' => false, 'error' => 'Укажите название пункта (до 160 символов)'], 400);
             }
@@ -129,6 +193,12 @@ class MenuController extends Controller
                 return $this->json(['success' => false, 'error' => 'Слишком длинный CSS-класс'], 400);
             }
 
+            if ($id > 0) {
+                $existingItem = $model->itemById($id);
+                if (!$existingItem || (int) $existingItem['menu_id'] !== (int) $menu['id']) {
+                    return $this->json(['success' => false, 'error' => 'Пункт не найден в выбранном меню'], 404);
+                }
+            }
             $result = $model->saveItem($id, (int) $menu['id'], $parentId, $title, $url, $icon, $cssClass, $isActive);
             if (!$result['success']) {
                 return $this->json(['success' => false, 'error' => $result['error']], 400);
@@ -153,7 +223,13 @@ class MenuController extends Controller
         \admin_require_csrf();
 
         $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
-        $result = (new Menu())->deleteItem($id);
+        $model = new Menu();
+        $item = $model->itemById($id);
+        $itemMenu = $item ? $model->menuById((int) $item['menu_id']) : null;
+        if (!$item || !$itemMenu || ($this->menuPrefix !== '' && strpos((string) $itemMenu['menu_name'], $this->menuPrefix) !== 0)) {
+            return $this->json(['success' => false, 'error' => 'Пункт не найден'], 404);
+        }
+        $result = $model->deleteItem($id);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => 'Пункт не найден'], 404);
         }
@@ -174,10 +250,12 @@ class MenuController extends Controller
         \admin_require_csrf();
 
         $name = isset($parameters['name']) && is_string($parameters['name']) ? $parameters['name'] : '';
-        if (!preg_match('/^[a-z0-9_-]{1,80}$/', $name)) {
-            return $this->json(['success' => false, 'error' => 'Некорректный идентификатор меню'], 400);
+        $model = new Menu();
+        $menu = $this->scopedMenu($name, $model);
+        if (!$menu || ($this->menuPrefix === '' && $menu['menu_name'] !== $name)) {
+            return $this->json(['success' => false, 'error' => 'Меню не найдено'], 404);
         }
-        $result = (new Menu())->deleteMenu($name);
+        $result = $model->deleteMenu((string) $menu['menu_name']);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => 'Меню не найдено или главное'], 404);
         }

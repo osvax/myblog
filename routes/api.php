@@ -158,3 +158,7 @@ return function (Router $router) {
     $router->post('/api/admin/custom-fields/{id}/toggle', [$customFields, 'toggleActive']);
     $router->delete('/api/admin/custom-fields/{id}', [$customFields, 'delete']);
 };
+    $router->get('/api/admin/rubric-menus', [$menus, 'handleRubric']);
+    $router->post('/api/admin/rubric-menus', [$menus, 'handleRubric']);
+    $router->delete('/api/admin/rubric-menus/{id}/delete-item', [$menus, 'deleteRubricItem']);
+    $router->delete('/api/admin/rubric-menus/{name}/delete-menu', [$menus, 'deleteRubricMenu']);
