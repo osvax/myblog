@@ -3,48 +3,144 @@
 namespace App\Models;
 
 use App\Core\Database;
+use App\Core\QueryBuilder;
+use App\DTO\ArticleDTO;
+
 class ContentRepository
 {
     private $db;
+    private $qb;
 
     public function __construct()
     {
         $this->db = Database::connection();
+        // QueryBuilder для таблицы articles
+        $this->qb = new QueryBuilder($this->db, 'articles');
     }
 
-    public function articles($publishedOnly = false)
+    /**
+     * Внутренний хелпер: создаёт QueryBuilder для articles с базовыми JOIN и select.
+     */
+    private function baseArticlesQuery(): QueryBuilder
     {
-        $where = $publishedOnly ? 'WHERE a.is_published = 1' : '';
-        $statement = $this->db->query(
-            'SELECT a.*, c.name AS category, c.slug AS category_slug
-             FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id ' . $where . '
-             ORDER BY a.published_at DESC, a.created_at DESC'
-        );
-        return array_map([$this, 'articleRow'], $statement->fetchAll());
+        return (new QueryBuilder($this->db, 'articles a'))
+            ->select(['a.*', 'c.name AS category', 'c.slug AS category_slug'])
+            ->leftJoin('categories c', 'c.id', '=', 'a.category_id');
     }
 
-    public function articleById($id)
+    /**
+     * Внутренний хелпер: QueryBuilder для portfolio_projects.
+     */
+    private function baseProjectsQuery(): QueryBuilder
     {
-        $statement = $this->db->prepare(
-            'SELECT a.*, c.name AS category, c.slug AS category_slug
-             FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id WHERE a.id = :id'
-        );
-        $statement->execute(['id' => $id]);
-        $row = $statement->fetch();
+        return new QueryBuilder($this->db, 'portfolio_projects');
+    }
+
+    /**
+     * Внутренний хелпер: QueryBuilder для categories с подсчётом статей.
+     * Делает LEFT JOIN с articles и GROUP BY для получения articles_count.
+     *
+     * ИСПОЛЬЗУЕТСЯ В:
+     * - categories() — список всех рубрик с количеством статей
+     * - categoryById(), categoryBySlug() — одиночная рубрика с count
+     *
+     * @return QueryBuilder Настроенный QB (нужно вызвать get() или first())
+     */
+    private function baseCategoriesQuery(): QueryBuilder
+    {
+        return (new QueryBuilder($this->db, 'categories c'))
+            ->select([
+                'c.id',
+                'c.name',
+                'c.slug',
+                'c.description',
+                'COUNT(a.id) AS articles_count'  // алиас для CategoryDTO::fromDatabase()
+            ])
+            ->leftJoin('articles a', 'a.category_id', '=', 'c.id')
+            ->orderBy('c.name', 'ASC');
+    }
+
+    public function articles(bool $publishedOnly = false): array
+    {
+        $query = $this->baseArticlesQuery()
+            ->when($publishedOnly, fn($q) => $q->where('a.is_published', '=', 1))
+            ->orderBy('a.published_at', 'DESC')
+            ->orderBy('a.created_at', 'DESC');
+
+        $rows = $query->get();
+        return array_map([$this, 'articleRow'], $rows);
+    }
+
+    public function articleById(string $id): ?array
+    {
+        $row = $this->baseArticlesQuery()
+            ->where('a.id', '=', $id)
+            ->first();
+
         return $row ? $this->articleRow($row) : null;
     }
 
-    public function articleBySlug($slug, $publishedOnly = true)
+    public function articleBySlug(string $slug, bool $publishedOnly = true): ?array
     {
-        $sql = 'SELECT a.*, c.name AS category, c.slug AS category_slug
-                FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id WHERE a.slug = :slug';
+        $query = $this->baseArticlesQuery()->where('a.slug', '=', $slug);
+
         if ($publishedOnly) {
-            $sql .= ' AND a.is_published = 1';
+            $query->where('a.is_published', '=', 1);
         }
-        $statement = $this->db->prepare($sql);
-        $statement->execute(['slug' => $slug]);
-        $row = $statement->fetch();
+
+        $row = $query->first();
         return $row ? $this->articleRow($row) : null;
+    }
+
+    /**
+     * Получает статью как ArticleDTO (для API ответов).
+     *
+     * @param string $id
+     * @return ArticleDTO|null
+     */
+    public function articleDtoById(string $id): ?ArticleDTO
+    {
+        $row = $this->baseArticlesQuery()
+            ->where('a.id', '=', $id)
+            ->first();
+
+        return $row ? ArticleDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Получает статью по slug как ArticleDTO.
+     *
+     * @param string $slug
+     * @param bool $publishedOnly
+     * @return ArticleDTO|null
+     */
+    public function articleDtoBySlug(string $slug, bool $publishedOnly = true): ?ArticleDTO
+    {
+        $query = $this->baseArticlesQuery()->where('a.slug', '=', $slug);
+
+        if ($publishedOnly) {
+            $query->where('a.is_published', '=', 1);
+        }
+
+        $row = $query->first();
+        return $row ? ArticleDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Список статей как массив ArticleDTO.
+     *
+     * @param bool $publishedOnly
+     * @return ArticleDTO[]
+     */
+    public function articlesAsDto(bool $publishedOnly = false): array
+    {
+        $query = $this->baseArticlesQuery()
+            ->when($publishedOnly, fn($q) => $q->where('a.is_published', '=', 1))
+            ->orderBy('a.published_at', 'DESC')
+            ->orderBy('a.created_at', 'DESC');
+
+        $rows = $query->get();
+        return array_map([ArticleDTO::class, 'fromDatabase'], $rows);
     }
 
     /**
@@ -67,21 +163,26 @@ class ContentRepository
     }
 
     /**
-     * Рубрика по slug.
+     * Рубрика по ID (возвращает массив для обратной совместимости).
      */
     public function categoryById(int $id): ?array
     {
-        $statement = $this->db->prepare('SELECT id, name, slug, description FROM ' . db_table('categories') . ' WHERE id = :id LIMIT 1');
-        $statement->execute(['id' => $id]);
-        $row = $statement->fetch();
+        $row = $this->baseCategoriesQuery()
+            ->where('c.id', '=', $id)
+            ->first();
+
         return $row ?: null;
     }
 
+    /**
+     * Рубрика по slug (возвращает массив для обратной совместимости).
+     */
     public function categoryBySlug(string $slug): ?array
     {
-        $statement = $this->db->prepare('SELECT id, name, slug, description FROM ' . db_table('categories') . ' WHERE slug = :slug LIMIT 1');
-        $statement->execute(['slug' => $slug]);
-        $row = $statement->fetch();
+        $row = $this->baseCategoriesQuery()
+            ->where('c.slug', '=', $slug)
+            ->first();
+
         return $row ?: null;
     }
 
@@ -90,59 +191,100 @@ class ContentRepository
      */
     public function articlesByCategory(string $categorySlug, bool $publishedOnly = true): array
     {
-        $sql = 'SELECT a.*, c.name AS category, c.slug AS category_slug
-                FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id
-                WHERE c.slug = :slug';
-        if ($publishedOnly) {
-            $sql .= ' AND a.is_published = 1';
-        }
-        $statement = $this->db->prepare($sql . ' ORDER BY a.published_at DESC, a.created_at DESC');
-        $statement->execute(['slug' => $categorySlug]);
-        return array_map([$this, 'articleRow'], $statement->fetchAll());
+        $query = $this->baseArticlesQuery()
+            ->where('c.slug', '=', $categorySlug)
+            ->when($publishedOnly, fn($q) => $q->where('a.is_published', '=', 1))
+            ->orderBy('a.published_at', 'DESC')
+            ->orderBy('a.created_at', 'DESC');
+
+        $rows = $query->get();
+        return array_map([$this, 'articleRow'], $rows);
     }
 
-    public function saveArticle(array $article)
+    /**
+     * Сохраняет статью из ArticleDTO (новый предпочтительный способ).
+     *
+     * @param ArticleDTO $dto
+     * @return array|null Сохранённая статья с присоединенными данными категории
+     */
+    public function saveArticleFromDTO(ArticleDTO $dto): ?array
     {
-        $category = $this->db->prepare('SELECT id FROM ' . db_table('categories') . ' WHERE name = :name');
-        $category->execute(['name' => $article['category']]);
-        $categoryId = $category->fetchColumn();
-        if (!$categoryId) {
-            // Автогенерация slug рубрики из названия (кириллица транслитерируется)
-            $slug = \slugify($article['category']);
-            $insertCategory = $this->db->prepare('INSERT INTO ' . db_table('categories') . ' (name, slug) VALUES (:name, :slug)');
-            $insertCategory->execute([
-                'name' => $article['category'],
-                'slug' => $slug !== '' ? $slug : substr(hash('sha256', $article['category']), 0, 32),
-            ]);
-            $categoryId = $this->db->lastInsertId();
+        // Валидируем DTO перед сохранением
+        if (!$dto->validate()) {
+            throw new \InvalidArgumentException('ArticleDTO validation failed: ' . json_encode($dto->getErrors()));
         }
 
-        $statement = $this->db->prepare(
-            'INSERT INTO ' . db_table('articles') . '
-                (id, slug, title, description, body_html, category_id, author, published_at, icon, cover_path, tags_json, is_published)
-             VALUES
-                (:id, :slug, :title, :description, :body_html, :category_id, :author, :published_at, :icon, :cover_path, :tags_json, :is_published)
-             ON DUPLICATE KEY UPDATE
-                slug = VALUES(slug), title = VALUES(title), description = VALUES(description),
-                body_html = VALUES(body_html), category_id = VALUES(category_id), author = VALUES(author),
-                published_at = VALUES(published_at), icon = VALUES(icon), cover_path = VALUES(cover_path),
-                tags_json = VALUES(tags_json), is_published = VALUES(is_published)'
-        );
-        $statement->execute([
-            'id' => $article['id'],
-            'slug' => $article['slug'],
-            'title' => $article['title'],
-            'description' => $article['description'],
-            'body_html' => $article['content'],
-            'category_id' => $categoryId,
-            'author' => $article['author'],
-            'published_at' => $article['date'] !== '' ? $article['date'] : null,
-            'icon' => $article['icon'],
-            'cover_path' => $article['cover'],
-            'tags_json' => json_encode($article['tags'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'is_published' => $article['active'] ? 1 : 0,
-        ]);
-        return $this->articleById($article['id']);
+        // Резолвим category_id (DTO может иметь category slug или category_id)
+        $categoryId = $dto->category_id;
+        if (!$categoryId && $dto->category) {
+            $category = $this->db->prepare('SELECT id FROM ' . db_table('categories') . ' WHERE slug = :slug');
+            $category->execute(['slug' => $dto->category]);
+            $categoryId = (int)($category->fetchColumn() ?? 0);
+
+            if (!$categoryId) {
+                // Автосоздание категории по slug
+                $insertCategory = $this->db->prepare('INSERT INTO ' . db_table('categories') . ' (name, slug) VALUES (:name, :slug)');
+                $insertCategory->execute([
+                    'name' => $dto->category,
+                    'slug' => $dto->category,
+                ]);
+                $categoryId = (int)$this->db->lastInsertId();
+            }
+        }
+
+        // Подготовка данных для БД
+        $data = [
+            'id' => $dto->id,
+            'slug' => $dto->slug,
+            'title' => $dto->title,
+            'description' => $dto->description,
+            'body_html' => $dto->content,
+            'category_id' => $categoryId ?: null,
+            'author' => $dto->author,
+            'published_at' => $dto->date !== '' ? $dto->date : null,
+            'icon' => $dto->icon,
+            'cover_path' => $dto->cover,
+            'tags_json' => json_encode($dto->tags, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
+            'is_published' => $dto->active ? 1 : 0,
+            'updated_at' => date('Y-m-d H:i:s'),
+        ];
+
+        // UPSERT: INSERT ... ON DUPLICATE KEY UPDATE
+        $table = db_table('articles');
+        $columns = array_keys($data);
+        $placeholders = implode(',', array_fill(0, count($columns), '?'));
+        $colList = implode(',', $columns);
+
+        // UPDATE часть (все кроме id)
+        $updateParts = [];
+        foreach ($columns as $col) {
+            if ($col !== 'id') {
+                $updateParts[] = "$col = VALUES($col)";
+            }
+        }
+
+        $sql = "INSERT INTO $table ($colList) VALUES ($placeholders)
+                ON DUPLICATE KEY UPDATE " . implode(', ', $updateParts);
+
+        $stmt = $this->db->prepare($sql);
+        $values = array_values($data);
+        // Для ON DUPLICATE KEY UPDATE значения повторяются
+        $stmt->execute(array_merge($values, $values));
+
+        return $this->articleById($dto->id);
+    }
+
+    /**
+     * Сохраняет статью из массива (обратная совместимость).
+     * Преобразует массив в ArticleDTO и делегирует saveArticleFromDTO.
+     *
+     * @param array $article
+     * @return array|null
+     */
+    public function saveArticle(array $article): ?array
+    {
+        $dto = ArticleDTO::fromRequest($article, $article['id'] ?? null);
+        return $this->saveArticleFromDTO($dto);
     }
 
     public function deleteArticle($id)
@@ -152,66 +294,93 @@ class ContentRepository
         return $statement->rowCount() > 0;
     }
 
-    public function projects($publishedOnly = false)
+    public function projects(bool $publishedOnly = false): array
     {
-        $where = $publishedOnly ? 'WHERE is_published = 1' : '';
-        $statement = $this->db->query('SELECT * FROM ' . db_table('portfolio_projects') . ' ' . $where . ' ORDER BY created_at DESC');
-        return array_map([$this, 'projectRow'], $statement->fetchAll());
+        $query = $this->baseProjectsQuery()
+            ->when($publishedOnly, fn($q) => $q->where('is_published', '=', 1))
+            ->orderBy('created_at', 'DESC');
+
+        $rows = $query->get();
+        return array_map([$this, 'projectRow'], $rows);
     }
 
-    public function projectById($id)
+    public function projectById(string $id): ?array
     {
-        $statement = $this->db->prepare('SELECT * FROM ' . db_table('portfolio_projects') . ' WHERE id = :id');
-        $statement->execute(['id' => $id]);
-        $row = $statement->fetch();
+        $row = $this->baseProjectsQuery()
+            ->where('id', '=', $id)
+            ->first();
+
         return $row ? $this->projectRow($row) : null;
     }
 
-    public function projectBySlug($slug, $publishedOnly = true)
+    public function projectBySlug(string $slug, bool $publishedOnly = true): ?array
     {
-        $sql = 'SELECT * FROM ' . db_table('portfolio_projects') . ' WHERE slug = :slug' . ($publishedOnly ? ' AND is_published = 1' : '');
-        $statement = $this->db->prepare($sql);
-        $statement->execute(['slug' => $slug]);
-        $row = $statement->fetch();
+        $query = $this->baseProjectsQuery()->where('slug', '=', $slug);
+
+        if ($publishedOnly) {
+            $query->where('is_published', '=', 1);
+        }
+
+        $row = $query->first();
         return $row ? $this->projectRow($row) : null;
     }
 
-    public function saveProject(array $project)
+    /**
+     * Сохраняет проект из ProjectDTO (новый предпочтительный способ).
+     *
+     * @param ProjectDTO $dto
+     * @return array|null Сохранённый проект с gallery и infoItems
+     */
+    public function saveProjectFromDTO(ProjectDTO $dto): ?array
     {
-        $statement = $this->db->prepare(
-            'INSERT INTO ' . db_table('portfolio_projects') . '
-                (id, slug, title, technologies, icon, description, task_json, solution, result, client, project_year, duration, stack, results_json, screenshots_json, is_published)
-             VALUES
-                (:id, :slug, :title, :technologies, :icon, :description, :task_json, :solution, :result, :client, :project_year, :duration, :stack, :results_json, :screenshots_json, :is_published)
-             ON DUPLICATE KEY UPDATE
-                slug = VALUES(slug), title = VALUES(title), technologies = VALUES(technologies),
-                icon = VALUES(icon), description = VALUES(description), task_json = VALUES(task_json),
-                solution = VALUES(solution), result = VALUES(result), client = VALUES(client), project_year = VALUES(project_year),
-                duration = VALUES(duration), stack = VALUES(stack), results_json = VALUES(results_json),
-                screenshots_json = VALUES(screenshots_json), is_published = VALUES(is_published)'
-        );
-        $statement->execute([
-            'id' => $project['id'],
-            'slug' => $project['slug'],
-            'title' => $project['title'],
-            'technologies' => $project['technologies'],
-            'icon' => $project['icon'],
-            'description' => $project['description'],
-            'task_json' => json_encode($project['task'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'solution' => $project['solution'],
-            'result' => $project['result'],
-            'client' => $project['client'],
-            'project_year' => $project['year'] ?: null,
-            'duration' => $project['duration'],
-            'stack' => $project['stack'],
-            'results_json' => json_encode($project['results'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'screenshots_json' => json_encode($project['screenshots'], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
-            'is_published' => $project['active'] ? 1 : 0,
-        ]);
-        // Снимки с описаниями и дополнительные поля — отдельные таблицы, заменяются полностью
-        $this->saveProjectGallery($project['id'], $project['gallery'] ?? []);
-        $this->saveProjectInfoItems($project['id'], $project['infoItems'] ?? []);
-        return $this->projectById($project['id']);
+        // Валидируем DTO перед сохранением
+        if (!$dto->validate()) {
+            throw new \InvalidArgumentException('ProjectDTO validation failed: ' . json_encode($dto->getErrors()));
+        }
+
+        // Подготовка данных для основной таблицы
+        $data = $dto->toArray();
+
+        // UPSERT: INSERT ... ON DUPLICATE KEY UPDATE
+        $table = db_table('portfolio_projects');
+        $columns = array_keys($data);
+        $placeholders = implode(',', array_fill(0, count($columns), '?'));
+        $colList = implode(',', $columns);
+
+        // UPDATE часть (все кроме id)
+        $updateParts = [];
+        foreach ($columns as $col) {
+            if ($col !== 'id') {
+                $updateParts[] = "$col = VALUES($col)";
+            }
+        }
+
+        $sql = "INSERT INTO $table ($colList) VALUES ($placeholders)
+                ON DUPLICATE KEY UPDATE " . implode(', ', $updateParts);
+
+        $stmt = $this->db->prepare($sql);
+        $values = array_values($data);
+        // Для ON DUPLICATE KEY UPDATE значения повторяются
+        $stmt->execute(array_merge($values, $values));
+
+        // Сохраняем связанные данные (gallery, infoItems) — полная замена
+        $this->saveProjectGallery($dto->id, $dto->gallery);
+        $this->saveProjectInfoItems($dto->id, $dto->infoItems);
+
+        return $this->projectById($dto->id);
+    }
+
+    /**
+     * Сохраняет проект из массива (обратная совместимость).
+     * Преобразует массив в ProjectDTO и делегирует saveProjectFromDTO.
+     *
+     * @param array $project
+     * @return array|null
+     */
+    public function saveProject(array $project): ?array
+    {
+        $dto = ProjectDTO::fromRequest($project, $project['id'] ?? null);
+        return $this->saveProjectFromDTO($dto);
     }
 
     /**
@@ -382,30 +551,13 @@ class ContentRepository
         return $statement->fetchColumn() !== false;
     }
 
-    public function categories()
+    public function categories(): array
     {
-        return $this->db->query(
-            'SELECT c.id, c.name, c.slug, c.description, COUNT(a.id) AS articles
-             FROM ' . db_table('categories') . ' c LEFT JOIN ' . db_table('articles') . ' a ON a.category_id = c.id
-             GROUP BY c.id ORDER BY c.name'
-        )->fetchAll();
-    }
+        $rows = $this->baseCategoriesQuery()
+            ->groupBy('c.id')  // Добавим groupBy в QueryBuilder
+            ->get();
 
-    public function saveCategory($id, $name, $slug, $description)
-    {
-        if ($id === null) {
-            $statement = $this->db->prepare('INSERT INTO ' . db_table('categories') . ' (name, slug, description) VALUES (:name, :slug, :description)');
-            $statement->execute(['name' => $name, 'slug' => $slug, 'description' => $description]);
-            return (int) $this->db->lastInsertId();
-        }
-        $statement = $this->db->prepare('UPDATE ' . db_table('categories') . ' SET name = :name, slug = :slug, description = :description WHERE id = :id');
-        $statement->execute(['name' => $name, 'slug' => $slug, 'description' => $description, 'id' => $id]);
-        if ($statement->rowCount() > 0) {
-            return (int) $id;
-        }
-        $exists = $this->db->prepare('SELECT 1 FROM ' . db_table('categories') . ' WHERE id = :id');
-        $exists->execute(['id' => $id]);
-        return $exists->fetchColumn() !== false ? (int) $id : false;
+        return $rows;
     }
 
     public function deleteCategory($id)
@@ -421,6 +573,139 @@ class ContentRepository
         $statement = $this->db->prepare('DELETE FROM ' . db_table('categories') . ' WHERE id = :id');
         $statement->execute(['id' => $id]);
         return $statement->rowCount() > 0;
+    }
+
+    // === DTO методы для категорий ===
+
+    /**
+     * Сохраняет категорию из CategoryDTO (новый предпочтительный способ).
+     *
+     * ИСПОЛЬЗОВАНИЕ:
+     * ```php
+     * $dto = CategoryDTO::fromRequest($request->json(), $id);
+     * if (!$dto->validate()) { return errors; }
+     * $saved = $this->saveCategoryFromDTO($dto);
+     * ```
+     *
+     * @param CategoryDTO $dto Заполненный и провалидированный DTO
+     * @return int|false ID сохранённой категории или false при ошибке
+     */
+    public function saveCategoryFromDTO(CategoryDTO $dto)
+    {
+        // Валидируем DTO перед сохранением
+        if (!$dto->validate()) {
+            throw new \InvalidArgumentException('CategoryDTO validation failed: ' . json_encode($dto->getErrors()));
+        }
+
+        $data = $dto->toArray();
+        $table = db_table('categories');
+
+        if ($dto->id === null) {
+            // INSERT — новая категория
+            // Убираем id из данных (AUTO_INCREMENT)
+            unset($data['id']);
+            $columns = array_keys($data);
+            $placeholders = implode(',', array_fill(0, count($columns), '?'));
+            $colList = implode(',', $columns);
+
+            $sql = "INSERT INTO $table ($colList) VALUES ($placeholders)";
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute(array_values($data));
+
+            return (int)$this->db->lastInsertId();
+        } else {
+            // UPDATE — существующая категория
+            $updateParts = [];
+            foreach ($data as $col => $val) {
+                if ($col !== 'id') { // id не обновляем
+                    $updateParts[] = "$col = ?";
+                }
+            }
+            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . " WHERE id = ?";
+
+            $values = [];
+            foreach ($data as $col => $val) {
+                if ($col !== 'id') {
+                    $values[] = $val;
+                }
+            }
+            $values[] = $dto->id; // для WHERE id = ?
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($values);
+
+            if ($stmt->rowCount() > 0) {
+                return (int)$dto->id;
+            }
+            // Проверяем, существует ли запись (rowCount=0 может быть если данные не изменились)
+            $exists = $this->db->prepare("SELECT 1 FROM $table WHERE id = ?");
+            $exists->execute([$dto->id]);
+            return $exists->fetchColumn() !== false ? (int)$dto->id : false;
+        }
+    }
+
+    /**
+     * Сохраняет категорию из массива (обратная совместимость).
+     * Преобразует массив в CategoryDTO и делегирует saveCategoryFromDTO.
+     *
+     * @param int|null $id
+     * @param string $name
+     * @param string $slug
+     * @param string $description
+     * @return int|false
+     */
+    public function saveCategory($id, $name, $slug, $description)
+    {
+        $dto = new CategoryDTO();
+        $dto->id = $id;
+        $dto->name = $name;
+        $dto->slug = $slug;
+        $dto->description = $description;
+        return $this->saveCategoryFromDTO($dto);
+    }
+
+    /**
+     * Получает категорию как CategoryDTO (для API ответов).
+     *
+     * @param int $id
+     * @return CategoryDTO|null
+     */
+    public function categoryDtoById(int $id): ?CategoryDTO
+    {
+        $row = $this->baseCategoriesQuery()
+            ->where('c.id', '=', $id)
+            ->first();
+
+        return $row ? CategoryDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Получает категорию по slug как CategoryDTO.
+     *
+     * @param string $slug
+     * @return CategoryDTO|null
+     */
+    public function categoryDtoBySlug(string $slug): ?CategoryDTO
+    {
+        $row = $this->baseCategoriesQuery()
+            ->where('c.slug', '=', $slug)
+            ->first();
+
+        return $row ? CategoryDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Список категорий как массив CategoryDTO.
+     *
+     * @return CategoryDTO[]
+     */
+    public function categoriesAsDto(): array
+    {
+        $rows = $this->baseCategoriesQuery()
+            ->groupBy('c.id')
+            ->get();
+
+        return array_map([CategoryDTO::class, 'fromDatabase'], $rows);
     }
 
     public function orderList()
@@ -700,5 +985,57 @@ class ContentRepository
             'createdAt' => $row['order_date'],
             'status' => $row['status'],
         ]);
+    }
+
+    // === DTO методы для проектов ===
+
+    /**
+     * Получает проект как ProjectDTO (для API ответов).
+     *
+     * @param string $id
+     * @return ProjectDTO|null
+     */
+    public function projectDtoById(string $id): ?ProjectDTO
+    {
+        $row = $this->baseProjectsQuery()
+            ->where('id', '=', $id)
+            ->first();
+
+        return $row ? ProjectDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Получает проект по slug как ProjectDTO.
+     *
+     * @param string $slug
+     * @param bool $publishedOnly
+     * @return ProjectDTO|null
+     */
+    public function projectDtoBySlug(string $slug, bool $publishedOnly = true): ?ProjectDTO
+    {
+        $query = $this->baseProjectsQuery()->where('slug', '=', $slug);
+
+        if ($publishedOnly) {
+            $query->where('is_published', '=', 1);
+        }
+
+        $row = $query->first();
+        return $row ? ProjectDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Список проектов как массив ProjectDTO.
+     *
+     * @param bool $publishedOnly
+     * @return ProjectDTO[]
+     */
+    public function projectsAsDto(bool $publishedOnly = false): array
+    {
+        $query = $this->baseProjectsQuery()
+            ->when($publishedOnly, fn($q) => $q->where('is_published', '=', 1))
+            ->orderBy('created_at', 'DESC');
+
+        $rows = $query->get();
+        return array_map([ProjectDTO::class, 'fromDatabase'], $rows);
     }
 }
