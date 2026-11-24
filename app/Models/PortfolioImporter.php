@@ -4,11 +4,48 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Core\Database;
+use PDO;
 
+/**
+ * PortfolioImporter — импорт проектов из markdown-файлов в портфолио.
+ *
+ * === МИГРАЦИЯ ===
+ * - Конструктор принимает PDO (для тестов — SQLite :memory:)
+ * - parseNew() — чистая функция парсинга markdown (без БД)
+ * - importNewNew() — полный цикл импорта с БД
+ * - Статические методы-обёртки для обратной совместимости (CLI скрипт)
+ */
 final class PortfolioImporter
 {
-    public function parse(string $markdown): array
+    private PDO $db;
+    private ContentRepository $repository;
+
+    /**
+     * @param PDO|null $db PDO соединение (по умолчанию Database::connection())
+     */
+    public function __construct(?PDO $db = null)
+    {
+        $this->db = $db ?? \App\Core\Database::connection();
+        $this->repository = new ContentRepository();
+    }
+
+    /**
+     * Распарсить markdown описания проекта (новый API).
+     *
+     * @param string $markdown
+     * @return array{
+     *     title: string,
+     *     description: string,
+     *     task: string[],
+     *     solution: string,
+     *     result: string,
+     *     technologies: string,
+     *     stack: string,
+     *     year: int|null,
+     *     duration: string
+     * }
+     */
+    public function parseNew(string $markdown): array
     {
         $markdown = str_replace(["\r\n", "\r"], "\n", ltrim($markdown, "\xEF\xBB\xBF"));
         preg_match('/^#\s+(.+)$/m', $markdown, $title);
@@ -45,6 +82,9 @@ final class PortfolioImporter
         ];
     }
 
+    /**
+     * Убрать markdown-разметку, оставить чистый текст.
+     */
     private function plainText(string $text): string
     {
         $text = preg_replace('/^```[^\n]*$|^\s*---+\s*$/m', '', $text);
@@ -56,10 +96,13 @@ final class PortfolioImporter
         return trim($text);
     }
 
-    public function importNew(): array
+    /**
+     * Импортировать новые проекты из папки public/portfolio/ (новый API).
+     *
+     * @return string[] список импортированных slug
+     */
+    public function importNewNew(): array
     {
-        $db = Database::connection();
-        $repository = new ContentRepository();
         $imported = [];
         foreach (glob(APP_ROOT . '/public/portfolio/*', GLOB_ONLYDIR) ?: [] as $directory) {
             $folder = basename($directory);
@@ -67,7 +110,7 @@ final class PortfolioImporter
                 continue;
             }
             $slug = 'project-' . strtolower(str_replace('_', '-', $folder));
-            if ($repository->projectBySlug($slug, false) !== null) {
+            if ($this->repository->projectBySlug($slug, false) !== null) {
                 continue;
             }
             $descriptionFile = $directory . '/job/description.md';
@@ -78,7 +121,7 @@ final class PortfolioImporter
             if ($markdown === false) {
                 throw new \RuntimeException('Не удалось прочитать описание: ' . $folder);
             }
-            $data = $this->parse($markdown);
+            $data = $this->parseNew($markdown);
             if ($data['title'] === '' || $data['description'] === '') {
                 throw new \RuntimeException('В описании отсутствует название или раздел «О проекте»: ' . $folder);
             }
@@ -126,16 +169,39 @@ final class PortfolioImporter
                 'infoItems' => $infoItems,
                 'active' => true,
             ]);
-            $db->beginTransaction();
+            $this->db->beginTransaction();
             try {
-                $repository->saveProject($project);
-                $db->commit();
+                $this->repository->saveProject($project);
+                $this->db->commit();
             } catch (\Throwable $error) {
-                $db->rollBack();
+                $this->db->rollBack();
                 throw $error;
             }
             $imported[] = $slug;
         }
         return $imported;
+    }
+
+    // ===================== ОБРАТНАЯ СОВМЕСТИМОСТЬ (статические) =====================
+
+    /**
+     * Парсинг markdown (статический вызов для обратной совместимости).
+     *
+     * @param string $markdown
+     * @return array
+     */
+    public static function parse(string $markdown): array
+    {
+        return (new self())->parseNew($markdown);
+    }
+
+    /**
+     * Импорт новых проектов (статический вызов для CLI скрипта).
+     *
+     * @return string[]
+     */
+    public static function importNew(): array
+    {
+        return (new self())->importNewNew();
     }
 }
