@@ -4,26 +4,62 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Core\Database;
+use PDO;
 
+/**
+ * LandingPageManager — генератор HTML лендинга из настроек.
+ *
+ * === МИГРАЦИЯ ===
+ * - Конструктор принимает PDO (для тестов — SQLite :memory:)
+ * - Читает настройки через LandingPageSetting (DTO-based)
+ * - Статический метод-обёртка для обратной совместимости
+ */
 final class LandingPageManager
 {
+    private PDO $db;
+    private LandingPageSetting $settingModel;
+
+    /**
+     * @param PDO|null $db PDO соединение (по умолчанию Database::connection())
+     */
+    public function __construct(?PDO $db = null)
+    {
+        $this->db = $db ?? \App\Core\Database::connection();
+        $this->settingModel = new LandingPageSetting($this->db);
+    }
+
+    // ===================== ОБРАТНАЯ СОВМЕСТИМОСТЬ (статический) =====================
+
+    /**
+     * Сгенерировать HTML страницы из настроек (обратная совместимость).
+     *
+     * @param string $pageSlug
+     * @return string
+     */
+    public static function generate(string $pageSlug = 'home'): string
+    {
+        return (new self())->generateNew($pageSlug);
+    }
+
+    // ===================== НОВЫЙ API =====================
+
     /**
      * Сгенерировать HTML страницы из настроек.
      *
      * @param string $pageSlug
      * @return string
      */
-    public function generate(string $pageSlug = 'home'): string
+    public function generateNew(string $pageSlug = 'home'): string
     {
-        $db = Database::connection();
-        $stmt = $db->query('SELECT * FROM ' . db_table('landing_page_settings') . ' WHERE is_active = 1 ORDER BY field_group ASC, display_order ASC');
-        $settings = $stmt->fetchAll();
+        // Получаем все активные настройки через DTO-based API
+        $settingsDTO = $this->settingModel->getAllNew();
 
-        // Группируем по секциям
+        // Группируем по field_group
         $sections = [];
-        foreach ($settings as $setting) {
-            $sections[$setting['field_group']][] = $setting;
+        foreach ($settingsDTO as $setting) {
+            if ($setting->isActive === 1) {
+                $sections[$setting->fieldGroup][] = $setting;
+            }
         }
 
         $html = '<!DOCTYPE html>' . PHP_EOL;
@@ -88,8 +124,12 @@ final class LandingPageManager
         return $html;
     }
 
+    // ===================== PRIVATE HELPERS =====================
+
     /**
-     * Получить значение поля.
+     * Получить значение поля по секции и имени.
+     *
+     * @param array<string, \App\DTO\LandingPageSettingDTO[]> $sections
      */
     private function getFieldValue(array $sections, string $sectionKey, string $fieldName, string $default): string
     {
@@ -97,8 +137,8 @@ final class LandingPageManager
             return $default;
         }
         foreach ($sections[$sectionKey] as $field) {
-            if ($field['field_name'] === $fieldName) {
-                return $field['field_value'] ?: $default;
+            if ($field->fieldName === $fieldName) {
+                return $field->fieldValue !== '' ? $field->fieldValue : $default;
             }
         }
         return $default;
@@ -106,6 +146,8 @@ final class LandingPageManager
 
     /**
      * Получить глобальную настройку.
+     *
+     * @param array<string, \App\DTO\LandingPageSettingDTO[]> $sections
      */
     private function getGlobalSetting(array $sections, string $fieldName, string $default): string
     {
@@ -113,17 +155,17 @@ final class LandingPageManager
             return '';
         }
         foreach ($sections['global'] as $field) {
-            if ($field['field_name'] === $fieldName && !empty($field['field_value'])) {
+            if ($field->fieldName === $fieldName && $field->fieldValue !== '') {
                 if ($fieldName === 'google_analytics') {
-                    return '    <!-- ' . $this->escape($field['field_value']) . ' -->' . PHP_EOL . '    <script>' . PHP_EOL . '    ' . $this->escape($field['field_value']) . PHP_EOL . '    </script>' . PHP_EOL;
+                    return '    <!-- ' . $this->escape($field->fieldValue) . ' -->' . PHP_EOL . '    <script>' . PHP_EOL . '    ' . $this->escape($field->fieldValue) . PHP_EOL . '    </script>' . PHP_EOL;
                 }
-                if ($fieldName === 'custom_css' && !empty($field['field_value'])) {
-                    return '    <style>' . PHP_EOL . '    ' . $this->escape($field['field_value']) . PHP_EOL . '    </style>' . PHP_EOL;
+                if ($fieldName === 'custom_css' && $field->fieldValue !== '') {
+                    return '    <style>' . PHP_EOL . '    ' . $this->escape($field->fieldValue) . PHP_EOL . '    </style>' . PHP_EOL;
                 }
-                if ($fieldName === 'custom_js' && !empty($field['field_value'])) {
-                    return '    <script>' . PHP_EOL . '    ' . $this->escape($field['field_value']) . PHP_EOL . '    </script>' . PHP_EOL;
+                if ($fieldName === 'custom_js' && $field->fieldValue !== '') {
+                    return '    <script>' . PHP_EOL . '    ' . $this->escape($field->fieldValue) . PHP_EOL . '    </script>' . PHP_EOL;
                 }
-                return $field['field_value'];
+                return $field->fieldValue;
             }
         }
         return $default;
@@ -131,16 +173,18 @@ final class LandingPageManager
 
     /**
      * Рендер Hero секции.
+     *
+     * @param \App\DTO\LandingPageSettingDTO[] $fields
      */
     private function renderHero(array $fields): string
     {
-        $title = $this->getFieldValue($fields, 'hero', 'title', 'Заголовок');
-        $subtitle = $this->getFieldValue($fields, 'hero', 'subtitle', '');
-        $ctaText = $this->getFieldValue($fields, 'hero', 'cta_text', 'Подробнее');
-        $ctaUrl = $this->getFieldValue($fields, 'hero', 'cta_url', '#');
-        $bgImage = $this->getFieldValue($fields, 'hero', 'background_image', '');
-        $bgColor = $this->getFieldValue($fields, 'hero', 'background_color', '#ffffff');
-        $bgVideo = $this->getFieldValue($fields, 'hero', 'background_video', '');
+        $title = $this->getFieldValue(['hero' => $fields], 'hero', 'title', 'Заголовок');
+        $subtitle = $this->getFieldValue(['hero' => $fields], 'hero', 'subtitle', '');
+        $ctaText = $this->getFieldValue(['hero' => $fields], 'hero', 'cta_text', 'Подробнее');
+        $ctaUrl = $this->getFieldValue(['hero' => $fields], 'hero', 'cta_url', '#');
+        $bgImage = $this->getFieldValue(['hero' => $fields], 'hero', 'background_image', '');
+        $bgColor = $this->getFieldValue(['hero' => $fields], 'hero', 'background_color', '#ffffff');
+        $bgVideo = $this->getFieldValue(['hero' => $fields], 'hero', 'background_video', '');
 
         $style = '';
         if (!empty($bgImage)) {
@@ -180,11 +224,13 @@ final class LandingPageManager
 
     /**
      * Рендер обычной секции.
+     *
+     * @param \App\DTO\LandingPageSettingDTO[] $fields
      */
     private function renderSection(string $sectionKey, array $fields): string
     {
-        $title = $this->getFieldValue($fields, $sectionKey, 'title', ucfirst($sectionKey));
-        $subtitle = $this->getFieldValue($fields, $sectionKey, 'subtitle', '');
+        $title = $this->getFieldValue([$sectionKey => $fields], $sectionKey, 'title', ucfirst($sectionKey));
+        $subtitle = $this->getFieldValue([$sectionKey => $fields], $sectionKey, 'subtitle', '');
 
         $html = '    <!-- ' . ucfirst($sectionKey) . ' Section -->' . PHP_EOL;
         $html .= '    <section class="py-5">' . PHP_EOL;
@@ -205,14 +251,16 @@ final class LandingPageManager
 
     /**
      * Рендер Contact секции.
+     *
+     * @param \App\DTO\LandingPageSettingDTO[] $fields
      */
     private function renderContact(array $fields): string
     {
-        $title = $this->getFieldValue($fields, 'contact', 'title', 'Контакты');
-        $address = $this->getFieldValue($fields, 'contact', 'address', '');
-        $phone = $this->getFieldValue($fields, 'contact', 'phone', '');
-        $email = $this->getFieldValue($fields, 'contact', 'email', '');
-        $mapEmbed = $this->getFieldValue($fields, 'contact', 'map_embed', '');
+        $title = $this->getFieldValue(['contact' => $fields], 'contact', 'title', 'Контакты');
+        $address = $this->getFieldValue(['contact' => $fields], 'contact', 'address', '');
+        $phone = $this->getFieldValue(['contact' => $fields], 'contact', 'phone', '');
+        $email = $this->getFieldValue(['contact' => $fields], 'contact', 'email', '');
+        $mapEmbed = $this->getFieldValue(['contact' => $fields], 'contact', 'map_embed', '');
 
         $html = '    <!-- Contact Section -->' . PHP_EOL;
         $html .= '    <section class="py-5 bg-light">' . PHP_EOL;
@@ -263,12 +311,14 @@ final class LandingPageManager
 
     /**
      * Рендер Footer.
+     *
+     * @param \App\DTO\LandingPageSettingDTO[] $fields
      */
     private function renderFooter(array $fields): string
     {
-        $copyright = $this->getFieldValue($fields, 'footer', 'copyright', '© 2024');
-        $bgColor = $this->getFieldValue($fields, 'footer', 'background_color', '#333333');
-        $textColor = $this->getFieldValue($fields, 'footer', 'text_color', '#ffffff');
+        $copyright = $this->getFieldValue(['footer' => $fields], 'footer', 'copyright', '© 2024');
+        $bgColor = $this->getFieldValue(['footer' => $fields], 'footer', 'background_color', '#333333');
+        $textColor = $this->getFieldValue(['footer' => $fields], 'footer', 'text_color', '#ffffff');
 
         $html = '    <!-- Footer -->' . PHP_EOL;
         $html .= '    <footer class="py-4" style="background-color: ' . $this->escape($bgColor) . '; color: ' . $this->escape($textColor) . ';">' . PHP_EOL;
