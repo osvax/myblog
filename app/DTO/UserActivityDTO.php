@@ -19,7 +19,7 @@ namespace App\DTO;
  * - browser (VARCHAR 32, виртуальная) — из CASE user_agent
  * - section (VARCHAR 32, виртуальная) — из CASE page_url
  */
-final class UserActivityDTO
+final class UserActivityDTO extends AbstractDTO
 {
     /** @var int|null ID записи (NULL для новой) */
     public ?int $id = null;
@@ -55,8 +55,9 @@ final class UserActivityDTO
      * Создаёт DTO из строки БД.
      *
      * @param array<string, mixed> $row
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = isset($row['id']) ? (int)$row['id'] : null;
@@ -82,6 +83,7 @@ final class UserActivityDTO
      * @param string $ipAddress
      * @param string $userAgent
      * @param string|null $referrer
+     * @return static
      */
     public static function create(
         ?int $userId,
@@ -90,7 +92,7 @@ final class UserActivityDTO
         string $ipAddress,
         string $userAgent,
         ?string $referrer = null
-    ): self {
+    ): static {
         $dto = new self();
         $dto->userId = $userId;
         $dto->pageUrl = $pageUrl;

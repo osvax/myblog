@@ -19,7 +19,7 @@ namespace App\DTO;
  * - created_at (TIMESTAMP)
  * - updated_at (TIMESTAMP)
  */
-final class CustomFieldDTO
+final class CustomFieldDTO extends AbstractDTO
 {
     /** @var int|null ID записи (NULL для новой) */
     public ?int $id = null;
@@ -55,8 +55,9 @@ final class CustomFieldDTO
      * Создаёт DTO из строки БД.
      *
      * @param array<string, mixed> $row
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = isset($row['id']) ? (int) $row['id'] : null;

@@ -38,7 +38,7 @@ namespace App\DTO;
  * - css_class (VARCHAR 100) — CSS класс для стилизации
  * - created_at, updated_at (TIMESTAMP)
  */
-final class MenuDTO
+final class MenuDTO extends AbstractDTO
 {
     /** @var int|null ID меню (NULL для нового) */
     public ?int $id = null;
@@ -61,17 +61,13 @@ final class MenuDTO
     /** @var int Количество корневых пунктов меню */
     public int $itemsCount = 0;
 
-    // === Валидация ===
-
-    /** @var array<string, string> Ошибки валидации ['field' => 'message'] */
-    private array $errors = [];
-
     /**
      * Создаёт DTO из строки БД.
      *
      * @param array<string, mixed> $row
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = (int) ($row['id'] ?? 0);
@@ -90,8 +86,9 @@ final class MenuDTO
      *
      * @param array<string, mixed> $data
      * @param int|null $id ID меню при обновлении
+     * @return static
      */
-    public static function fromRequest(array $data, ?int $id = null): self
+    public static function fromRequest(array $data, ?int $id = null): static
     {
         $dto = new self();
         $dto->id = $id;
@@ -105,22 +102,22 @@ final class MenuDTO
     /** Валидация для создания меню. */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         if ($this->menuName === '') {
-            $this->errors['menu_name'] = 'Идентификатор меню обязателен';
+            $this->addError('menu_name', 'Идентификатор меню обязателен');
         } elseif (!preg_match('/^[a-z0-9][a-z0-9_]{1,62}$/', $this->menuName)) {
-            $this->errors['menu_name'] = 'Идентификатор: латинские буквы, цифры, подчёркивание (от 2 символов)';
+            $this->addError('menu_name', 'Идентификатор: латинские буквы, цифры, подчёркивание (от 2 символов)');
         }
 
         if ($this->title === '') {
-            $this->errors['title'] = 'Название меню обязательно';
+            $this->addError('title', 'Название меню обязательно');
         } elseif (mb_strlen($this->title) > 160) {
-            $this->errors['title'] = 'Название меню не более 160 символов';
+            $this->addError('title', 'Название меню не более 160 символов');
         }
 
         if ($this->cssClass !== '' && mb_strlen($this->cssClass) > 100) {
-            $this->errors['css_class'] = 'CSS класс не более 100 символов';
+            $this->addError('css_class', 'CSS класс не более 100 символов');
         }
 
         return empty($this->errors);
@@ -129,25 +126,19 @@ final class MenuDTO
     /** Валидация для обновления меню (menu_name не меняется). */
     public function validateUpdate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         if ($this->title === '') {
-            $this->errors['title'] = 'Название меню обязательно';
+            $this->addError('title', 'Название меню обязательно');
         } elseif (mb_strlen($this->title) > 160) {
-            $this->errors['title'] = 'Название меню не более 160 символов';
+            $this->addError('title', 'Название меню не более 160 символов');
         }
 
         if ($this->cssClass !== '' && mb_strlen($this->cssClass) > 100) {
-            $this->errors['css_class'] = 'CSS класс не более 100 символов';
+            $this->addError('css_class', 'CSS класс не более 100 символов');
         }
 
         return empty($this->errors);
-    }
-
-    /** Возвращает ошибки валидации. */
-    public function getErrors(): array
-    {
-        return $this->errors;
     }
 
     /**

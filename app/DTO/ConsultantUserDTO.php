@@ -17,7 +17,7 @@ namespace App\DTO;
  * - created_at (DATETIME)
  * - updated_at (DATETIME)
  */
-final class ConsultantUserDTO
+final class ConsultantUserDTO extends AbstractDTO
 {
     /** @var string ID (32 hex chars) */
     public string $id = '';
@@ -71,8 +71,9 @@ final class ConsultantUserDTO
      * Создаёт DTO из строки БД.
      *
      * @param array<string, mixed> $row
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = $row['id'] ?? '';
@@ -93,6 +94,22 @@ final class ConsultantUserDTO
         $dto->typingRole = $row['typingRole'] ?? null;
 
         return $dto;
+    }
+
+    /**
+     * Массив для INSERT/UPDATE в БД (основные поля).
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'id' => $this->id,
+            'name' => $this->name,
+            'phone' => $this->phone,
+            'source' => $this->source,
+            'status' => $this->status,
+        ];
     }
 
     /**

@@ -61,7 +61,7 @@ namespace App\DTO;
  * - 'manager' — editor + заказы, сообщения, пользователи
  * - 'admin' — полный доступ (настройки, роли, логи, бэкапы)
  */
-final class UserDTO
+final class UserDTO extends AbstractDTO
 {
     // === Основные поля (колонки va_users) ===
 
@@ -139,9 +139,6 @@ final class UserDTO
     /** @var string Подтверждение пароля */
     public string $passwordConfirm = '';
 
-    // === Ошибки валидации ===
-    private array $errors = [];
-
     // === Константы ===
     public const ROLE_USER = 'user';
     public const ROLE_EDITOR = 'editor';
@@ -174,9 +171,9 @@ final class UserDTO
      *
      * @param array $data Данные из $request->json()
      * @param int|null $id ID из URL (для PUT)
-     * @return self
+     * @return static
      */
-    public static function fromRequest(array $data, ?int $id = null): self
+    public static function fromRequest(array $data, ?int $id = null): static
     {
         $dto = new self();
         $dto->id = $id ?? (isset($data['id']) && is_numeric($data['id']) ? (int)$data['id'] : null);
@@ -219,9 +216,9 @@ final class UserDTO
      * Создаёт DTO из строки БД (результат SELECT * FROM va_users [JOIN va_roles]).
      *
      * @param array $row Ассоциативный массив из БД
-     * @return self
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = isset($row['id']) ? (int)$row['id'] : null;
@@ -256,46 +253,32 @@ final class UserDTO
      */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         // --- name ---
-        if ($this->name === '') {
-            $this->errors['name'] = 'Имя обязательно';
-        } elseif (mb_strlen($this->name) < self::NAME_MIN) {
-            $this->errors['name'] = 'Имя не короче ' . self::NAME_MIN . ' символов';
-        } elseif (mb_strlen($this->name) > self::NAME_MAX) {
-            $this->errors['name'] = 'Имя не длиннее ' . self::NAME_MAX . ' символов';
-        }
+        $this->validateStringLength($this->name, 'name', self::NAME_MIN, self::NAME_MAX, 'Имя');
 
         // --- email ---
-        if ($this->email === '') {
-            $this->errors['email'] = 'Email обязателен';
-        } elseif (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            $this->errors['email'] = 'Неверный формат email';
-        } elseif (mb_strlen($this->email) > 255) {
-            $this->errors['email'] = 'Email не длиннее 255 символов';
-        }
+        $this->validateEmail($this->email, 'email', 255);
 
         // --- password (plainPassword) ---
         if ($this->plainPassword === '') {
-            $this->errors['password'] = 'Пароль обязателен';
+            $this->addError('password', 'Пароль обязателен');
         } elseif (mb_strlen($this->plainPassword) < self::PASSWORD_MIN) {
-            $this->errors['password'] = 'Пароль не короче ' . self::PASSWORD_MIN . ' символов';
+            $this->addError('password', 'Пароль не короче ' . self::PASSWORD_MIN . ' символов');
         }
 
         // --- passwordConfirm ---
         if ($this->plainPassword !== $this->passwordConfirm) {
-            $this->errors['passwordConfirm'] = 'Пароли не совпадают';
+            $this->addError('passwordConfirm', 'Пароли не совпадают');
         }
 
         // --- role ---
-        if (!in_array($this->role, self::ROLE_VALUES, true)) {
-            $this->errors['role'] = 'Недопустимая роль. Допустимые: ' . implode(', ', self::ROLE_VALUES);
-        }
+        $this->validateEnum($this->role, 'role', self::ROLE_VALUES, 'роль');
 
         // --- avatarPath ---
         if ($this->avatarPath !== '' && mb_strlen($this->avatarPath) > self::AVATAR_MAX) {
-            $this->errors['avatarPath'] = 'Путь к аватару слишком длинный';
+            $this->addError('avatarPath', 'Путь к аватару слишком длинный');
         }
 
         return empty($this->errors);
@@ -310,43 +293,31 @@ final class UserDTO
      */
     public function validateUpdate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         // --- name ---
-        if ($this->name === '') {
-            $this->errors['name'] = 'Имя обязательно';
-        } elseif (mb_strlen($this->name) < self::NAME_MIN) {
-            $this->errors['name'] = 'Имя не короче ' . self::NAME_MIN . ' символов';
-        } elseif (mb_strlen($this->name) > self::NAME_MAX) {
-            $this->errors['name'] = 'Имя не длиннее ' . self::NAME_MAX . ' символов';
-        }
+        $this->validateStringLength($this->name, 'name', self::NAME_MIN, self::NAME_MAX, 'Имя');
 
         // --- email ---
-        if ($this->email === '') {
-            $this->errors['email'] = 'Email обязателен';
-        } elseif (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            $this->errors['email'] = 'Неверный формат email';
-        }
+        $this->validateEmail($this->email, 'email', 255);
 
         // --- role ---
-        if (!in_array($this->role, self::ROLE_VALUES, true)) {
-            $this->errors['role'] = 'Недопустимая роль. Допустимые: ' . implode(', ', self::ROLE_VALUES);
-        }
+        $this->validateEnum($this->role, 'role', self::ROLE_VALUES, 'роль');
 
         // --- avatarPath ---
         if ($this->avatarPath !== '' && mb_strlen($this->avatarPath) > self::AVATAR_MAX) {
-            $this->errors['avatarPath'] = 'Путь к аватару слишком длинный';
+            $this->addError('avatarPath', 'Путь к аватару слишком длинный');
         }
 
         // Профиль — опционально, без строгой валидации
         if (mb_strlen($this->phone) > 50) {
-            $this->errors['phone'] = 'Телефон не длиннее 50 символов';
+            $this->addError('phone', 'Телефон не длиннее 50 символов');
         }
         if (mb_strlen($this->timezone) > 50) {
-            $this->errors['timezone'] = 'Неверный часовой пояс';
+            $this->addError('timezone', 'Неверный часовой пояс');
         }
         if (mb_strlen($this->language) > 10) {
-            $this->errors['language'] = 'Неверный код языка';
+            $this->addError('language', 'Неверный код языка');
         }
 
         return empty($this->errors);
@@ -360,39 +331,18 @@ final class UserDTO
      */
     public function validatePassword(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         if ($this->plainPassword === '') {
-            $this->errors['password'] = 'Пароль обязателен';
+            $this->addError('password', 'Пароль обязателен');
         } elseif (mb_strlen($this->plainPassword) < self::PASSWORD_MIN) {
-            $this->errors['password'] = 'Пароль не короче ' . self::PASSWORD_MIN . ' символов';
+            $this->addError('password', 'Пароль не короче ' . self::PASSWORD_MIN . ' символов');
         }
 
         if ($this->plainPassword !== $this->passwordConfirm) {
-            $this->errors['passwordConfirm'] = 'Пароли не совпадают';
+            $this->addError('passwordConfirm', 'Пароли не совпадают');
         }
 
-        return empty($this->errors);
-    }
-
-    /**
-     * Возвращает ошибки валидации.
-     *
-     * @return array ['field' => 'message', ...]
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Проверяет, прошла ли валидация.
-     */
-    public function isValid(): bool
-    {
-        if (empty($this->errors)) {
-            $this->validate();
-        }
         return empty($this->errors);
     }
 

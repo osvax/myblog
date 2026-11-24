@@ -60,7 +60,7 @@ namespace App\DTO;
  * - 'question' — вопрос с сайта (требует email)
  * - 'comment' — комментарий к статье (требует article_slug)
  */
-final class MessageDTO
+final class MessageDTO extends AbstractDTO
 {
     // === Основные поля (колонки va_messages) ===
 
@@ -106,9 +106,6 @@ final class MessageDTO
     /** @var string Дата обновления (Y-m-d H:i:s) */
     public string $updatedAt = '';
 
-    // === Ошибки валидации ===
-    private array $errors = [];
-
     // === Константы ===
     public const TYPE_CONTACT = 'contact';
     public const TYPE_QUESTION = 'question';
@@ -143,9 +140,9 @@ final class MessageDTO
      *
      * @param array $data Данные из $request->json()
      * @param int|null $id ID из URL (для PATCH/POST reply)
-     * @return self
+     * @return static
      */
-    public static function fromRequest(array $data, ?int $id = null): self
+    public static function fromRequest(array $data, ?int $id = null): static
     {
         $dto = new self();
         $dto->id = $id ?? (isset($data['id']) && is_numeric($data['id']) ? (int)$data['id'] : null);
@@ -210,9 +207,9 @@ final class MessageDTO
      * Создаёт DTO из строки БД (результат SELECT * FROM va_messages).
      *
      * @param array $row Ассоциативный массив из БД
-     * @return self
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = isset($row['id']) ? (int)$row['id'] : null;
@@ -241,34 +238,22 @@ final class MessageDTO
      */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         // --- type ---
-        if (!in_array($this->type, self::TYPE_VALUES, true)) {
-            $this->errors['type'] = 'Недопустимый тип сообщения. Допустимые: ' . implode(', ', self::TYPE_VALUES);
-        }
+        $this->validateEnum($this->type, 'type', self::TYPE_VALUES, 'тип сообщения');
 
         // --- name (обязателен для всех типов) ---
-        if ($this->name === '') {
-            $this->errors['name'] = 'Имя обязательно';
-        } elseif (mb_strlen($this->name) < self::NAME_MIN) {
-            $this->errors['name'] = 'Имя не короче ' . self::NAME_MIN . ' символов';
-        } elseif (mb_strlen($this->name) > self::NAME_MAX) {
-            $this->errors['name'] = 'Имя не длиннее ' . self::NAME_MAX . ' символов';
-        }
+        $this->validateStringLength($this->name, 'name', self::NAME_MIN, self::NAME_MAX, 'Имя');
 
         // --- email ---
         if ($this->type === self::TYPE_CONTACT || $this->type === self::TYPE_QUESTION) {
             // Для contact/question — email обязателен
-            if ($this->email === '') {
-                $this->errors['email'] = 'Email обязателен';
-            } elseif (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-                $this->errors['email'] = 'Неверный формат email';
-            }
+            $this->validateEmail($this->email, 'email');
         } elseif ($this->type === self::TYPE_COMMENT) {
             // Для комментариев — email опционален, но если задан — валиден
             if ($this->email !== '' && !filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-                $this->errors['email'] = 'Неверный формат email';
+                $this->addError('email', 'Неверный формат email');
             }
         }
 
@@ -278,33 +263,27 @@ final class MessageDTO
         // --- subject ---
         if ($this->type === self::TYPE_CONTACT || $this->type === self::TYPE_QUESTION) {
             if ($this->subject === '') {
-                $this->errors['subject'] = 'Тема обязательна';
+                $this->addError('subject', 'Тема обязательна');
             } elseif (mb_strlen($this->subject) > self::SUBJECT_MAX) {
-                $this->errors['subject'] = 'Тема не длиннее ' . self::SUBJECT_MAX . ' символов';
+                $this->addError('subject', 'Тема не длиннее ' . self::SUBJECT_MAX . ' символов');
             }
         }
 
         // --- body (обязателен для всех) ---
-        if ($this->body === '') {
-            $this->errors['body'] = 'Текст сообщения обязателен';
-        } elseif (mb_strlen($this->body) < self::BODY_MIN) {
-            $this->errors['body'] = 'Текст сообщения слишком короткий';
-        } elseif (mb_strlen($this->body) > self::BODY_MAX) {
-            $this->errors['body'] = 'Текст сообщения не длиннее ' . self::BODY_MAX . ' символов';
-        }
+        $this->validateStringLength($this->body, 'body', self::BODY_MIN, self::BODY_MAX, 'Текст сообщения');
 
         // --- articleSlug (обязателен для комментариев) ---
         if ($this->type === self::TYPE_COMMENT) {
             if ($this->articleSlug === '') {
-                $this->errors['articleSlug'] = 'Slug статьи обязателен для комментария';
+                $this->addError('articleSlug', 'Slug статьи обязателен для комментария');
             } elseif (mb_strlen($this->articleSlug) > 180) {
-                $this->errors['articleSlug'] = 'Slug статьи не длиннее 180 символов';
+                $this->addError('articleSlug', 'Slug статьи не длиннее 180 символов');
             }
         }
 
         // --- parentId ---
         if ($this->parentId !== null && $this->parentId <= 0) {
-            $this->errors['parentId'] = 'Некорректный ID родительского комментария';
+            $this->addError('parentId', 'Некорректный ID родительского комментария');
         }
 
         return empty($this->errors);
@@ -318,41 +297,16 @@ final class MessageDTO
      */
     public function validateStaffReply(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
-        if ($this->name === '') {
-            $this->errors['name'] = 'Имя автора ответа обязательно';
-        } elseif (mb_strlen($this->name) < self::NAME_MIN || mb_strlen($this->name) > self::NAME_MAX) {
-            $this->errors['name'] = 'Имя: от ' . self::NAME_MIN . ' до ' . self::NAME_MAX . ' символов';
-        }
+        $this->validateStringLength($this->name, 'name', self::NAME_MIN, self::NAME_MAX, 'Имя автора ответа');
 
         if ($this->body === '') {
-            $this->errors['body'] = 'Текст ответа обязателен';
+            $this->addError('body', 'Текст ответа обязателен');
         } elseif (mb_strlen($this->body) > self::BODY_MAX) {
-            $this->errors['body'] = 'Текст ответа не длиннее ' . self::BODY_MAX . ' символов';
+            $this->addError('body', 'Текст ответа не длиннее ' . self::BODY_MAX . ' символов');
         }
 
-        return empty($this->errors);
-    }
-
-    /**
-     * Возвращает ошибки валидации.
-     *
-     * @return array ['field' => 'message', ...]
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Проверяет, прошла ли валидация.
-     */
-    public function isValid(): bool
-    {
-        if (empty($this->errors)) {
-            $this->validate();
-        }
         return empty($this->errors);
     }
 

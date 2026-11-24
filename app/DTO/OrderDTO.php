@@ -67,7 +67,7 @@ namespace App\DTO;
  * - notes: заметки менеджера
  * - calculatorDetails: данные калькулятора
  */
-final class OrderDTO
+final class OrderDTO extends AbstractDTO
 {
     // === Основные поля (колонки va_orders) ===
 
@@ -133,9 +133,6 @@ final class OrderDTO
     /** @var string Техническое задание / сообщение клиента */
     public string $technicalBrief = '';
 
-    // === Ошибки валидации ===
-    private array $errors = [];
-
     // === Константы ===
     public const STATUS_VALUES = ['Новый', 'В работе', 'Завершён', 'Отменён'];
     public const CLIENT_NAME_MAX = 160;
@@ -164,9 +161,9 @@ final class OrderDTO
      *                - calculatorDetails (array)
      *                - clientName, projectType, deadline, completedAt, paidAmount (для админки)
      * @param int|null $id ID из URL параметра (для PUT/PATCH)
-     * @return self Готовый DTO (нужно вызвать validate())
+     * @return static Готовый DTO (нужно вызвать validate())
      */
-    public static function fromRequest(array $data, ?int $id = null): self
+    public static function fromRequest(array $data, ?int $id = null): static
     {
         $dto = new self();
         $dto->id = $id ?? (isset($data['id']) && is_numeric($data['id']) ? (int)$data['id'] : null);
@@ -228,9 +225,9 @@ final class OrderDTO
      * ```
      *
      * @param array $row Ассоциативный массив из БД
-     * @return self
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = isset($row['id']) ? (int)$row['id'] : null;
@@ -299,79 +296,65 @@ final class OrderDTO
      */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         // --- clientName ---
-        if ($this->clientName === '') {
-            $this->errors['clientName'] = 'Имя клиента обязательно';
-        } elseif (mb_strlen($this->clientName) < self::CLIENT_NAME_MIN) {
-            $this->errors['clientName'] = 'Имя клиента не короче ' . self::CLIENT_NAME_MIN . ' символов';
-        } elseif (mb_strlen($this->clientName) > self::CLIENT_NAME_MAX) {
-            $this->errors['clientName'] = 'Имя клиента не длиннее ' . self::CLIENT_NAME_MAX . ' символов';
-        }
+        $this->validateStringLength($this->clientName, 'clientName', self::CLIENT_NAME_MIN, self::CLIENT_NAME_MAX, 'Имя клиента');
 
         // --- email ---
-        if ($this->email === '') {
-            $this->errors['email'] = 'Email обязателен';
-        } elseif (!filter_var($this->email, FILTER_VALIDATE_EMAIL)) {
-            $this->errors['email'] = 'Неверный формат email';
-        }
+        $this->validateEmail($this->email, 'email');
 
         // --- phone ---
         // Опционально, просто строка
 
         // --- projectType ---
         if ($this->projectType !== '' && mb_strlen($this->projectType) > self::PROJECT_TYPE_MAX) {
-            $this->errors['projectType'] = 'Тип проекта не длиннее ' . self::PROJECT_TYPE_MAX . ' символов';
+            $this->addError('projectType', 'Тип проекта не длиннее ' . self::PROJECT_TYPE_MAX . ' символов');
         }
 
         // --- budget ---
         if ($this->budget < 0) {
-            $this->errors['budget'] = 'Бюджет не может быть отрицательным';
+            $this->addError('budget', 'Бюджет не может быть отрицательным');
         }
 
         // --- deadline ---
         if ($this->deadline !== null && $this->deadline !== '' && !$this->validDate($this->deadline)) {
-            $this->errors['deadline'] = 'Дедлайн: неверный формат даты (ожидается Y-m-d)';
+            $this->addError('deadline', 'Дедлайн: неверный формат даты (ожидается Y-m-d)');
         }
 
         // --- orderDate ---
         if ($this->orderDate === '') {
-            $this->errors['orderDate'] = 'Дата заказа обязательна';
+            $this->addError('orderDate', 'Дата заказа обязательна');
         } elseif (!$this->validDate($this->orderDate)) {
-            $this->errors['orderDate'] = 'Дата заказа: неверный формат (ожидается Y-m-d)';
+            $this->addError('orderDate', 'Дата заказа: неверный формат (ожидается Y-m-d)');
         }
 
         // --- status ---
-        if ($this->status === '') {
-            $this->errors['status'] = 'Статус обязателен';
-        } elseif (!in_array($this->status, self::STATUS_VALUES, true)) {
-            $this->errors['status'] = 'Недопустимый статус. Допустимые: ' . implode(', ', self::STATUS_VALUES);
-        }
+        $this->validateEnum($this->status, 'status', self::STATUS_VALUES, 'статус');
 
         // --- completedAt ---
         if ($this->completedAt !== null && $this->completedAt !== '' && !$this->validDate($this->completedAt)) {
-            $this->errors['completedAt'] = 'Дата завершения: неверный формат (ожидается Y-m-d)';
+            $this->addError('completedAt', 'Дата завершения: неверный формат (ожидается Y-m-d)');
         }
         if ($this->completedAt !== null && $this->completedAt !== '' && $this->orderDate !== '' && $this->validDate($this->orderDate)) {
             if ($this->completedAt < $this->orderDate) {
-                $this->errors['completedAt'] = 'Дата завершения не может быть раньше даты заказа';
+                $this->addError('completedAt', 'Дата завершения не может быть раньше даты заказа');
             }
         }
 
         // --- paidAmount ---
         if ($this->paidAmount < 0) {
-            $this->errors['paidAmount'] = 'Оплаченная сумма не может быть отрицательной';
+            $this->addError('paidAmount', 'Оплаченная сумма не может быть отрицательной');
         }
 
         // --- deadlineFrom (из details) ---
         if ($this->deadlineFrom !== '' && !$this->validDate($this->deadlineFrom)) {
-            $this->errors['deadlineFrom'] = 'Дедлайн "от": неверный формат даты';
+            $this->addError('deadlineFrom', 'Дедлайн "от": неверный формат даты');
         }
 
         // --- source ---
         if (mb_strlen($this->source) > self::SOURCE_MAX) {
-            $this->errors['source'] = 'Источник не длиннее ' . self::SOURCE_MAX . ' символов';
+            $this->addError('source', 'Источник не длиннее ' . self::SOURCE_MAX . ' символов');
         }
 
         return empty($this->errors);
@@ -384,27 +367,6 @@ final class OrderDTO
     {
         $d = \DateTime::createFromFormat('Y-m-d', $date);
         return $d !== false && $d->format('Y-m-d') === $date;
-    }
-
-    /**
-     * Возвращает ошибки валидации.
-     *
-     * @return array ['field' => 'message', ...]
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Проверяет, прошла ли валидация.
-     */
-    public function isValid(): bool
-    {
-        if (empty($this->errors)) {
-            $this->validate();
-        }
-        return empty($this->errors);
     }
 
     /**

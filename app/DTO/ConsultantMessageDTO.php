@@ -14,7 +14,7 @@ namespace App\DTO;
  * - message (TEXT) — текст сообщения
  * - created_at (DATETIME)
  */
-final class ConsultantMessageDTO
+final class ConsultantMessageDTO extends AbstractDTO
 {
     /** @var int ID сообщения */
     public int $id = 0;
@@ -35,8 +35,9 @@ final class ConsultantMessageDTO
      * Создаёт DTO из строки БД.
      *
      * @param array<string, mixed> $row
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = isset($row['id']) ? (int) $row['id'] : 0;
@@ -46,6 +47,20 @@ final class ConsultantMessageDTO
         $dto->createdAt = $row['created_at'] ?? $row['createdAt'] ?? '';
 
         return $dto;
+    }
+
+    /**
+     * Массив для INSERT/UPDATE в БД.
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'user_id' => $this->userId,
+            'role' => $this->role,
+            'message' => $this->text,
+        ];
     }
 
     /**

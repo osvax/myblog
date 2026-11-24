@@ -8,7 +8,7 @@ namespace App\DTO;
  * ProjectDTO — объект переноса данных для проекта портфолио.
  * Включает вложенные структуры: галерея, доп. поля, задача, результаты, скриншоты.
  */
-final class ProjectDTO
+final class ProjectDTO extends AbstractDTO
 {
     // === Основные поля ===
 
@@ -43,9 +43,6 @@ final class ProjectDTO
     /** @var array{kind: string, name: string, value: string, file_path?: string}[] Доп. поля */
     public array $infoItems = [];
 
-    // === Ошибки валидации ===
-    private array $errors = [];
-
     // === Константы для валидации путей ===
     public const SCREENSHOT_PATH_REGEX = '#^(?:uploads/portfolio/[A-Za-z0-9_-]+/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$#';
     public const DOC_FILE_PATH_REGEX = '#^uploads/documents/portfolio/[a-z0-9][a-z0-9-]*\.(?:doc|docx)$#';
@@ -56,9 +53,9 @@ final class ProjectDTO
      *
      * @param array $data Данные из $request->json()
      * @param string|null $id ID для обновления (генерируется для новой)
-     * @return self
+     * @return static
      */
-    public static function fromRequest(array $data, ?string $id = null): self
+    public static function fromRequest(array $data, ?string $id = null): static
     {
         $dto = new self();
         $dto->id = $id ?? bin2hex(random_bytes(16));
@@ -89,79 +86,21 @@ final class ProjectDTO
         $dto->screenshots = is_array($data['screenshots'] ?? null) ? array_values($data['screenshots']) : [];
 
         // gallery: массив {path, description}
-        $dto->gallery = $dto->normalizeGallery($data['gallery'] ?? []);
+        $dto->gallery = self::normalizePaths($data['gallery'] ?? [], 'path', 'description');
 
         // infoItems: массив {kind, name, value, file_path?}
-        $dto->infoItems = $dto->normalizeInfoItems($data['infoItems'] ?? []);
+        $dto->infoItems = self::normalizeInfoItems($data['infoItems'] ?? []);
 
         return $dto;
-    }
-
-    /**
-     * Нормализует массив галереи.
-     *
-     * @param array $raw
-     * @return array{path: string, description: string}[]
-     */
-    private function normalizeGallery(array $raw): array
-    {
-        $result = [];
-        foreach ($raw as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $path = trim((string)($item['path'] ?? ''));
-            if ($path === '') {
-                continue;
-            }
-            $result[] = [
-                'path' => $path,
-                'description' => is_string($item['description'] ?? null) ? $item['description'] : '',
-            ];
-        }
-        return $result;
-    }
-
-    /**
-     * Нормализует массив доп. полей.
-     *
-     * @param array $raw
-     * @return array{kind: string, name: string, value: string, file_path?: string}[]
-     */
-    private function normalizeInfoItems(array $raw): array
-    {
-        $result = [];
-        foreach ($raw as $item) {
-            if (!is_array($item)) {
-                continue;
-            }
-            $kind = trim((string)($item['kind'] ?? ''));
-            $name = trim((string)($item['name'] ?? ''));
-            $value = trim((string)($item['value'] ?? ''));
-            if ($kind === '' || $name === '' || $value === '') {
-                continue;
-            }
-
-            $normalized = [
-                'kind' => $kind,
-                'name' => $name,
-                'value' => $value,
-            ];
-            if (isset($item['file_path']) && is_string($item['file_path']) && $item['file_path'] !== '') {
-                $normalized['file_path'] = $item['file_path'];
-            }
-            $result[] = $normalized;
-        }
-        return $result;
     }
 
     /**
      * Создаёт DTO из строки БД (результат SELECT с присоединёнными gallery/infoItems).
      *
      * @param array $row Ассоциативный массив из БД (после projectRow)
-     * @return self
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = $row['id'] ?? '';
@@ -203,47 +142,47 @@ final class ProjectDTO
      */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         // slug: обязателен, до 180 chars, только валидные символы
         if (!$this->slug) {
-            $this->errors['slug'] = 'Slug обязателен';
+            $this->addError('slug', 'Slug обязателен');
         } elseif (mb_strlen($this->slug) > 180) {
-            $this->errors['slug'] = 'Slug не длиннее 180 символов';
+            $this->addError('slug', 'Slug не длиннее 180 символов');
         } elseif (!preg_match('/^[a-z0-9\-]+$/i', $this->slug)) {
-            $this->errors['slug'] = 'Slug только латиница, цифры, дефис';
+            $this->addError('slug', 'Slug только латиница, цифры, дефис');
         }
 
         // title: обязателен
         if (!$this->title) {
-            $this->errors['title'] = 'Заголовок обязателен';
+            $this->addError('title', 'Заголовок обязателен');
         } elseif (mb_strlen($this->title) > 255) {
-            $this->errors['title'] = 'Заголовок не длиннее 255 символов';
+            $this->addError('title', 'Заголовок не длиннее 255 символов');
         }
 
         // technologies: обязателен
         if (!$this->technologies) {
-            $this->errors['technologies'] = 'Технологии обязательны';
+            $this->addError('technologies', 'Технологии обязательны');
         } elseif (mb_strlen($this->technologies) > 500) {
-            $this->errors['technologies'] = 'Технологии не длиннее 500 символов';
+            $this->addError('technologies', 'Технологии не длиннее 500 символов');
         }
 
         // description: обязателен
         if (!$this->description) {
-            $this->errors['description'] = 'Описание обязательно';
+            $this->addError('description', 'Описание обязательно');
         }
 
         // screenshots: проверка путей
         foreach ($this->screenshots as $index => $path) {
             if (!preg_match(self::SCREENSHOT_PATH_REGEX, $path)) {
-                $this->errors["screenshots.$index"] = "Неверный путь скриншота: $path";
+                $this->addError("screenshots.$index", "Неверный путь скриншота: $path");
             }
         }
 
         // gallery: проверка путей (должны совпадать с разрешенными паттернами)
         foreach ($this->gallery as $index => $item) {
             if (!preg_match(self::SCREENSHOT_PATH_REGEX, $item['path'])) {
-                $this->errors["gallery.$index.path"] = "Неверный путь изображения галереи: {$item['path']}";
+                $this->addError("gallery.$index.path", "Неверный путь изображения галереи: {$item['path']}");
             }
         }
 
@@ -253,14 +192,14 @@ final class ProjectDTO
                 $valid = preg_match(self::DOC_FILE_PATH_REGEX, $item['file_path'])
                     || preg_match(self::IMG_FILE_PATH_REGEX, $item['file_path']);
                 if (!$valid) {
-                    $this->errors["infoItems.$index.file_path"] = "Неверный путь файла: {$item['file_path']}";
+                    $this->addError("infoItems.$index.file_path", "Неверный путь файла: {$item['file_path']}");
                 }
             }
         }
 
         // year: если задан — разумный год
         if ($this->year !== null && ($this->year < 1900 || $this->year > date('Y') + 1)) {
-            $this->errors['year'] = 'Неверный год';
+            $this->addError('year', 'Неверный год');
         }
 
         // icon: дефолт если пустой
@@ -268,29 +207,6 @@ final class ProjectDTO
             $this->icon = 'bi-briefcase';
         }
 
-        return empty($this->errors);
-    }
-
-    /**
-     * Возвращает ошибки валидации.
-     *
-     * @return array ['field' => 'message', ...]
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Проверяет, прошла ли валидация.
-     *
-     * @return bool
-     */
-    public function isValid(): bool
-    {
-        if (empty($this->errors)) {
-            $this->validate();
-        }
         return empty($this->errors);
     }
 

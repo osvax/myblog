@@ -9,7 +9,7 @@ namespace App\DTO;
  * Инкапсулирует валидацию и преобразование из/в массив/БД.
  * Использует respect/validation (composer require respect/validation).
  */
-final class ArticleDTO
+final class ArticleDTO extends AbstractDTO
 {
     // === Поля ===
 
@@ -29,17 +29,14 @@ final class ArticleDTO
     public int $views = 0;
     public ?string $published_at = null;
 
-    // === Ошибки валидации ===
-    private array $errors = [];
-
     /**
      * Создаёт DTO из массива запроса (JSON / POST).
      *
      * @param array $data Данные из $request->json() или $_POST
      * @param string|null $id ID для обновления (генерируется для новой)
-     * @return self
+     * @return static
      */
-    public static function fromRequest(array $data, ?string $id = null): self
+    public static function fromRequest(array $data, ?string $id = null): static
     {
         $dto = new self();
         $dto->id = $id ?? bin2hex(random_bytes(16)); // 32 hex chars
@@ -65,9 +62,9 @@ final class ArticleDTO
      * Создаёт DTO из строки БД (результат SELECT).
      *
      * @param array $row Ассоциативный массив из БД
-     * @return self
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = $row['id'] ?? '';
@@ -96,49 +93,49 @@ final class ArticleDTO
      */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         // slug: обязателен, до 180 chars, только валидные символы
         if (!$this->slug) {
-            $this->errors['slug'] = 'Slug обязателен';
+            $this->addError('slug', 'Slug обязателен');
         } elseif (mb_strlen($this->slug) > 180) {
-            $this->errors['slug'] = 'Slug не длиннее 180 символов';
+            $this->addError('slug', 'Slug не длиннее 180 символов');
         } elseif (!preg_match('/^[a-z0-9\-]+$/i', $this->slug)) {
-            $this->errors['slug'] = 'Slug только латиница, цифры, дефис';
+            $this->addError('slug', 'Slug только латиница, цифры, дефис');
         }
 
         // title: обязателен
         if (!$this->title) {
-            $this->errors['title'] = 'Заголовок обязателен';
+            $this->addError('title', 'Заголовок обязателен');
         } elseif (mb_strlen($this->title) > 255) {
-            $this->errors['title'] = 'Заголовок не длиннее 255 символов';
+            $this->addError('title', 'Заголовок не длиннее 255 символов');
         }
 
         // description: обязателен
         if (!$this->description) {
-            $this->errors['description'] = 'Описание обязательно';
+            $this->addError('description', 'Описание обязательно');
         } elseif (mb_strlen($this->description) > 500) {
-            $this->errors['description'] = 'Описание не длиннее 500 символов';
+            $this->addError('description', 'Описание не длиннее 500 символов');
         }
 
         // category: обязателен (slug категории)
         if (!$this->category && !$this->category_id) {
-            $this->errors['category'] = 'Выберите категорию';
+            $this->addError('category', 'Выберите категорию');
         }
 
         // content: обязателен
         if (!$this->content) {
-            $this->errors['content'] = 'Контент обязателен';
+            $this->addError('content', 'Контент обязателен');
         }
 
         // author: обязателен
         if (!$this->author) {
-            $this->errors['author'] = 'Автор обязателен';
+            $this->addError('author', 'Автор обязателен');
         }
 
         // date: валидная дата Y-m-d
         if ($this->date && !preg_match('/^\d{4}-\d{2}-\d{2}$/', $this->date)) {
-            $this->errors['date'] = 'Дата в формате Y-m-d';
+            $this->addError('date', 'Дата в формате Y-m-d');
         }
 
         // icon: дефолт если пустой
@@ -153,29 +150,6 @@ final class ArticleDTO
         $this->tags = array_filter(array_map('trim', $this->tags));
         $this->tags = array_slice($this->tags, 0, 20); // макс 20 тегов
 
-        return empty($this->errors);
-    }
-
-    /**
-     * Возвращает ошибки валидации.
-     *
-     * @return array ['field' => 'message', ...]
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Проверяет, прошла ли валидация (вызывает validate() если ещё нет).
-     *
-     * @return bool
-     */
-    public function isValid(): bool
-    {
-        if (empty($this->errors)) {
-            $this->validate();
-        }
         return empty($this->errors);
     }
 

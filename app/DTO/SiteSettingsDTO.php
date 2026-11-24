@@ -65,7 +65,7 @@ namespace App\DTO;
  * statistics: statisticsSections (json массив), gaMeasurementId, yaCounterId
  * custom: пользовательские поля (добавляются через админку)
  */
-final class SiteSettingsDTO
+final class SiteSettingsDTO extends AbstractDTO
 {
     // === Значения настроек (плоский массив key => value) ===
     /** @var array<string, mixed> */
@@ -74,9 +74,6 @@ final class SiteSettingsDTO
     // === Метаданные полей (key => ['type', 'tab_group', 'label', 'placeholder', 'options', 'display_order']) ===
     /** @var array<string, array> */
     private array $meta = [];
-
-    // === Ошибки валидации ===
-    private array $errors = [];
 
     // === Константы типов ===
     public const TYPE_TEXT = 'text';
@@ -135,9 +132,9 @@ final class SiteSettingsDTO
      *
      * @param array $data Плоский массив ['key' => value, ...]
      * @param array $existingMeta Существующие метаданные из БД ['key' => ['type'=>..., 'tab_group'=>...], ...]
-     * @return self
+     * @return static
      */
-    public static function fromRequest(array $data, array $existingMeta = []): self
+    public static function fromRequest(array $data, array $existingMeta = []): static
     {
         $dto = new self();
 
@@ -165,9 +162,9 @@ final class SiteSettingsDTO
      * Создаёт DTO из строк БД (результат SELECT * FROM va_site_settings).
      *
      * @param array $rows Массив строк из БД
-     * @return self
+     * @return static
      */
-    public static function fromDatabase(array $rows): self
+    public static function fromDatabase(array $rows): static
     {
         $dto = new self();
 
@@ -183,7 +180,7 @@ final class SiteSettingsDTO
             $dto->meta[$key] = [
                 'type' => $type,
                 'tab_group' => $row['tab_group'] ?? self::TAB_CUSTOM,
-                'label' => $row['setting_key'], // Можно расширить: добавить label в БД
+                'label' => $row['setting_key'],
                 'placeholder' => $row['placeholder'] ?? '',
                 'options' => $row['options'] ? json_decode($row['options'], true) : [],
                 'display_order' => (int)($row['display_order'] ?? 0),
@@ -286,7 +283,7 @@ final class SiteSettingsDTO
      */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         foreach ($this->values as $key => $value) {
             $meta = $this->meta[$key] ?? ['type' => self::TYPE_TEXT];
@@ -294,7 +291,7 @@ final class SiteSettingsDTO
 
             $error = $this->validateValue($key, $value, $type);
             if ($error !== null) {
-                $this->errors[$key] = $error;
+                $this->addError($key, $error);
             }
         }
 
@@ -315,33 +312,12 @@ final class SiteSettingsDTO
                 ? 'Цвет в формате #RRGGBB' : null,
             self::TYPE_NUMBER => (!is_numeric($value))
                 ? 'Должно быть числом' : null,
-            self::TYPE_CHECKBOX => null, // bool всегда валиден
+            self::TYPE_CHECKBOX => null,
             self::TYPE_JSON => (!is_array($value))
                 ? 'Должно быть массивом/объектом' : null,
-            self::TYPE_SELECT => null, // строка, валидация опциональна
-            default => null, // text, textarea, tel — любая строка
+            self::TYPE_SELECT => null,
+            default => null,
         };
-    }
-
-    /**
-     * Возвращает ошибки валидации.
-     *
-     * @return array ['key' => 'message', ...]
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Проверяет, прошла ли валидация.
-     */
-    public function isValid(): bool
-    {
-        if (empty($this->errors)) {
-            $this->validate();
-        }
-        return empty($this->errors);
     }
 
     /**

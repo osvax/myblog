@@ -44,7 +44,7 @@ namespace App\DTO;
  * - role_id (INT, FK) + page_slug (VARCHAR 100) — PK составной
  * - page_slug — слаг страницы админки (из config/admin-navigation.php)
  */
-final class RoleDTO
+final class RoleDTO extends AbstractDTO
 {
     // === Основные поля (колонки va_roles) ===
 
@@ -77,17 +77,13 @@ final class RoleDTO
     /** @var int Количество пользователей с этой ролью */
     public int $usersCount = 0;
 
-    // === Валидация ===
-
-    /** @var array<string, string> Ошибки валидации ['field' => 'message'] */
-    private array $errors = [];
-
     /**
      * Создаёт DTO из строки БД (va_roles + permissions + users_count).
      *
      * @param array<string, mixed> $row
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = (int) ($row['id'] ?? 0);
@@ -119,8 +115,9 @@ final class RoleDTO
      *
      * @param array<string, mixed> $data
      * @param int|null $id ID роли при обновлении
+     * @return static
      */
-    public static function fromRequest(array $data, ?int $id = null): self
+    public static function fromRequest(array $data, ?int $id = null): static
     {
         $dto = new self();
         $dto->id = $id;
@@ -143,18 +140,18 @@ final class RoleDTO
     /** Валидация для создания роли. */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         if ($this->roleKey === '') {
-            $this->errors['role_key'] = 'Ключ роли обязателен';
+            $this->addError('role_key', 'Ключ роли обязателен');
         } elseif (!preg_match('/^[a-z0-9][a-z0-9_-]{1,62}$/', $this->roleKey)) {
-            $this->errors['role_key'] = 'Ключ роли: латинские буквы, цифры, дефис и подчёркивание (от 2 символов)';
+            $this->addError('role_key', 'Ключ роли: латинские буквы, цифры, дефис и подчёркивание (от 2 символов)');
         }
 
         if ($this->name === '') {
-            $this->errors['name'] = 'Название роли обязательно';
+            $this->addError('name', 'Название роли обязательно');
         } elseif (mb_strlen($this->name) > 160) {
-            $this->errors['name'] = 'Название роли не более 160 символов';
+            $this->addError('name', 'Название роли не более 160 символов');
         }
 
         return empty($this->errors);
@@ -163,21 +160,15 @@ final class RoleDTO
     /** Валидация для обновления роли (role_key не меняется). */
     public function validateUpdate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         if ($this->name === '') {
-            $this->errors['name'] = 'Название роли обязательно';
+            $this->addError('name', 'Название роли обязательно');
         } elseif (mb_strlen($this->name) > 160) {
-            $this->errors['name'] = 'Название роли не более 160 символов';
+            $this->addError('name', 'Название роли не более 160 символов');
         }
 
         return empty($this->errors);
-    }
-
-    /** Возвращает ошибки валидации. */
-    public function getErrors(): array
-    {
-        return $this->errors;
     }
 
     /**

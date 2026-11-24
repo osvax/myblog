@@ -44,7 +44,7 @@ namespace App\DTO;
  * - is_active (TINYINT) — 1 активно, 0 скрыто
  * - created_at, updated_at (TIMESTAMP)
  */
-final class MenuItemDTO
+final class MenuItemDTO extends AbstractDTO
 {
     /** @var int|null ID пункта (NULL для нового) */
     public ?int $id = null;
@@ -84,17 +84,13 @@ final class MenuItemDTO
     /** @var MenuItemDTO[] Дочерние пункты (подменю) */
     public array $children = [];
 
-    // === Валидация ===
-
-    /** @var array<string, string> Ошибки валидации ['field' => 'message'] */
-    private array $errors = [];
-
     /**
      * Создаёт DTO из строки БД.
      *
      * @param array<string, mixed> $row
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = (int) ($row['id'] ?? 0);
@@ -117,8 +113,9 @@ final class MenuItemDTO
      *
      * @param array<string, mixed> $data
      * @param int|null $id ID пункта при обновлении
+     * @return static
      */
-    public static function fromRequest(array $data, ?int $id = null): self
+    public static function fromRequest(array $data, ?int $id = null): static
     {
         $dto = new self();
         $dto->id = $id;
@@ -139,30 +136,30 @@ final class MenuItemDTO
     /** Валидация для создания пункта. */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         if ($this->menuId <= 0) {
-            $this->errors['menu_id'] = 'ID меню обязателен';
+            $this->addError('menu_id', 'ID меню обязателен');
         }
 
         if ($this->title === '') {
-            $this->errors['title'] = 'Название пункта обязательно';
+            $this->addError('title', 'Название пункта обязательно');
         } elseif (mb_strlen($this->title) > 160) {
-            $this->errors['title'] = 'Название пункта не более 160 символов';
+            $this->addError('title', 'Название пункта не более 160 символов');
         }
 
         if ($this->url === '') {
-            $this->errors['url'] = 'URL обязателен';
+            $this->addError('url', 'URL обязателен');
         } elseif (mb_strlen($this->url) > 500) {
-            $this->errors['url'] = 'URL не более 500 символов';
+            $this->addError('url', 'URL не более 500 символов');
         }
 
         if ($this->icon !== '' && mb_strlen($this->icon) > 64) {
-            $this->errors['icon'] = 'Иконка не более 64 символов';
+            $this->addError('icon', 'Иконка не более 64 символов');
         }
 
         if ($this->cssClass !== '' && mb_strlen($this->cssClass) > 100) {
-            $this->errors['css_class'] = 'CSS класс не более 100 символов';
+            $this->addError('css_class', 'CSS класс не более 100 символов');
         }
 
         return empty($this->errors);
@@ -171,35 +168,29 @@ final class MenuItemDTO
     /** Валидация для обновления пункта. */
     public function validateUpdate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         if ($this->title === '') {
-            $this->errors['title'] = 'Название пункта обязательно';
+            $this->addError('title', 'Название пункта обязательно');
         } elseif (mb_strlen($this->title) > 160) {
-            $this->errors['title'] = 'Название пункта не более 160 символов';
+            $this->addError('title', 'Название пункта не более 160 символов');
         }
 
         if ($this->url === '') {
-            $this->errors['url'] = 'URL обязателен';
+            $this->addError('url', 'URL обязателен');
         } elseif (mb_strlen($this->url) > 500) {
-            $this->errors['url'] = 'URL не более 500 символов';
+            $this->addError('url', 'URL не более 500 символов');
         }
 
         if ($this->icon !== '' && mb_strlen($this->icon) > 64) {
-            $this->errors['icon'] = 'Иконка не более 64 символов';
+            $this->addError('icon', 'Иконка не более 64 символов');
         }
 
         if ($this->cssClass !== '' && mb_strlen($this->cssClass) > 100) {
-            $this->errors['css_class'] = 'CSS класс не более 100 символов';
+            $this->addError('css_class', 'CSS класс не более 100 символов');
         }
 
         return empty($this->errors);
-    }
-
-    /** Возвращает ошибки валидации. */
-    public function getErrors(): array
-    {
-        return $this->errors;
     }
 
     /**

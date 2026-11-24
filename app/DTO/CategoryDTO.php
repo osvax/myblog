@@ -44,7 +44,7 @@ namespace App\DTO;
  * - 1 категория → много статей (articles.category_id)
  * - Навигация (category_navigation) ссылается на категории
  */
-final class CategoryDTO
+final class CategoryDTO extends AbstractDTO
 {
     // === Основные поля (соответствуют колонкам va_categories) ===
 
@@ -65,9 +65,6 @@ final class CategoryDTO
     /** @var int Количество статей в этой рубрике (из LEFT JOIN + COUNT) */
     public int $articles_count = 0;
 
-    // === Ошибки валидации ===
-    private array $errors = [];
-
     // === Константы для валидации ===
     public const SLUG_MAX_LENGTH = 140;
     public const NAME_MAX_LENGTH = 255;
@@ -86,9 +83,9 @@ final class CategoryDTO
      * @param array $data Данные из $request->json() или $_POST
      *                Ожидаемые ключи: name, slug, description, (id опционально)
      * @param int|null $id ID из URL параметра (для PUT), если есть
-     * @return self Готовый DTO (невалидированный, нужно вызвать validate())
+     * @return static Готовый DTO (невалидированный, нужно вызвать validate())
      */
-    public static function fromRequest(array $data, ?int $id = null): self
+    public static function fromRequest(array $data, ?int $id = null): static
     {
         $dto = new self();
 
@@ -121,9 +118,9 @@ final class CategoryDTO
      *
      * @param array $row Ассоциативный массив из БД (fetch_assoc)
      *                Ожидаемые ключи: id, name, slug, description, articles_count (опционально)
-     * @return self
+     * @return static
      */
-    public static function fromDatabase(array $row): self
+    public static function fromDatabase(array $row): static
     {
         $dto = new self();
         $dto->id = isset($row['id']) ? (int)$row['id'] : null;
@@ -153,22 +150,22 @@ final class CategoryDTO
      */
     public function validate(): bool
     {
-        $this->errors = [];
+        $this->clearErrors();
 
         // --- name ---
         if ($this->name === '') {
-            $this->errors['name'] = 'Название рубрики обязательно';
+            $this->addError('name', 'Название рубрики обязательно');
         } elseif (mb_strlen($this->name) > self::NAME_MAX_LENGTH) {
-            $this->errors['name'] = 'Название не длиннее ' . self::NAME_MAX_LENGTH . ' символов';
+            $this->addError('name', 'Название не длиннее ' . self::NAME_MAX_LENGTH . ' символов');
         }
 
         // --- slug ---
         if ($this->slug === '') {
-            $this->errors['slug'] = 'Адрес (slug) обязателен';
+            $this->addError('slug', 'Адрес (slug) обязателен');
         } elseif (mb_strlen($this->slug) > self::SLUG_MAX_LENGTH) {
-            $this->errors['slug'] = 'Адрес не длиннее ' . self::SLUG_MAX_LENGTH . ' символов';
+            $this->addError('slug', 'Адрес не длиннее ' . self::SLUG_MAX_LENGTH . ' символов');
         } elseif (!preg_match(self::SLUG_PATTERN, $this->slug)) {
-            $this->errors['slug'] = 'Адрес: только латиница, цифры, дефис (например: my-category)';
+            $this->addError('slug', 'Адрес: только латиница, цифры, дефис (например: my-category)');
         }
         // Примечание: уникальность slug проверяется в БД (UNIQUE INDEX),
         // здесь не проверяем — будет ошибка при INSERT/UPDATE
@@ -176,44 +173,6 @@ final class CategoryDTO
         // --- description ---
         // Опционально, валидации нет (TEXT в БД)
 
-        return empty($this->errors);
-    }
-
-    /**
-     * Возвращает ошибки валидации.
-     *
-     * ФОРМАТ ОТВЕТА (для JSON API):
-     * [
-     *   'name' => 'Название рубрики обязательно',
-     *   'slug' => 'Адрес: только латиница, цифры, дефис'
-     * ]
-     *
-     * ИСПОЛЬЗОВАНИЕ В КОНТРОЛЛЕРЕ:
-     * ```php
-     * return $this->json([
-     *   'success' => false,
-     *   'error' => 'Ошибки валидации',
-     *   'errors' => $dto->getErrors()  // <-- сюда
-     * ], 400);
-     * ```
-     *
-     * @return array ['field' => 'message', ...]
-     */
-    public function getErrors(): array
-    {
-        return $this->errors;
-    }
-
-    /**
-     * Проверяет, прошла ли валидация (вызывает validate() если ещё нет).
-     *
-     * @return bool
-     */
-    public function isValid(): bool
-    {
-        if (empty($this->errors)) {
-            $this->validate();
-        }
         return empty($this->errors);
     }
 

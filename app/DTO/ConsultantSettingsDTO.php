@@ -11,7 +11,7 @@ namespace App\DTO;
  * - setting_key (VARCHAR 64, PK) — ключ настройки
  * - setting_value (TEXT) — значение настройки
  */
-final class ConsultantSettingsDTO
+final class ConsultantSettingsDTO extends AbstractDTO
 {
     /** @var bool Включен ли консультант */
     public bool $enabled = true;
@@ -41,8 +41,9 @@ final class ConsultantSettingsDTO
      * Создаёт DTO из массива строк БД.
      *
      * @param array<int, array<string, mixed>> $rows
+     * @return static
      */
-    public static function fromDatabase(array $rows): self
+    public static function fromDatabase(array $rows): static
     {
         $dto = new self();
         foreach ($rows as $row) {
@@ -55,6 +56,25 @@ final class ConsultantSettingsDTO
             }
         }
         return $dto;
+    }
+
+    /**
+     * Массив для INSERT/UPDATE в БД (key => value).
+     *
+     * @return array<string, mixed>
+     */
+    public function toArray(): array
+    {
+        return [
+            'enabled' => $this->enabled ? '1' : '0',
+            'buttonColor' => $this->buttonColor,
+            'buttonTextColor' => $this->buttonTextColor,
+            'buttonPosition' => $this->buttonPosition,
+            'workingHours' => $this->workingHours,
+            'censoredWords' => $this->censoredWords,
+            'welcomeMessage' => $this->welcomeMessage,
+            'notificationEmail' => $this->notificationEmail,
+        ];
     }
 
     /**
