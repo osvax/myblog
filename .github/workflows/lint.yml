@@ -1,0 +1,52 @@
+name: Lint & Build
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+jobs:
+  lint:
+    name: Lint & Build
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.2'
+          extensions: mbstring, intl, json, dom, xml, ctype, fileinfo
+          ini-values: memory_limit=512M
+          coverage: none
+          tools: composer:v2, php-cs-fixer
+
+      - name: Cache Composer packages
+        uses: actions/cache@v4
+        with:
+          path: vendor
+          key: ${{ runner.os }}-composer-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            ${{ runner.os }}-composer-
+
+      - name: Install dependencies
+        run: composer install --no-progress --no-interaction --prefer-dist --optimize-autoloader
+
+      - name: Validate composer.json
+        run: composer validate --strict --no-check-all
+
+      - name: Check PHP syntax (lint)
+        run: find app config routes -name "*.php" -exec php -l {} \; | grep -v "No syntax errors" || true
+
+      - name: Run php-cs-fixer (dry-run)
+        run: php-cs-fixer fix --dry-run --diff --config=.php-cs-fixer.dist.php
+
+      - name: Check for debug code (var_dump, die, dd, etc.)
+        run: |
+          if grep -r "var_dump\|die(\|exit(\|dd(\|dump(\|print_r(\|console.log\|debugger" --include="*.php" app/ config/ routes/ 2>/dev/null | grep -v ".php-cs-fixer\|vendor\|test\|Test"; then
+            echo "::error::Found debug code in source files"
+            exit 1
+          fi

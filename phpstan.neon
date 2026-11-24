@@ -1,0 +1,52 @@
+includes:
+    - vendor/phpstan/phpstan/phpstan.neon
+
+parameters:
+    level: 5
+    paths:
+        - app
+        - config
+        - routes
+    excludePaths:
+        - app/Core/admin-functions.php
+        - app/Core/auth.php
+        - app/Core/custom-fields.php
+        - app/Core/slug.php
+        - app/Core/assets.php
+        - app/Core/calculator.php
+        - app/Core/menu.php
+        - app/Core/static-pages.php
+        - app/Views
+        - storage
+        - public
+        - database/migrations
+        - vendor
+        - .github
+    checkMissingIterableValueType: false
+    treatPhpDocTypesAsCertain: true
+    ignoreErrors:
+        - '#Call to an undefined method admin_is_authenticated\(\)#'
+        - '#Call to an undefined method admin_can_access\(\)#'
+        - '#Call to an undefined method admin_require_csrf\(\)#'
+        - '#Call to an undefined method admin_start_session\(\)#'
+        - '#Call to an undefined method db_table\(\)#'
+        - '#Call to an undefined method request_is_https\(\)#'
+        - '#Call to an undefined method flash\(\)#'
+        - '#Call to an undefined method redirect\(\)#'
+        - '#Call to an undefined method is_post\(\)#'
+        - '#Call to an undefined method is_get\(\)#'
+        - '#Call to an undefined method is_ajax\(\)#'
+        - '#Call to an undefined method sanitize\(\)#'
+        - '#Call to an undefined method slugify\(\)#'
+        - '#Call to an undefined method format_price\(\)#'
+        - '#Call to an undefined method format_date\(\)#'
+        - '#Call to an undefined method get_admin_url\(\)#'
+        - '#Call to an undefined method asset\(\)#'
+        - '#Call to an undefined method view\(\)#'
+        - '#Call to an undefined method config\(\)#'
+        - '#Call to an undefined method logger\(\)#'
+        - '#Call to an undefined method mailer\(\)#'
+        - '#Call to an undefined method container\(\)#'
+    treatDynamicCallsAsTrusted: true
+    inferPrivatePropertyTypeFromConstructor: true
+    reportUnmatchedIgnoredErrors: false
