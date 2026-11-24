@@ -411,6 +411,9 @@ Email: {email}
                                     <input type="file" id="contactsAboutPhotoInput" class="form-control" accept="image/jpeg,image/png,image/webp">
                                     <button type="button" class="btn btn-orange fw-bold mt-2" id="contactsAboutPhotoUpload"><i class="bi bi-cloud-upload"></i> Загрузить фото</button>
                                     <span id="contactsAboutPhotoStatus" class="small text-muted d-block mt-2"></span>
+                                    <div id="contactsAboutPhotoPreview" class="mt-3" hidden>
+                                        <img id="contactsAboutPhotoPreviewImage" class="img-thumbnail" src="" alt="Миниатюра фото блока «Обо мне»" style="width: 214px; height: 276px; object-fit: cover;">
+                                    </div>
                                     <input type="hidden" id="contactsAboutPhoto" value="">
                                 </div>
                                 <div class="col-lg-7">
@@ -433,7 +436,7 @@ Email: {email}
                                             <button type="button" class="btn btn-sm btn-outline-dark ms-auto" id="contactsAboutSourceToggle" aria-pressed="false"><i class="bi bi-code-slash"></i> HTML</button>
                                         </div>
                                         <div id="contactsAboutEditor" class="article-editor-canvas" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Визуальное содержимое блока «Обо мне»"></div>
-                                        <textarea id="contactsAboutHtml" class="form-control article-editor-source" rows="14" aria-label="HTML-код блока «Обо мне»" hidden><h2>Обо мне</h2><p>Расскажите посетителям о себе, своём опыте и подходе к работе.</p></textarea>
+                                        <textarea id="contactsAboutHtml" class="form-control article-editor-source" rows="14" aria-label="HTML-код блока «Обо мне»" hidden></textarea>
                                     </div>
                                     <div class="small text-muted mt-2">Используйте панель форматирования или включите режим HTML для редактирования кода.</div>
                                 </div>

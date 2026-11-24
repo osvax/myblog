@@ -1,4 +1,4 @@
-# myblog.loc
+# MyBlog
 
 Персональный блог, портфолио и CRM-система на самописном PHP MVC без фреймворков.
 
@@ -169,7 +169,7 @@
 ## Структура проекта
 
 ```text
-myblog.loc/
+MyBlog/
 ├── app/
 │   ├── Controllers/
 │   │   ├── Admin/              # Контроллеры административной панели
@@ -217,25 +217,25 @@ myblog.loc/
 Каталог проекта:
 
 ```text
-E:\OSPanel\www-html\myblog.loc
+E:\OSPanel\www-html\MyBlog
 ```
 
 В настройках домена OSPanel document root должен указывать на:
 
 ```text
-E:\OSPanel\www-html\myblog.loc\public
+E:\OSPanel\www-html\MyBlog\public
 ```
 
 Локальный адрес:
 
 ```text
-http://myblog.loc
+http://MyBlog
 ```
 
 HTTPS-адрес при настроенном сертификате:
 
 ```text
-https://myblog.loc
+https://MyBlog
 ```
 
 ### 2. Установить зависимости
@@ -307,7 +307,7 @@ npm run build
 ### 8. Проверить приложение
 
 ```cmd
-curl.exe http://myblog.loc/health
+curl.exe http://MyBlog/health
 ```
 
 Ожидаемый ответ:
@@ -319,10 +319,10 @@ curl.exe http://myblog.loc/health
 После этого открыть:
 
 ```text
-http://myblog.loc/
-http://myblog.loc/blog.html
-http://myblog.loc/portfolio.html
-http://myblog.loc/admin/login.html
+http://MyBlog/
+http://MyBlog/blog.html
+http://MyBlog/portfolio.html
+http://MyBlog/admin/login.html
 ```
 
 ---
@@ -336,9 +336,9 @@ Document root виртуального хоста должен указыват�
 ```apache
 <VirtualHost *:80>
     ServerName myblog.example.com
-    DocumentRoot /var/www/myblog.loc/public
+    DocumentRoot /var/www/MyBlog/public
 
-    <Directory /var/www/myblog.loc/public>
+    <Directory /var/www/MyBlog/public>
         AllowOverride All
         Require all granted
     </Directory>
@@ -353,7 +353,7 @@ Document root виртуального хоста должен указыват�
 server {
     listen 80;
     server_name myblog.example.com;
-    root /var/www/myblog.loc/public;
+    root /var/www/MyBlog/public;
     index index.php;
 
     location / {
@@ -901,7 +901,7 @@ DB_PREFIX
 Полный callback URL должен совпадать в настройках приложения Яндекс и сайта:
 
 ```text
-https://myblog.loc/api/auth/yandex/callback
+https://MyBlog/api/auth/yandex/callback
 ```
 
 Для production замените домен на фактический HTTPS-домен.

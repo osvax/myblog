@@ -6,7 +6,11 @@ class AdminUser
 {
     public function verifyCredentials($email, $password)
     {
-        $configuredEmail = strtolower(trim((string) (new \App\Models\SiteSettings())->get('adminLoginEmail', '')));
+        $settings = new \App\Models\SiteSettings();
+        $configuredEmail = strtolower(trim((string) $settings->get('adminLoginEmail', '')));
+        if ($configuredEmail === '') {
+            $configuredEmail = strtolower(trim((string) $settings->get('adminEmail', '')));
+        }
         $email = strtolower(trim((string) $email));
 
         if (!filter_var($configuredEmail, FILTER_VALIDATE_EMAIL)) {

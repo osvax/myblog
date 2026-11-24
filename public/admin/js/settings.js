@@ -13,6 +13,8 @@
             return value === true || value === 1 || value === '1';
         };
         var loadedSettings = {};
+        var settingsTabs = document.getElementById('settingsTabs');
+        var settingsActiveTabKey = 'myblog.admin.settings.activeTab.v1';
         var aboutEditor = document.getElementById('contactsAboutEditor');
         var aboutSource = document.getElementById('contactsAboutHtml');
         var aboutSourceToggle = document.getElementById('contactsAboutSourceToggle');
@@ -61,12 +63,25 @@
             });
         }
 
+        if (settingsTabs) {
+            settingsTabs.addEventListener('shown.bs.tab', function (event) {
+                var tabId = event.target && event.target.id;
+                if (tabId) localStorage.setItem(settingsActiveTabKey, tabId);
+            });
+
+            var savedTabId = localStorage.getItem(settingsActiveTabKey);
+            var savedTab = savedTabId ? document.getElementById(savedTabId) : null;
+            if (savedTab && window.bootstrap && window.bootstrap.Tab) {
+                window.bootstrap.Tab.getOrCreateInstance(savedTab).show();
+            }
+        }
+
         // Загружаем актуальные настройки из базы данных;
         // localStorage используется только как запасной источник значений
         var applySettings = function (settings) {
             loadedSettings = settings || {};
             Array.from(form.elements).forEach(function (field) {
-                if (!field.id || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
+                if (!field.id || field.type === 'file' || !Object.prototype.hasOwnProperty.call(settings, field.id)) return;
                 if (field.type === 'checkbox') {
                     field.checked = isCheckOn(settings[field.id]);
                 } else if (field.type === 'datetime-local') {
@@ -85,7 +100,7 @@
             syncAboutEditor();
             var values = {};
             Array.from(form.elements).forEach(function (field) {
-                if (!field.id) return;
+                if (!field.id || field.type === 'file') return;
                 values[field.id] = field.type === 'checkbox' ? field.checked : field.value.trim();
             });
             return values;
@@ -134,19 +149,29 @@
 
         fetch('../api/admin/settings', { credentials: 'same-origin' })
             .then(function (response) {
-                if (!response.ok) throw new Error('Не удалось загрузить настройки.');
+                if (!response.ok) throw new Error('Не удалось загрузить настройки из базы данных.');
                 return response.json();
             })
             .then(function (result) {
-                applySettings(Object.assign({}, window.SiteSettings.load(), (result && result.settings) || {}));
-                if (aboutSource && aboutEditor) {
-                    aboutEditor.innerHTML = aboutSource.value;
+                if (!result || !result.success || !result.settings) throw new Error('Сервер вернул некорректные настройки.');
+                applySettings(result.settings);
+                if (aboutPhotoPath) updateAboutPhotoPreview(aboutPhotoPath.value);
+                // Редактор "Обо мне" заполняется через applySettings из БД,
+                // а не из дефолтного textarea — иначе показываются старые/неизвестные значения
+                if (aboutEditor) {
+                    var editorValue = loadedSettings['contactsAboutHtml'] ?? '';
+                    aboutEditor.innerHTML = String(editorValue);
+                }
+                if (aboutSource) {
                     aboutSource.hidden = true;
                 }
             })
             .catch(function (error) {
                 console.error(error.message || 'Не удалось загрузить настройки из базы.');
-                applySettings(window.SiteSettings.load());
+                // Сбрасываем редактор "Обо мне" к пустому состоянию, чтобы не показывать старые/дефолтные значения
+                if (aboutEditor) aboutEditor.innerHTML = '';
+                if (aboutSource) aboutSource.value = '';
+                window.AdminNotifications.show(false, error.message || 'Не удалось загрузить настройки из базы данных.');
             });
 
         // Загружаем настройки консультанта
@@ -251,6 +276,24 @@
         // ---------- Загрузка фото блока «Обо мне» ----------
         var aboutPhotoUpload = document.getElementById('contactsAboutPhotoUpload');
         var aboutPhotoInput = document.getElementById('contactsAboutPhotoInput');
+        var aboutPhotoPath = document.getElementById('contactsAboutPhoto');
+        var aboutPhotoPreview = document.getElementById('contactsAboutPhotoPreview');
+        var aboutPhotoPreviewImage = document.getElementById('contactsAboutPhotoPreviewImage');
+        var updateAboutPhotoPreview = function (path) {
+            var normalizedPath = String(path || '').trim();
+            var isValidPath = /^uploads\/contacts\/[a-f0-9]{32}\.(?:jpg|png|webp)$/i.test(normalizedPath);
+            if (!aboutPhotoPreview || !aboutPhotoPreviewImage) return;
+            if (!isValidPath) {
+                aboutPhotoPreview.hidden = true;
+                aboutPhotoPreviewImage.removeAttribute('src');
+                return;
+            }
+            aboutPhotoPreviewImage.src = '/' + normalizedPath + '?v=' + Date.now();
+            aboutPhotoPreview.hidden = false;
+        };
+        if (aboutPhotoPath) {
+            updateAboutPhotoPreview(aboutPhotoPath.value);
+        }
         if (aboutPhotoUpload && aboutPhotoInput) {
             aboutPhotoUpload.addEventListener('click', function () {
                 var file = aboutPhotoInput.files && aboutPhotoInput.files[0];
@@ -272,7 +315,8 @@
                     })
                     .then(function (r) { return r.json().then(function (d) { if (!r.ok || !d.success) throw new Error(d.error || 'Не удалось загрузить фото'); return d; }); })
                     .then(function (d) {
-                        document.getElementById('contactsAboutPhoto').value = d.path || '';
+                        if (aboutPhotoPath) aboutPhotoPath.value = d.path || '';
+                        updateAboutPhotoPreview(d.path || '');
                         if (status) status.textContent = 'Фото загружено';
                         window.AdminNotifications.show(true, 'Фото блока «Обо мне» загружено');
                     })

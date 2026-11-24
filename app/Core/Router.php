@@ -101,7 +101,15 @@ class Router
         if (strpos($path, '/api/') === 0) {
             return Response::json(['success' => false, 'error' => 'Не найдено'], 404);
         }
-        $home = strpos($path, '/admin') === 0 ? '/admin/index.html' : '/';
+        // Для админ-путей: если нет ключа доступа, проверяем аутентификацию
+        // Если неавторизован — редирект на страницу входа, иначе 404
+        if (strpos($path, '/admin') === 0) {
+            if (!\admin_is_authenticated()) {
+                return Response::redirect('/admin/login.html', 302);
+            }
+            return ErrorPages::page(404, 'Страница не найдена', 'Такой страницы нет или она была перемещена.', '/admin/index.html');
+        }
+        $home = '/';
         return ErrorPages::page(404, 'Страница не найдена', 'Такой страницы нет или она была перемещена.', $home);
     }
 
@@ -113,7 +121,14 @@ class Router
         if (strpos($path, '/api/') === 0) {
             return new Response('Method not allowed', 405, ['Allow' => 'GET, POST, PUT, DELETE', 'Content-Type' => 'application/json; charset=utf-8']);
         }
-        $home = strpos($path, '/admin') === 0 ? '/admin/index.html' : '/';
+        // Для админ-путей: если нет ключа доступа, проверяем аутентификацию
+        if (strpos($path, '/admin') === 0) {
+            if (!\admin_is_authenticated()) {
+                return Response::redirect('/admin/login.html', 302);
+            }
+            return ErrorPages::page(403, 'Метод не поддерживается', 'Эта страница не отвечает на такой способ запроса. Вернитесь на главную.', '/admin/index.html');
+        }
+        $home = '/';
         return ErrorPages::page(403, 'Метод не поддерживается', 'Эта страница не отвечает на такой способ запроса. Вернитесь на главную.', $home);
     }
 

@@ -49,6 +49,12 @@ class SiteSettingsController extends Controller
             $input['contactsAboutHtml'] = \App\Core\Sanitizer::get()->purify($input['contactsAboutHtml']);
         }
 
+        // Фото загружается отдельным запросом: пустое значение из общей формы
+        // не должно затирать уже сохранённый путь.
+        if (array_key_exists('contactsAboutPhoto', $input) && trim((string) $input['contactsAboutPhoto']) === '') {
+            unset($input['contactsAboutPhoto']);
+        }
+
         // Если меняется список разделов статистики — читаем старый список
         // до сохранения, чтобы после удалить данные по выключенным разделам
         $oldStatisticsSections = null;
@@ -191,8 +197,24 @@ class SiteSettingsController extends Controller
         }
         \admin_require_csrf();
         $file = $_FILES['contacts_about_photo'] ?? null;
-        if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-            return $this->json(['success' => false, 'error' => 'Не передано фото'], 400);
+        if (!is_array($file)) {
+            return $this->json(['success' => false, 'error' => 'Файл не пришёл на сервер. Проверьте выбор файла и повторите загрузку.'], 400);
+        }
+        $uploadError = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
+        if ($uploadError !== UPLOAD_ERR_OK) {
+            $uploadErrors = [
+                UPLOAD_ERR_INI_SIZE => 'Файл превышает серверный лимит загрузки',
+                UPLOAD_ERR_FORM_SIZE => 'Файл превышает допустимый размер формы',
+                UPLOAD_ERR_PARTIAL => 'Файл загрузился не полностью',
+                UPLOAD_ERR_NO_FILE => 'Файл не выбран',
+                UPLOAD_ERR_NO_TMP_DIR => 'На сервере отсутствует временная папка загрузки',
+                UPLOAD_ERR_CANT_WRITE => 'Сервер не может записать временный файл загрузки',
+                UPLOAD_ERR_EXTENSION => 'Загрузка файла остановлена расширением PHP',
+            ];
+            return $this->json(['success' => false, 'error' => $uploadErrors[$uploadError] ?? 'Ошибка загрузки файла'], 400);
+        }
+        if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
+            return $this->json(['success' => false, 'error' => 'Сервер не распознал загруженный файл. Повторите загрузку.'], 400);
         }
         if ((int) $file['size'] < 1 || (int) $file['size'] > 5 * 1024 * 1024) {
             return $this->json(['success' => false, 'error' => 'Размер фото должен быть не больше 5 МБ'], 400);
@@ -221,7 +243,13 @@ class SiteSettingsController extends Controller
         $settings = new SiteSettings();
         $oldPath = (string) $settings->get('contactsAboutPhoto', '');
         $path = 'uploads/contacts/' . $filename;
-        $settings->saveAllWithType(['contactsAboutPhoto' => $path]);
+        $saveResult = $settings->saveAllWithType(['contactsAboutPhoto' => $path]);
+        if (!$saveResult['success']) {
+            if (is_file($target) && !is_link($target)) {
+                @unlink($target);
+            }
+            return $this->json(['success' => false, 'error' => $saveResult['error'] ?? 'Не удалось сохранить путь к фото'], 500);
+        }
         if (preg_match('#^uploads/contacts/[a-f0-9]{32}\.(?:jpg|png|webp)$#', $oldPath)) {
             $oldFile = APP_ROOT . '/public/' . $oldPath;
             if (is_file($oldFile) && !is_link($oldFile)) {
