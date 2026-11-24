@@ -1,42 +1,26 @@
 <?php
 
-use App\Controllers\Admin\AdminProfileController;
-use App\Controllers\Admin\AuthController;
-use App\Controllers\Admin\CalculatorController;
-use App\Controllers\Admin\ContentController;
-use App\Controllers\Admin\CustomFieldController;
-use App\Controllers\Admin\FileManagerController;
-use App\Controllers\Admin\LandingPageAdminController;
-use App\Controllers\Admin\LandingPageController;
-use App\Controllers\Admin\MediaController;
-use App\Controllers\Admin\MenuController;
-use App\Controllers\Admin\RolesController;
-use App\Controllers\Admin\SiteSettingsController;
-use App\Controllers\Admin\SystemController;
-use App\Controllers\Admin\TemplateController;
-use App\Controllers\Admin\UsersController;
-use App\Controllers\Api\ConsultantController;
-use App\Controllers\Api\FormController;
 use App\Core\Router;
 
 return function (Router $router) {
-    $auth = new AuthController();
-    $consultant = new ConsultantController();
-    $content = new ContentController();
-    $system = new SystemController();
-    $files = new FileManagerController();
-    $media = new MediaController();
-    $templates = new TemplateController();
-    $forms = new FormController();
-    $users = new UsersController();
-    $profile = new AdminProfileController();
-    $siteSettings = new SiteSettingsController();
-    $customFields = new CustomFieldController();
-    $calculator = new CalculatorController();
-    $menus = new MenuController();
-    $roles = new RolesController();
-    $landingPage = new LandingPageController();
-    $landingPageAdmin = new LandingPageAdminController();
+    // Controllers from container
+    $auth = container(\App\Controllers\Admin\AuthController::class);
+    $consultant = container(\App\Controllers\Api\ConsultantController::class);
+    $content = container(\App\Controllers\Admin\ContentController::class);
+    $system = container(\App\Controllers\Admin\SystemController::class);
+    $files = container(\App\Controllers\Admin\FileManagerController::class);
+    $media = container(\App\Controllers\Admin\MediaController::class);
+    $templates = container(\App\Controllers\Admin\TemplateController::class);
+    $forms = container(\App\Controllers\Api\FormController::class);
+    $users = container(\App\Controllers\Admin\UsersController::class);
+    $profile = container(\App\Controllers\Admin\AdminProfileController::class);
+    $siteSettings = container(\App\Controllers\Admin\SiteSettingsController::class);
+    $customFields = container(\App\Controllers\Admin\CustomFieldController::class);
+    $calculator = container(\App\Controllers\Admin\CalculatorController::class);
+    $menus = container(\App\Controllers\Admin\MenuController::class);
+    $roles = container(\App\Controllers\Admin\RolesController::class);
+    $landingPage = container(\App\Controllers\Admin\LandingPageController::class);
+    $landingPageAdmin = container(\App\Controllers\Admin\LandingPageAdminController::class);
 
     $router->post('/api/auth/login', [$auth, 'login']);
     $router->get('/api/auth/csrf', [$auth, 'csrf']);

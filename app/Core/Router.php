@@ -2,6 +2,8 @@
 
 namespace App\Core;
 
+use App\Core\ApiResource;
+
 class Router
 {
     private $routes = [];
@@ -146,10 +148,15 @@ class Router
             }
             return new Response('', 204);
         } catch (\Throwable $error) {
-            error_log('MVC request failed: ' . $error->getMessage() . ' in ' . $error->getFile() . ':' . $error->getLine() . "\n" . $error->getTraceAsString());
+            // Логируем через ApplicationLogger (Monolog JSON)
+            $appLogger = container(ApplicationLogger::class);
+            $appLogger->logException($error, 'MVC request failed: ' . $request->path());
+
+            // Также пишем в БД для админки (Logger::write)
             \App\Core\Logger::write('errors', 'Ошибка 500: ' . $error->getMessage() . ' (' . $request->path() . ')');
+
             if (strpos($request->path(), '/api/') === 0) {
-                return Response::json(['success' => false, 'error' => 'Внутренняя ошибка сервера.'], 500);
+                return $this->json(ApiResource::error('Внутренняя ошибка сервера'), 500);
             }
             $home = strpos($request->path(), '/admin') === 0 ? '/admin/index.html' : '/';
             return ErrorPages::page(500, 'Внутренняя ошибка сервера', 'Что-то пошло не так. Попробуйте обновить страницу через минуту.', $home);

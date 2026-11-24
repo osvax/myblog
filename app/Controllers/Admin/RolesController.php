@@ -3,6 +3,7 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
 use App\Models\Role;
 
 /**
@@ -10,15 +11,21 @@ use App\Models\Role;
  */
 class RolesController extends Controller
 {
+    private $role;
+
+    public function __construct(Role $role)
+    {
+        $this->role = $role;
+    }
+
     /** Список ролей с правами + справочник разделов. */
     public function index($request)
     {
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
-        $model = new Role();
-        $roles = array_map(function ($role) use ($model) {
+        $roles = array_map(function ($role) {
             return [
                 'id' => (int) $role['id'],
                 'role_key' => $role['role_key'],
@@ -26,22 +33,21 @@ class RolesController extends Controller
                 'description' => $role['description'],
                 'is_system' => (bool) $role['is_system'],
                 'users_count' => (int) $role['users_count'],
-                'permissions' => $model->permissions((int) $role['id']),
+                'permissions' => $this->role->permissions((int) $role['id']),
             ];
-        }, $model->all());
+        }, $this->role->all());
 
-        return $this->json([
-            'success' => true,
+        return $this->json(ApiResource::success([
             'roles' => $roles,
             'sections' => require APP_ROOT . '/config/admin-navigation.php',
-        ]);
+        ]));
     }
 
     /** Создать роль. */
     public function create($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -51,25 +57,25 @@ class RolesController extends Controller
         $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
         $description = isset($input['description']) && is_string($input['description']) ? trim($input['description']) : '';
 
-        $result = (new Role())->create($key, $name, $description);
+        $result = $this->role->create($key, $name, $description);
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error']], 400);
+            return $this->json(ApiResource::error($result['error']), 400);
         }
-        return $this->json(['success' => true, 'id' => $result['id']]);
+        return $this->json(ApiResource::success(['id' => $result['id']]));
     }
 
     /** Обновить роль: название, описание и права одним запросом. */
     public function update($request, $parameters)
     {
         if ($request->method() !== 'PUT') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
 
         $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
         if ($id <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
+            return $this->json(ApiResource::error('Неверный ID'), 400);
         }
 
         $input = $request->json();
@@ -77,31 +83,31 @@ class RolesController extends Controller
         $description = isset($input['description']) && is_string($input['description']) ? trim($input['description']) : '';
         $permissions = isset($input['permissions']) && is_array($input['permissions']) ? $input['permissions'] : null;
 
-        $result = (new Role())->update($id, $name, $description, $permissions);
+        $result = $this->role->update($id, $name, $description, $permissions);
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error']], 400);
+            return $this->json(ApiResource::error($result['error']), 400);
         }
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     /** Удалить роль (не системную и не назначенную пользователям). */
     public function delete($request, $parameters)
     {
         if ($request->method() !== 'DELETE') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
 
         $id = isset($parameters['id']) ? (int) $parameters['id'] : 0;
         if ($id <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
+            return $this->json(ApiResource::error('Неверный ID'), 400);
         }
 
-        $result = (new Role())->delete($id);
+        $result = $this->role->delete($id);
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error']], 400);
+            return $this->json(ApiResource::error($result['error']), 400);
         }
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 }

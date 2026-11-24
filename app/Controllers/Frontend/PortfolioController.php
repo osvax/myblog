@@ -5,16 +5,27 @@ namespace App\Controllers\Frontend;
 use App\Controllers\Controller;
 use App\Core\Response;
 use App\Models\ContentRepository;
+use App\Models\SiteSettings;
 
 class PortfolioController extends Controller
 {
+    private $content;
+    private $settings;
+
+    public function __construct(
+        ContentRepository $content,
+        SiteSettings $settings
+    ) {
+        $this->content = $content;
+        $this->settings = $settings;
+    }
+
     public function index($request)
     {
         $user = current_user();
-        $content = new ContentRepository();
-        $settings = (new \App\Models\SiteSettings())->all();
+        $settings = $this->settings->all();
         $projects = [];
-        foreach ($content->projects(true) as $project) {
+        foreach ($this->content->projects(true) as $project) {
             $projects[$project['slug']] = $project;
         }
 
@@ -54,8 +65,7 @@ class PortfolioController extends Controller
     public function project($request, $slug)
     {
         $user = current_user();
-        $content = new ContentRepository();
-        $project = $content->projectBySlug($slug);
+        $project = $this->content->projectBySlug($slug);
         if (!$project) {
             return \App\Core\ErrorPages::page(404, 'Проект не найден', 'Такого проекта нет или он был удалён.', '/');
         }
@@ -64,7 +74,7 @@ class PortfolioController extends Controller
         $project['results'] = $this->parseResults($project['results_json'] ?? null);
 
         $allProjects = [];
-        foreach ($content->projects(true) as $p) {
+        foreach ($this->content->projects(true) as $p) {
             $allProjects[$p['slug']] = [
                 'slug' => $p['slug'],
                 'title' => $p['title'],
@@ -93,7 +103,7 @@ class PortfolioController extends Controller
         }
 
         // Тумблеры карточки «Информация о проекте» (Настройки → Портфолио)
-        $projectSettings = new \App\Models\SiteSettings();
+        $projectSettings = $this->settings;
 
         return $this->page('frontend', $template, [
             'title' => $project['title'],
@@ -119,8 +129,7 @@ class PortfolioController extends Controller
     public function publicProject($request, $slug)
     {
         $user = current_user();
-        $content = new ContentRepository();
-        $project = $content->projectBySlug($slug);
+        $project = $this->content->projectBySlug($slug);
         if (!$project) {
             return \App\Core\ErrorPages::page(404, 'Проект не найден', 'Такого проекта нет или он был удалён.', '/');
         }
@@ -129,7 +138,7 @@ class PortfolioController extends Controller
         $project['results'] = $this->parseResults($project['results_json'] ?? null);
 
         // Тумблеры карточки «Информация о проекте» (Настройки → Портфолио)
-        $projectSettings = new \App\Models\SiteSettings();
+        $projectSettings = $this->settings;
 
         return $this->page('frontend', $slug, [
             'title' => $project['title'],
@@ -153,8 +162,7 @@ class PortfolioController extends Controller
     public function publicArticle($request, $slug)
     {
         $user = current_user();
-        $content = new ContentRepository();
-        $article = $content->articleBySlug($slug);
+        $article = $this->content->articleBySlug($slug);
         if (!$article) {
             return \App\Core\ErrorPages::page(404, 'Статья не найдена', 'Такой статьи нет или она была удалена.', '/blog.html');
         }

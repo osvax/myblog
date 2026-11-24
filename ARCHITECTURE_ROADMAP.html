@@ -1,0 +1,700 @@
+<h1>MyBlog — Архитектурный аудит и Roadmap</h1>
+<p><strong>Автор:</strong> AI Assistant<br>
+<strong>Дата:</strong> 2024<br>
+<strong>Проект:</strong> <code>valentin/myblog</code> — персональный блог, портфолио и CRM на самописном PHP MVC</p>
+<hr>
+<h2>1. Текущее состояние проекта</h2>
+<h3>Стек технологий</h3>
+<table>
+<thead>
+<tr>
+<th>Слой</th>
+<th>Технологии</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Backend</strong></td>
+<td>PHP 8.1+, самописный MVC, PDO/MariaDB, Composer, PHP-DI, Symfony Mailer/Mime, HTMLPurifier, Predis (Redis)</td>
+</tr>
+<tr>
+<td><strong>Frontend</strong></td>
+<td>Vite 5, Bootstrap 5.3, Bootstrap Icons, Vanilla JS (ES modules), SCSS (ITCSS-подобная структура), Highlight.js, CodeMirror</td>
+</tr>
+<tr>
+<td><strong>Инфраструктура</strong></td>
+<td>Apache/Nginx, PHP-FPM, MariaDB 10.9+, Redis (рекомендуется), Docker-ready</td>
+</tr>
+<tr>
+<td><strong>Качество кода</strong></td>
+<td>PHPStan Level 5, PSR-12 (phpcs/phpcbf), PHPUnit</td>
+</tr>
+</tbody>
+</table>
+<h3>Возможности</h3>
+<ul>
+<li>Публичная часть: блог, портфолио, контакты, заказы, авторизация (email/pass, 2FA, OAuth Яндекс), темы, SEO</li>
+<li>Админка: дашборд, статистика, CRUD статей/проектов/категорий/страниц, файловый менеджер, меню, роли/права (RBAC), лендинг-билдер, калькулятор, консультант (чат), импорт портфолио из Markdown</li>
+<li>Безопасность: CSRF, HttpOnly/SameSite/Secure куки, rate limiting, санитизация HTML, защита загрузок, prepared statements</li>
+</ul>
+<h3>Структура проекта</h3>
+<pre><code>MyBlog/
+├── app/
+│   ├── Controllers/ (Admin, Api, Frontend)
+│   ├── Core/ (Router, Request, Response, Database, Auth, RateLimiter, ...)
+│   ├── Models/ (ContentRepository, User, SiteSettings, ...)
+│   └── Views/ (admin, frontend/themes)
+├── config/ (container.php, database.php, admin-*.php)
+├── database/migrations/ (SQL + CLI скрипты)
+├── public/ (index.php, build/, uploads/, portfolio/)
+├── resources/ (js/, scss/)
+├── routes/ (web.php, api.php)
+├── tests/
+├── composer.json, package.json, vite.config.js
+└── README.md
+</code></pre>
+<hr>
+<h2>2. Рефакторинг / Архитектура (Приоритет: Высокий)</h2>
+<h3>2.1 Query Builder</h3>
+<p><strong>Проблема:</strong> Raw SQL повсюду, дублирование <code>db_table()</code>, ручные JOIN/WHERE.</p>
+<p><strong>Решение:</strong> Лёгкая обёртка над PDO — <code>App\Core\QueryBuilder</code>.</p>
+<pre><code class="language-php">// app/Core/QueryBuilder.php
+final class QueryBuilder
+{
+    private PDO $pdo;
+    private string $table;
+    private array $wheres = [];
+    private array $bindings = [];
+    private array $joins = [];
+    private array $selects = ['*'];
+    private ?string $orderBy = null;
+    private ?int $limit = null;
+
+    public function __construct(PDO $pdo, string $table) { ... }
+    public function select(array $columns): self { ... }
+    public function where(string $col, string $op, mixed $val): self { ... }
+    public function join(string $table, string $first, string $op, string $second, string $type = 'INNER'): self { ... }
+    public function orderBy(string $col, string $dir = 'ASC'): self { ... }
+    public function limit(int $n): self { ... }
+    public function get(): array { ... }
+    public function first(): ?array { ... }
+    public function insert(array $data): string|false { ... }
+    public function update(array $data): int { ... }
+    public function delete(): int { ... }
+}
+</code></pre>
+<p><strong>Пример рефакторинга <code>ContentRepository::articles()</code>:</strong></p>
+<pre><code class="language-php">// До
+$statement = $this-&gt;db-&gt;query(
+    'SELECT a.*, c.name AS category, c.slug AS category_slug
+     FROM ' . db_table('articles') . ' a LEFT JOIN ' . db_table('categories') . ' c ON c.id = a.category_id ' . $where . '
+     ORDER BY a.published_at DESC, a.created_at DESC'
+);
+
+// После
+return $this-&gt;qb('articles a')
+    -&gt;select(['a.*', 'c.name AS category', 'c.slug AS category_slug'])
+    -&gt;join('categories c', 'c.id', '=', 'a.category_id', 'LEFT')
+    -&gt;when($publishedOnly, fn($q) =&gt; $q-&gt;where('a.is_published', '=', 1))
+    -&gt;orderBy('a.published_at', 'DESC')
+    -&gt;get();
+</code></pre>
+<h3>2.2 DTO + Валидация</h3>
+<p><strong>Проблема:</strong> Валидация разброшена по контроллерам (<code>articleInput</code>, <code>projectInput</code>).</p>
+<p><strong>Решение:</strong> DTO классы с атрибутами валидации.</p>
+<pre><code class="language-php">// app/DTO/ArticleDTO.php
+namespace App\DTO;
+
+use Respect\Validation\Validator as v;
+use Attribute;
+
+#[Attribute] class NotBlank {}
+#[Attribute] class Length { public function __construct(public int $max) {} }
+#[Attribute] class Email {}
+
+class ArticleDTO
+{
+    public string $id;
+    #[NotBlank, Length(180)]
+    public string $slug;
+    #[NotBlank]
+    public string $title;
+    #[NotBlank]
+    public string $description;
+    #[NotBlank]
+    public string $category;
+    public string $content;
+    #[NotBlank]
+    public string $author;
+    public string $date; // Y-m-d
+    public bool $active;
+    public array $tags = [];
+    public string $cover = '';
+    public string $icon = 'bi-file-text';
+
+    public static function fromRequest(array $data, ?string $id = null): self
+    {
+        $dto = new self();
+        $dto-&gt;id = $id ?? bin2hex(random_bytes(16));
+        $dto-&gt;slug = $data['slug'] ?? '';
+        $dto-&gt;title = $data['title'] ?? '';
+        // ...
+        return $dto;
+    }
+
+    public function validate(): array
+    {
+        $errors = [];
+        // Используем respect/validation или свой минимальный валидатор
+        return $errors;
+    }
+}
+</code></pre>
+<p><strong>В контроллере:</strong></p>
+<pre><code class="language-php">$dto = ArticleDTO::fromRequest($request-&gt;json(), $params['id'] ?? null);
+$errors = $dto-&gt;validate();
+if ($errors) return $this-&gt;json(['success' =&gt; false, 'errors' =&gt; $errors], 400);
+$article = $this-&gt;content-&gt;saveArticle($dto-&gt;toArray());
+</code></pre>
+<h3>2.3 Миграции с версионированием</h3>
+<p><strong>Проблема:</strong> Набор <code>run_*.php</code> скриптов — не версиями, а разовыми патчами.</p>
+<p><strong>Решение:</strong> Таблица <code>va_migrations</code> + <code>MigrationRunner</code>.</p>
+<pre><code class="language-sql">CREATE TABLE va_migrations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    executed_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+</code></pre>
+<pre><code class="language-php">// app/Core/MigrationRunner.php
+class MigrationRunner
+{
+    public function __construct(private PDO $pdo) {}
+
+    public function getExecuted(): array { ... }
+    public function run(string $migrationsPath): void
+    {
+        $files = glob(&quot;$migrationsPath/V*__*.php&quot;);
+        sort($files);
+        $executed = $this-&gt;getExecuted();
+        foreach ($files as $file) {
+            $name = basename($file, '.php');
+            if (in_array($name, $executed)) continue;
+            require_once $file;
+            $class = &quot;Migration_$name&quot;;
+            (new $class())-&gt;up($this-&gt;pdo);
+            $this-&gt;pdo-&gt;prepare(&quot;INSERT INTO va_migrations (name) VALUES (?)&quot;)-&gt;execute([$name]);
+        }
+    }
+    public function rollback(int $steps = 1): void { ... }
+}
+</code></pre>
+<p><strong>Формат миграции:</strong> <code>database/migrations/V001__init.php</code></p>
+<pre><code class="language-php">class Migration_V001__init
+{
+    public function up(PDO $pdo): void
+    {
+        $pdo-&gt;exec(&quot;CREATE TABLE va_users (...);&quot;);
+    }
+    public function down(PDO $pdo): void
+    {
+        $pdo-&gt;exec(&quot;DROP TABLE va_users;&quot;);
+    }
+}
+</code></pre>
+<h3>2.4 DI везде</h3>
+<p><strong>Проблема:</strong> Контроллеры создаются вручную в <code>routes/*.php</code>.</p>
+<p><strong>Решение:</strong> Автовайринг через PHP-DI.</p>
+<pre><code class="language-php">// config/container.php
+return [
+    App\Core\QueryBuilder::class =&gt; \DI\factory(fn() =&gt; new App\Core\QueryBuilder(Database::connection(), '')),
+    App\Models\ContentRepository::class =&gt; \DI\autowire()-&gt;constructorParameter('qb', \DI\get(App\Core\QueryBuilder::class)),
+    App\Controllers\Admin\ContentController::class =&gt; \DI\autowire(),
+    // ...
+];
+</code></pre>
+<pre><code class="language-php">// routes/api.php
+return function (Router $router) {
+    $container = require __DIR__ . '/../config/container.php';
+    $content = $container-&gt;get(App\Controllers\Admin\ContentController::class);
+    // ...
+};
+</code></pre>
+<h3>2.5 Error Handling + Logging</h3>
+<p><strong>Monolog + JSON логи + Sentry.</strong></p>
+<pre><code class="language-php">// app/bootstrap.php (добавить)
+use Monolog\Logger;
+use Monolog\Handler\StreamHandler;
+use Monolog\Formatter\JsonFormatter;
+
+$log = new Logger('myblog');
+$handler = new StreamHandler(APP_ROOT . '/var/log/app.jsonl');
+$handler-&gt;setFormatter(new JsonFormatter());
+$log-&gt;pushHandler($handler);
+
+// В Router::invoke — ловим Throwable, логируем с контекстом
+</code></pre>
+<h3>2.6 API Resources / Transformers</h3>
+<pre><code class="language-php">// app/Core/ApiResource.php
+class ApiResource
+{
+    public static function item(mixed $data, string $transformer): array
+    {
+        return ['success' =&gt; true, 'data' =&gt; (new $transformer())-&gt;transform($data)];
+    }
+    public static function collection(iterable $items, string $transformer): array
+    {
+        return ['success' =&gt; true, 'data' =&gt; array_map(fn($i) =&gt; (new $transformer())-&gt;transform($i), $items)];
+    }
+    public static function error(string $message, int $code = 400, array $meta = []): array
+    {
+        return ['success' =&gt; false, 'error' =&gt; $message, 'meta' =&gt; $meta];
+    }
+}
+</code></pre>
+<pre><code class="language-php">// app/Transformers/ArticleTransformer.php
+class ArticleTransformer
+{
+    public function transform(array $article): array
+    {
+        return [
+            'id' =&gt; $article['id'],
+            'slug' =&gt; $article['slug'],
+            'title' =&gt; $article['title'],
+            // только нужные поля, никаких внутренних
+        ];
+    }
+}
+</code></pre>
+<hr>
+<h2>3. Фронтенд — Миграция на Vue 3 (Постепенная гибридная)</h2>
+<h3>Стратегия: Острова → Shared UI Kit → Полная миграция</h3>
+<h3>3.1 Подготовка</h3>
+<pre><code class="language-bash">npm i vue@3 pinia @vitejs/plugin-vue vue-tsc typescript
+</code></pre>
+<pre><code class="language-js">// vite.config.js
+import vue from '@vitejs/plugin-vue';
+export default defineConfig({
+  plugins: [vue()],
+  // ...
+});
+</code></pre>
+<h3>3.2 Этапы</h3>
+<table>
+<thead>
+<tr>
+<th>Этап</th>
+<th>Что делаем</th>
+<th>Примеры</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>0. Фундамент</strong></td>
+<td>Vue 3, TS, Pinia, Vite plugin</td>
+<td><code>tsconfig.json</code>, <code>vite.config.js</code></td>
+</tr>
+<tr>
+<td><strong>1. Острова</strong></td>
+<td>Изолированные Vue-приложения в админке</td>
+<td>Консультант, Калькулятор, Шаблоны, Файловый менеджер</td>
+</tr>
+<tr>
+<td><strong>2. UI Kit</strong></td>
+<td><code>resources/js/ui/</code> — BaseButton, BaseInput, BaseModal, BaseTable, BaseToast, BaseAvatar</td>
+<td><code>&lt;BaseButton variant=&quot;orange&quot; @click=&quot;save&quot;&gt;</code></td>
+</tr>
+<tr>
+<td><strong>3. Pinia сторы</strong></td>
+<td><code>useAuthStore</code>, <code>useConsultantStore</code>, <code>useMediaStore</code></td>
+<td>Централизованный стейт, API слой с <code>ky</code></td>
+</tr>
+<tr>
+<td><strong>4. Публичная часть</strong></td>
+<td><code>app.js</code> → <code>createApp(App).mount('#app')</code>, <code>window.__INITIAL_STATE__</code></td>
+<td>Реактивная навигация, консультант-виджет</td>
+</tr>
+<tr>
+<td><strong>5. Очистка</strong></td>
+<td>Удаление Vanilla JS модулей по мере покрытия</td>
+<td>Меньше кода, меньше багов</td>
+</tr>
+</tbody>
+</table>
+<h3>3.3 Важные нюансы</h3>
+<ul>
+<li><strong>Темизация:</strong> CSS переменные <code>--theme-*</code> уже работают. Vue-компоненты просто их используют.</li>
+<li><strong>Bootstrap 5:</strong> Оставляем как CSS-фреймворк. Не ставим <code>bootstrap-vue-next</code>. Пишем свои обёртки.</li>
+<li><strong>CodeMirror 6:</strong> Обернуть в <code>&lt;CodeMirrorEditor v-model=&quot;html&quot; :extensions=&quot;[html(), php()]&quot;/&gt;</code>.</li>
+<li><strong>Vite entry points:</strong> Останется 2 — <code>app</code> (public) + <code>admin</code> (админка).</li>
+<li><strong>TypeScript:</strong> Строгий режим с дня 1.</li>
+</ul>
+<h3>3.4 Генерация TS типов из PHP DTO</h3>
+<pre><code class="language-bash"># Скрипт в CI: php artisan dto:generate-types → resources/js/types/api.d.ts
+</code></pre>
+<pre><code class="language-ts">// types/api.d.ts (генерируется)
+export interface ArticleDTO {
+  id: string;
+  slug: string;
+  title: string;
+  // ...
+}
+export interface ArticleListResponse { success: true; articles: ArticleDTO[]; }
+</code></pre>
+<p>В Vue: <code>const response = await api.get&lt;ArticleListResponse&gt;('/api/admin/articles')</code> — полный autocomplete.</p>
+<hr>
+<h2>4. Производительность</h2>
+<h3>4.1 Кэширование</h3>
+<table>
+<thead>
+<tr>
+<th>Уровень</th>
+<th>Что кэшируем</th>
+<th>Инструмент</th>
+<th>Инвалидация</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>HTTP</strong></td>
+<td>Статика (<code>public/build/*</code>, <code>uploads/*</code>)</td>
+<td>Nginx <code>expires 1y</code>, <code>immutable</code></td>
+<td>Vite manifest hash</td>
+</tr>
+<tr>
+<td><strong>API (GET)</strong></td>
+<td>Списки статей, проекты, категории, меню, настройки</td>
+<td>Redis + <code>ETag</code> / <code>If-None-Match</code></td>
+<td>Тэг-кэш: <code>articles</code>, <code>projects</code>, <code>categories</code>, <code>menus</code>, <code>settings</code></td>
+</tr>
+<tr>
+<td><strong>БД</strong></td>
+<td>Дашборд, статистика</td>
+<td>Материализованные представления / таблицы-кэш</td>
+<td>На запись в исходные таблицы</td>
+</tr>
+<tr>
+<td><strong>PHP</strong></td>
+<td>OPcache, конфиг</td>
+<td>OPcache (включён)</td>
+<td>Деплой</td>
+</tr>
+<tr>
+<td><strong>Фрагменты HTML</strong></td>
+<td>Блоки сайдбара, меню, виджеты</td>
+<td>Redis + теги</td>
+<td>Соответствующие сущности</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Пример кэша списка статей:</strong></p>
+<pre><code class="language-php">$cacheKey = 'admin:articles:list';
+$cached = $this-&gt;redis-&gt;get($cacheKey);
+if ($cached) return json_decode($cached, true);
+
+$articles = $this-&gt;qb(...)-&gt;get();
+$this-&gt;redis-&gt;setex($cacheKey, 300, json_encode($articles));
+$this-&gt;redis-&gt;sAdd('cache:tags:articles', $cacheKey);
+return $articles;
+</code></pre>
+<p><strong>Инвалидация:</strong></p>
+<pre><code class="language-php">$this-&gt;redis-&gt;sMembers('cache:tags:articles')-&gt;each(fn($key) =&gt; $this-&gt;redis-&gt;del($key));
+$this-&gt;redis-&gt;del('cache:tags:articles');
+</code></pre>
+<h3>4.2 Lazy-loading / Оптимизация запросов</h3>
+<table>
+<thead>
+<tr>
+<th>Проблема</th>
+<th>Решение</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>N+1</code> в <code>projectRow</code> → <code>gallery</code> + <code>infoItems</code></td>
+<td><code>JOIN</code> + <code>JSON_ARRAYAGG</code> в одном запросе</td>
+</tr>
+<tr>
+<td><code>articles()</code> + <code>commentCounts()</code> — 2 запроса</td>
+<td><code>LEFT JOIN (SELECT article_slug, COUNT(*) ...) cm ON cm.article_slug = a.slug</code></td>
+</tr>
+<tr>
+<td>Дашборд: 10+ запросов</td>
+<td>Один агрегирующий SQL / материализованное представление <code>va_dashboard_stats</code></td>
+</tr>
+<tr>
+<td><code>LandingPage::findActive($slug)</code> на каждом роуте</td>
+<td>Кэш в Redis на 60с + тег <code>landing_pages</code></td>
+</tr>
+<tr>
+<td>Изображения портфолио</td>
+<td>WebP/AVIF через <code>vite-imagetools</code> или <code>sharp</code> в очереди, <code>srcset</code> + <code>loading=lazy</code></td>
+</tr>
+</tbody>
+</table>
+<h3>4.3 БД индексы (проверить <code>EXPLAIN</code>)</h3>
+<pre><code class="language-sql">CREATE INDEX idx_articles_published_slug ON va_articles (is_published, slug);
+CREATE INDEX idx_articles_category_published ON va_articles (category_id, is_published, published_at DESC);
+CREATE INDEX idx_messages_type_approved_slug ON va_messages (message_type, is_approved, article_slug);
+CREATE INDEX idx_user_activities_created_at ON va_user_activities (created_at);
+CREATE INDEX idx_orders_status_date ON va_orders (status, order_date);
+</code></pre>
+<hr>
+<h2>5. Новые фичи</h2>
+<h3>5.1 API (публичное / партнёрское)</h3>
+<ul>
+<li><strong>Версионирование:</strong> <code>/api/v1/</code> + <code>Accept: application/vnd.myblog.v1+json</code></li>
+<li><strong>DTO Resources:</strong> <code>ApiResource::item($article, ArticleResource::class)</code></li>
+<li><strong>OpenAPI/Swagger:</strong> <code>zircote/swagger-php</code> атрибуты → <code>public/docs/openapi.json</code> → Swagger UI в <code>/api/docs</code></li>
+<li><strong>Rate Limiting:</strong> Разные лимиты: <code>api:public</code> (60/min), <code>api:auth</code> (300/min), <code>api:write</code> (30/min)</li>
+<li><strong>Auth:</strong> Personal Access Tokens (<code>va_api_tokens</code>), скопы (<code>articles:read</code>, <code>orders:write</code>)</li>
+</ul>
+<h3>5.2 Вебхуки</h3>
+<pre><code>POST /api/webhooks/{provider} → WebhookController::handle()
+</code></pre>
+<ul>
+<li>Таблица <code>va_webhook_endpoints (id, url, events_json, secret, active, retry_count, last_delivery_at)</code></li>
+<li>Подпись: <code>X-Signature: sha256(payload + secret)</code></li>
+<li>Очередь доставки с экспоненциальным бэкоффом</li>
+<li>События: <code>article.published</code>, <code>order.created</code>, <code>message.received</code>, <code>user.registered</code></li>
+</ul>
+<h3>5.3 Очередь задач (Job Queue)</h3>
+<p><strong>Таблица <code>va_jobs</code>:</strong></p>
+<pre><code class="language-sql">CREATE TABLE va_jobs (
+  id CHAR(36) PRIMARY KEY,
+  queue VARCHAR(64) NOT NULL,
+  payload JSON NOT NULL,
+  attempts TINYINT UNSIGNED DEFAULT 0,
+  max_attempts TINYINT UNSIGNED DEFAULT 3,
+  reserved_at DATETIME NULL,
+  available_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+CREATE INDEX idx_jobs_queue_available ON va_jobs (queue, available_at);
+</code></pre>
+<p><strong>Worker (<code>bin/queue-worker.php</code>):</strong></p>
+<pre><code class="language-php">while (true) {
+    $job = $pdo-&gt;prepare(&quot;
+        UPDATE va_jobs SET reserved_at = NOW()
+        WHERE id = (
+            SELECT id FROM va_jobs
+            WHERE queue = ? AND available_at &lt;= NOW() AND attempts &lt; max_attempts
+            ORDER BY available_at ASC LIMIT 1
+            FOR UPDATE SKIP LOCKED
+        )
+        RETURNING *
+    &quot;);
+    $job-&gt;execute(['default']);
+    if ($row = $job-&gt;fetch()) {
+        $handler = JobRegistry::get($row['payload']['job']);
+        try { $handler-&gt;handle($row['payload']['data']); $pdo-&gt;exec(&quot;DELETE FROM va_jobs WHERE id = '{$row['id']}'&quot;); }
+        catch (\Throwable $e) { /* retry logic, backoff */ }
+    } else { sleep(1); }
+}
+</code></pre>
+<p><strong>Что в очередь:</strong> Email, вебхуки, импорт портфолио, генерация sitemap, пересчёт статистики, обработка изображений.</p>
+<h3>5.4 Тесты</h3>
+<table>
+<thead>
+<tr>
+<th>Уровень</th>
+<th>Инструмент</th>
+<th>Что тестируем</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Unit</strong></td>
+<td>PHPUnit</td>
+<td>DTO валидация, QueryBuilder, slugify, калькулятор, утилиты</td>
+</tr>
+<tr>
+<td><strong>Integration</strong></td>
+<td>PHPUnit + SQLite <code>:memory:</code></td>
+<td>Repository, миграции, API контроллеры</td>
+</tr>
+<tr>
+<td><strong>E2E</strong></td>
+<td>Playwright (TypeScript)</td>
+<td>Критичные флоу: логин → статья → публикация; заказ → админка → статус</td>
+</tr>
+<tr>
+<td><strong>Frontend Unit</strong></td>
+<td>Vitest + @vue/test-utils</td>
+<td>Pinia сторы, UI Kit, API клиент</td>
+</tr>
+<tr>
+<td><strong>Static</strong></td>
+<td>PHPStan 5, psalm, eslint, stylelint, vue-tsc</td>
+<td>CI gate</td>
+</tr>
+</tbody>
+</table>
+<p><strong>Цель покрытия:</strong> 80% Unit/Integration, 100% публичные API эндпоинты.</p>
+<hr>
+<h2>6. CI/CD / Деплой</h2>
+<h3>6.1 GitHub Actions (<code>.github/workflows/ci.yml</code>)</h3>
+<pre><code class="language-yaml">name: CI
+on: [push, pull_request]
+jobs:
+  php:
+    runs-on: ubuntu-latest
+    services:
+      mariadb: { image: mariadb:10.9, env: { MYSQL_ROOT_PASSWORD: test, MYSQL_DATABASE: test }, ports: [3306:3306] }
+      redis: { image: redis:7-alpine, ports: [6379:6379] }
+    steps:
+      - uses: actions/checkout@v4
+      - uses: shivammathur/setup-php@v2
+        with: { php-version: '8.3', extensions: pdo_mysql, redis, mbstring, gd, zip }
+      - run: composer install --prefer-dist --no-progress
+      - run: composer phpstan
+      - run: composer cs
+      - run: composer test
+  node:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with: { node-version: '20', cache: 'npm' }
+      - run: npm ci
+      - run: npm run lint:js
+      - run: npm run lint:css
+      - run: npm run build
+  e2e:
+    needs: [php, node]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: npx playwright install --with-deps chromium
+      - run: npx playwright test
+</code></pre>
+<h3>6.2 Деплой (Zero-downtime)</h3>
+<table>
+<thead>
+<tr>
+<th>Окружение</th>
+<th>Как</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>Staging</strong></td>
+<td>Авто-деплой из <code>dev</code> ветки. <code>docker compose -f docker-compose.staging.yml up -d --build</code>. Миграции в <code>entrypoint.sh</code>.</td>
+</tr>
+<tr>
+<td><strong>Production</strong></td>
+<td>Ручной триггер (GitHub Environment <code>production</code> + approval). Blue/Green или Rolling update.</td>
+</tr>
+<tr>
+<td><strong>Миграции</strong></td>
+<td><code>php database/migrate.php up</code> в <code>initContainer</code> / <code>preStart</code> hook.</td>
+</tr>
+<tr>
+<td><strong>Ассеты</strong></td>
+<td><code>npm run build</code> в CI → артефакт <code>public/build/</code> → копируется в образ. <code>manifest.json</code> для кэш-бастинга.</td>
+</tr>
+<tr>
+<td><strong>Secrets</strong></td>
+<td>GitHub Environments / Vault / <code>.env</code> на сервере. <code>APP_KEY</code> генерируется один раз.</td>
+</tr>
+<tr>
+<td><strong>Healthcheck</strong></td>
+<td><code>GET /health</code> → <code>{&quot;success&quot;:true,&quot;app&quot;:&quot;myblog&quot;}</code>. Nginx/K8s probe.</td>
+</tr>
+<tr>
+<td><strong>Rollback</strong></td>
+<td><code>kubectl rollout undo</code> / <code>docker compose up -d --force-recreate</code> предыдущий образ.</td>
+</tr>
+</tbody>
+</table>
+<h3>6.3 Dockerfile</h3>
+<pre><code class="language-dockerfile"># build stage
+FROM node:20-alpine AS frontend
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci
+COPY resources/ ./resources/
+COPY vite.config.js postcss.config.js ./
+RUN npm run build
+
+# php stage
+FROM php:8.3-fpm-alpine
+RUN apk add --no-cache linux-headers $PHPIZE_DEPS \
+    &amp;&amp; pecl install redis \
+    &amp;&amp; docker-php-ext-enable redis pdo_mysql gd opcache
+WORKDIR /var/www/html
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+COPY composer*.php ./
+RUN composer install --no-dev --optimize-autoloader --no-interaction
+COPY . .
+COPY --from=frontend /app/public/build ./public/build
+RUN chown -R www-data:www-data /var/www/html/var /var/www/html/public/uploads
+USER www-data
+CMD [&quot;php-fpm&quot;]
+</code></pre>
+<hr>
+<h2>7. Roadmap (План действий)</h2>
+<table>
+<thead>
+<tr>
+<th>Неделя</th>
+<th>Фокус</th>
+<th>Делаблы</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><strong>1</strong></td>
+<td><strong>Архитектура</strong></td>
+<td>QueryBuilder, DTO/Validation, DI в routes, API Resource базовый класс</td>
+</tr>
+<tr>
+<td><strong>2</strong></td>
+<td><strong>Миграции + CI</strong></td>
+<td>MigrationRunner, baseline, GitHub Actions (php/node/lint/test)</td>
+</tr>
+<tr>
+<td><strong>3</strong></td>
+<td><strong>Кэш + БД</strong></td>
+<td>Redis кэш с тегами, индексы, N+1 фиксы, дашборд → материализованка</td>
+</tr>
+<tr>
+<td><strong>4</strong></td>
+<td><strong>Очередь + Вебхуки</strong></td>
+<td><code>va_jobs</code>, worker, email/webhook jobs, retry/backoff</td>
+</tr>
+<tr>
+<td><strong>5</strong></td>
+<td><strong>Vue 3: Админ-острова</strong></td>
+<td>Setup Vue+TS+Pinia, UI Kit, перенос Консультанта + Калькулятора</td>
+</tr>
+<tr>
+<td><strong>6</strong></td>
+<td><strong>Vue 3: Публика</strong></td>
+<td>Монтирование <code>app.js</code>, общий стейт, консультант-виджет, ленивые импорты</td>
+</tr>
+<tr>
+<td><strong>7</strong></td>
+<td><strong>API v1 + OpenAPI</strong></td>
+<td><code>/api/v1/</code>, токены, сваггер, rate limits</td>
+</tr>
+<tr>
+<td><strong>8</strong></td>
+<td><strong>E2E + Deploy</strong></td>
+<td>Playwright тесты, Dockerfile, staging/prod pipelines, healthchecks</td>
+</tr>
+<tr>
+<td><strong>9+</strong></td>
+<td><strong>Наблюдаемость</strong></td>
+<td>Sentry, структурированные логи, метрики (Prometheus + Grafana)</td>
+</tr>
+</tbody>
+</table>
+<hr>
+<h2>8. С чего начать прямо сейчас</h2>
+<ol>
+<li><strong>QueryBuilder + DTO</strong> — готовую реализацию для <code>ContentRepository::articles()</code> и <code>ArticleDTO</code>.</li>
+<li><strong>MigrationRunner</strong> — класс + baseline-скрипт для существующих <code>run_*.php</code>.</li>
+<li><strong>Vue 3 setup</strong> — <code>vite.config.js</code>, <code>tsconfig.json</code>, <code>resources/js/ui/BaseButton.vue</code>, Pinia store boilerplate.</li>
+</ol>
+<hr>
+<p><em>Документ сгенерирован на основе аудита кодбейза <code>valentin/myblog</code>.</em></p>

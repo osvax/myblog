@@ -3,16 +3,30 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
+use App\Models\SiteSettings;
+use App\Models\UserActivity;
 
 class SystemController extends Controller
 {
+    private $activity;
+    private $settings;
+
+    public function __construct(
+        UserActivity $activity,
+        SiteSettings $settings
+    ) {
+        $this->activity = $activity;
+        $this->settings = $settings;
+    }
+
     public function info($request, array $params = [])
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         $serverSoftware = isset($_SERVER['SERVER_SOFTWARE']) && is_string($_SERVER['SERVER_SOFTWARE'])
@@ -33,8 +47,7 @@ class SystemController extends Controller
             // БД недоступна — показываем только хост
         }
 
-        return $this->json([
-            'success' => true,
+        return $this->json(ApiResource::success([
             'webServer' => $serverSoftware !== '' ? $serverSoftware : 'Не определён',
             'phpVersion' => PHP_VERSION . ' (' . php_sapi_name() . ')',
             'os' => PHP_OS_FAMILY,
@@ -44,7 +57,7 @@ class SystemController extends Controller
             'timezone' => date_default_timezone_get() . ' (UTC' . date('P') . ')',
             'uploadLimit' => ini_get('upload_max_filesize'),
             'memoryLimit' => ini_get('memory_limit'),
-        ]);
+        ]));
     }
 
     /**
@@ -59,29 +72,27 @@ class SystemController extends Controller
     public function statistics($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
-        $activity = new \App\Models\UserActivity();
-        $traffic = $activity->traffic($this->validatedTrafficFilters());
+        $traffic = $this->activity->traffic($this->validatedTrafficFilters());
 
         // Интервал автообновления статистики дашборда (настройка раздела «Статистика сайта»)
-        $updateInterval = (int) (new \App\Models\SiteSettings())->get('statisticsUpdateInterval', 900);
+        $updateInterval = (int) $this->settings->get('statisticsUpdateInterval', 900);
         if ($updateInterval < 5) {
             $updateInterval = 900;
         }
 
-        return $this->json([
-            'success' => true,
-            'online' => $activity->onlineCount(),
-            'today' => $activity->todayCount(),
+        return $this->json(ApiResource::success([
+            'online' => $this->activity->onlineCount(),
+            'today' => $this->activity->todayCount(),
             'traffic' => $traffic['rows'],
             'pagination' => $traffic['pagination'],
             'updateInterval' => $updateInterval,
-        ]);
+        ]));
     }
 
     /**
@@ -91,13 +102,13 @@ class SystemController extends Controller
     public function online($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
-        return $this->json(['success' => true, 'online' => (new \App\Models\UserActivity())->onlineCount()]);
+        return $this->json(ApiResource::success(['online' => $this->activity->onlineCount()]));
     }
 
     /**
@@ -106,19 +117,19 @@ class SystemController extends Controller
     public function overview($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
-        $data = (new \App\Models\UserActivity())->overview();
-        $updateInterval = (int) (new \App\Models\SiteSettings())->get('statisticsUpdateInterval', 900);
+        $data = $this->activity->overview();
+        $updateInterval = (int) $this->settings->get('statisticsUpdateInterval', 900);
         if ($updateInterval < 5) {
             $updateInterval = 900;
         }
         $data['updateInterval'] = $updateInterval;
-        return $this->json(array_merge(['success' => true], $data));
+        return $this->json(ApiResource::success($data));
     }
 
     /**
@@ -128,19 +139,19 @@ class SystemController extends Controller
     public function hourly($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         $hour = trim((string) ($_GET['hour'] ?? ''));
         if (preg_match('/^(?:[01]\d|2[0-3])$/', $hour) !== 1) {
-            return $this->json(['success' => false, 'error' => 'Не указан час (00–23)'], 400);
+            return $this->json(ApiResource::error('Не указан час (00–23)'), 400);
         }
 
-        $byMinute = (new \App\Models\UserActivity())->hourDetail((int) $hour);
-        return $this->json(['success' => true, 'hour' => $hour, 'byMinute' => $byMinute]);
+        $byMinute = $this->activity->hourDetail((int) $hour);
+        return $this->json(ApiResource::success(['hour' => $hour, 'byMinute' => $byMinute]));
     }
 
     /**
@@ -150,18 +161,17 @@ class SystemController extends Controller
     public function traffic($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
-        $traffic = (new \App\Models\UserActivity())->traffic($this->validatedTrafficFilters());
-        return $this->json([
-            'success' => true,
+        $traffic = $this->activity->traffic($this->validatedTrafficFilters());
+        return $this->json(ApiResource::success([
             'traffic' => $traffic['rows'],
             'pagination' => $traffic['pagination'],
-        ]);
+        ]));
     }
 
     /**
@@ -170,24 +180,23 @@ class SystemController extends Controller
     public function clean($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         \admin_require_csrf();
 
-        $settings = new \App\Models\SiteSettings();
-        $days = (int) $settings->get('statisticsRetentionDays', 90);
+        $days = (int) $this->settings->get('statisticsRetentionDays', 90);
         if ($days <= 0) {
-            return $this->json(['success' => false, 'error' => 'Срок хранения «Без ограничения» — данные не удаляются. Установите срок хранения, чтобы очистить старые записи.']);
+            return $this->json(ApiResource::error('Срок хранения «Без ограничения» — данные не удаляются. Установите срок хранения, чтобы очистить старые записи.'));
         }
 
-        $deleted = (new \App\Models\UserActivity())->cleanupOld($days);
+        $deleted = $this->activity->cleanupOld($days);
         \App\Core\Database::connection()->exec(
             "UPDATE " . db_table('site_settings') . " SET setting_value = (SELECT NOW()), updated_at = NOW() WHERE setting_key = 'statisticsLastCleanAt'"
         );
-        return $this->json(['success' => true, 'deleted' => $deleted]);
+        return $this->json(ApiResource::success(['deleted' => $deleted]));
     }
 
     /**

@@ -4,9 +4,26 @@ namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
 use App\Core\Response;
+use App\Models\ContentRepository;
+use App\Models\SettingsRepository;
+use App\Models\UserActivity;
 
 class DashboardController extends Controller
 {
+    private $content;
+    private $settings;
+    private $activity;
+
+    public function __construct(
+        ContentRepository $content,
+        SettingsRepository $settings,
+        UserActivity $activity
+    ) {
+        $this->content = $content;
+        $this->settings = $settings;
+        $this->activity = $activity;
+    }
+
     public function index($request)
     {
         if (!\admin_is_authenticated()) {

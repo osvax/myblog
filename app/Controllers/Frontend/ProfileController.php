@@ -4,10 +4,22 @@ namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
 use App\Core\Response;
-use App\Models\User;
+use App\Models\UserRepository;
+use App\Models\SiteSettings;
 
 class ProfileController extends Controller
 {
+    private $users;
+    private $settings;
+
+    public function __construct(
+        UserRepository $users,
+        SiteSettings $settings
+    ) {
+        $this->users = $users;
+        $this->settings = $settings;
+    }
+
     public function show($request)
     {
         $user = current_user();
@@ -15,7 +27,7 @@ class ProfileController extends Controller
             return Response::redirect('/login.html');
         }
 
-        $full = (new User())->findById((int) $user['id']);
+        $full = $this->users->findById((int) $user['id']);
 
         if (is_array($full) && preg_match('#^/api/admin/avatar/([a-f0-9]{32}\.(?:jpg|png|webp))$#', (string) ($full['avatar_path'] ?? ''), $avatarMatch)) {
             $full['avatar_path'] = '/uploads/profile/' . $avatarMatch[1];
@@ -49,7 +61,7 @@ class ProfileController extends Controller
             return $this->json(['success' => false, 'error' => 'Имя должно содержать от 2 до 160 символов'], 400);
         }
 
-        $result = (new User())->updateProfile((int) $user['id'], $name, $user['avatar_path'] ?? '');
+        $result = $this->users->updateProfile((int) $user['id'], $name, $user['avatar_path'] ?? '');
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => 'Не удалось обновить профиль'], 500);
         }
@@ -109,7 +121,7 @@ class ProfileController extends Controller
 
         $oldAvatar = (string) ($user['avatar_path'] ?? '');
         $avatarPath = '/uploads/profile/' . $filename;
-        if (!(new User())->updateAvatar((int) $user['id'], $avatarPath)) {
+        if (!$this->users->updateAvatar((int) $user['id'], $avatarPath)) {
             @unlink($target);
             return $this->json(['success' => false, 'error' => 'Не удалось обновить профиль'], 500);
         }

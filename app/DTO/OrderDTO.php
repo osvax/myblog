@@ -252,6 +252,17 @@ class OrderDTO
             }
         }
 
+        // Хелпер: безопасно декодирует JSON-строку в массив, если это строка
+        $decodeIfJsonString = function ($value) {
+            if (is_string($value)) {
+                $decoded = json_decode($value, true);
+                if (is_array($decoded)) {
+                    return $decoded;
+                }
+            }
+            return is_array($value) ? $value : [];
+        };
+
         // Заполняем вложенные поля из details_json
         $dto->source = $details['source'] ?? 'Форма заказа на сайте';
         $dto->contactPerson = $details['contactPerson'] ?? $details['clientName'] ?? $dto->clientName;
@@ -260,7 +271,7 @@ class OrderDTO
         $dto->deadlineFrom = $details['deadlineFrom'] ?? '';
         $dto->paymentHistory = $details['paymentHistory'] ?? '';
         $dto->notes = $details['notes'] ?? '';
-        $dto->calculatorDetails = $details['calculatorDetails'] ?? [];
+        $dto->calculatorDetails = $decodeIfJsonString($details['calculatorDetails'] ?? []);
         $dto->budgetDisplay = $details['budgetDisplay'] ?? '';
         $dto->technicalBrief = $details['technicalBrief'] ?? '';
 

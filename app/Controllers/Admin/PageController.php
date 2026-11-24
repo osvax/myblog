@@ -5,9 +5,22 @@ namespace App\Controllers\Admin;
 use App\Controllers\Controller;
 use App\Core\Response;
 use App\Core\View;
+use App\Models\UserRepository;
+use App\Models\Role;
 
 class PageController extends Controller
 {
+    private $users;
+    private $role;
+
+    public function __construct(
+        UserRepository $users,
+        Role $role
+    ) {
+        $this->users = $users;
+        $this->role = $role;
+    }
+
     public function show($request, $slug)
     {
         $configPath = APP_ROOT . '/config/admin-pages.php';
@@ -99,8 +112,8 @@ class PageController extends Controller
         if (\admin_is_authenticated()) {
             $adminUserId = \admin_get_user_id();
             if ($adminUserId > 0) {
-                $adminUser = (new \App\Models\User())->findById($adminUserId);
-                $roleRow = (new \App\Models\Role())->byKey((string) ($adminUser['role'] ?? ''));
+                $adminUser = $this->users->findById($adminUserId);
+                $roleRow = $this->role->byKey((string) ($adminUser['role'] ?? ''));
                 $userRoleName = (string) ($roleRow['name'] ?? '');
             }
         }

@@ -3,7 +3,8 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
-use App\Core\Response;
+use App\Core\ApiResource;
+use App\Core\ApplicationLogger;
 use App\Models\ContentRepository;
 use App\Models\OrderRepository;
 use App\Models\MessageRepository;
@@ -12,46 +13,73 @@ use App\DTO\ProjectDTO;
 use App\DTO\CategoryDTO;
 use App\DTO\OrderDTO;
 use App\DTO\MessageDTO;
+use App\Transformers\ArticleTransformer;
+use App\Transformers\ProjectTransformer;
+use App\Transformers\CategoryTransformer;
+use App\Transformers\OrderTransformer;
+use App\Transformers\MessageTransformer;
 
 class ContentController extends Controller
 {
     private $content;
     private $orders;
     private $messages;
+    private $articleTransformer;
+    private $projectTransformer;
+    private $categoryTransformer;
+    private $orderTransformer;
+    private $messageTransformer;
+    private $logger;
 
-    public function __construct()
-    {
-        $this->content = new ContentRepository();
-        $this->orders = new OrderRepository();
-        $this->messages = new MessageRepository();
+    public function __construct(
+        ContentRepository $content,
+        OrderRepository $orders,
+        MessageRepository $messages,
+        ArticleTransformer $articleTransformer,
+        ProjectTransformer $projectTransformer,
+        CategoryTransformer $categoryTransformer,
+        OrderTransformer $orderTransformer,
+        MessageTransformer $messageTransformer,
+        ApplicationLogger $logger
+    ) {
+        $this->content = $content;
+        $this->orders = $orders;
+        $this->messages = $messages;
+        $this->articleTransformer = $articleTransformer;
+        $this->projectTransformer = $projectTransformer;
+        $this->categoryTransformer = $categoryTransformer;
+        $this->orderTransformer = $orderTransformer;
+        $this->messageTransformer = $messageTransformer;
+        $this->logger = $logger;
     }
 
     public function articles($request, array $params = [])
     {
         if (!$this->authorized()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() === 'GET') {
             if (isset($params['id'])) {
-                $article = $this->content->articleById($params['id']);
+                $article = $this->content->articleDtoById($params['id']);
                 return $article
-                    ? $this->json(['success' => true, 'article' => $article])
-                    : $this->json(['success' => false, 'error' => 'Статья не найдена'], 404);
+                    ? $this->json(ApiResource::success($this->articleTransformer->transform($article)))
+                    : $this->json(ApiResource::error('Статья не найдена'), 404);
             }
             // Число одобренных комментариев — для колонки в списке статей
             $counts = $this->content->commentCounts();
-            $articles = $this->content->articles();
-            foreach ($articles as &$article) {
+            $articles = $this->content->articlesAsDto();
+            $transformed = $this->articleTransformer->transformCollection($articles);
+            foreach ($transformed as &$article) {
                 $article['comments'] = $counts[$article['slug']] ?? 0;
             }
             unset($article);
-            return $this->json(['success' => true, 'articles' => $articles]);
+            return $this->json(ApiResource::success($transformed));
         }
         if ($request->method() === 'DELETE') {
             \admin_require_csrf();
             return $this->content->deleteArticle($params['id'] ?? '')
-                ? $this->json(['success' => true])
-                : $this->json(['success' => false, 'error' => 'Статья не найдена'], 404);
+                ? $this->json(ApiResource::success())
+                : $this->json(ApiResource::error('Статья не найдена'), 404);
         }
         if ($request->method() !== 'POST' && $request->method() !== 'PUT') {
             return $this->methodNotAllowed(['GET', 'POST', 'PUT', 'DELETE']);
@@ -63,40 +91,40 @@ class ContentController extends Controller
         $dto = ArticleDTO::fromRequest($jsonData, $params['id'] ?? null);
 
         if (!$dto->validate()) {
-            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
+            return $this->json(ApiResource::error('Ошибки валидации', $dto->getErrors()), 400);
         }
 
         try {
             $savedArticle = $this->content->saveArticleFromDTO($dto);
-            return $this->json(['success' => true, 'article' => $savedArticle]);
+            return $this->json(ApiResource::success($this->articleTransformer->transform($savedArticle)));
         } catch (\InvalidArgumentException $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+            return $this->json(ApiResource::error($e->getMessage()), 400);
         } catch (\Throwable $e) {
-            // Логируем ошибку (в будущем — через Monolog)
-            error_log('Article save error: ' . $e->getMessage());
-            return $this->json(['success' => false, 'error' => 'Ошибка сохранения статьи'], 500);
+            $this->logger->logException($e, 'Article save error');
+            return $this->json(ApiResource::error('Ошибка сохранения статьи'), 500);
         }
     }
 
     public function projects($request, array $params = [])
     {
         if (!$this->authorized()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() === 'GET') {
             if (isset($params['id'])) {
-                $project = $this->content->projectById($params['id']);
+                $project = $this->content->projectDtoById($params['id']);
                 return $project
-                    ? $this->json(['success' => true, 'project' => $project])
-                    : $this->json(['success' => false, 'error' => 'Проект не найден'], 404);
+                    ? $this->json(ApiResource::success($this->projectTransformer->transform($project)))
+                    : $this->json(ApiResource::error('Проект не найден'), 404);
             }
-            return $this->json(['success' => true, 'projects' => $this->content->projects()]);
+            $projects = $this->content->projectsAsDto();
+            return $this->json(ApiResource::success($this->projectTransformer->transformCollection($projects)));
         }
         if ($request->method() === 'DELETE') {
             \admin_require_csrf();
             return $this->content->deleteProject($params['id'] ?? '')
-                ? $this->json(['success' => true])
-                : $this->json(['success' => false, 'error' => 'Проект не найден'], 404);
+                ? $this->json(ApiResource::success())
+                : $this->json(ApiResource::error('Проект не найден'), 404);
         }
         if ($request->method() !== 'POST' && $request->method() !== 'PUT') {
             return $this->methodNotAllowed(['GET', 'POST', 'PUT', 'DELETE']);
@@ -108,40 +136,39 @@ class ContentController extends Controller
         $dto = ProjectDTO::fromRequest($jsonData, $params['id'] ?? null);
 
         if (!$dto->validate()) {
-            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
+            return $this->json(ApiResource::error('Ошибки валидации', $dto->getErrors()), 400);
         }
 
         try {
             $savedProject = $this->content->saveProjectFromDTO($dto);
-            return $this->json(['success' => true, 'project' => $savedProject]);
+            return $this->json(ApiResource::success($this->projectTransformer->transform($savedProject)));
         } catch (\InvalidArgumentException $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+            return $this->json(ApiResource::error($e->getMessage()), 400);
         } catch (\Throwable $e) {
-            // Логируем ошибку (в будущем — через Monolog)
-            error_log('Project save error: ' . $e->getMessage());
-            return $this->json(['success' => false, 'error' => 'Ошибка сохранения проекта'], 500);
+            $this->logger->logException($e, 'Project save error');
+            return $this->json(ApiResource::error('Ошибка сохранения проекта'), 500);
         }
     }
 
     public function orders($request, array $params = [])
     {
         if (!$this->authorized()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() === 'GET') {
-            // Новый API: возвращаем DTO с toApiArray для полной структуры
+            // Новый API: возвращаем DTO через трансформер
             $orders = $this->orders->ordersAsDto();
-            return $this->json(['success' => true, 'orders' => array_map(fn($o) => $o->toApiArray(), $orders)]);
+            return $this->json(ApiResource::success($this->orderTransformer->transformCollection($orders)));
         }
         if ($request->method() === 'DELETE') {
             \admin_require_csrf();
             $id = $params['id'] ?? '';
             if (!ctype_digit((string) $id)) {
-                return $this->json(['success' => false, 'error' => 'Некорректный ID заказа'], 400);
+                return $this->json(ApiResource::error('Некорректный ID заказа'), 400);
             }
             return $this->orders->deleteOrder((int) $id)
-                ? $this->json(['success' => true])
-                : $this->json(['success' => false, 'error' => 'Заказ не найден'], 404);
+                ? $this->json(ApiResource::success())
+                : $this->json(ApiResource::error('Заказ не найден'), 404);
         }
         if ($request->method() !== 'PUT' && $request->method() !== 'PATCH') {
             return $this->methodNotAllowed(['GET', 'PUT', 'PATCH', 'DELETE']);
@@ -150,7 +177,7 @@ class ContentController extends Controller
 
         $id = $params['id'] ?? '';
         if (!ctype_digit((string) $id)) {
-            return $this->json(['success' => false, 'error' => 'Некорректный ID заказа'], 400);
+            return $this->json(ApiResource::error('Некорректный ID заказа'), 400);
         }
 
         $jsonData = $request->json();
@@ -159,10 +186,10 @@ class ContentController extends Controller
         if ($request->method() === 'PATCH') {
             $existing = $this->orders->orderDtoById((int) $id);
             if ($existing === null) {
-                return $this->json(['success' => false, 'error' => 'Заказ не найден'], 404);
+                return $this->json(ApiResource::error('Заказ не найден'), 404);
             }
             // Преобразуем существующий DTO в массив и мержим
-            $existingArray = $existing->toApiArray();
+            $existingArray = $this->orderTransformer->transform($existing);
             $jsonData = array_merge($existingArray, $jsonData);
         }
 
@@ -170,19 +197,19 @@ class ContentController extends Controller
         $dto = OrderDTO::fromRequest($jsonData, (int) $id);
 
         if (!$dto->validate()) {
-            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
+            return $this->json(ApiResource::error('Ошибки валидации', $dto->getErrors()), 400);
         }
 
         try {
             $savedOrder = $this->orders->saveOrderFromDTO($dto);
             return $savedOrder
-                ? $this->json(['success' => true, 'order' => $savedOrder])
-                : $this->json(['success' => false, 'error' => 'Заказ не найден'], 404);
+                ? $this->json(ApiResource::success($this->orderTransformer->transform($savedOrder)))
+                : $this->json(ApiResource::error('Заказ не найден'), 404);
         } catch (\InvalidArgumentException $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+            return $this->json(ApiResource::error($e->getMessage()), 400);
         } catch (\Throwable $e) {
-            error_log('Order save error: ' . $e->getMessage());
-            return $this->json(['success' => false, 'error' => 'Ошибка сохранения заказа'], 500);
+            $this->logger->logException($e, 'Order save error');
+            return $this->json(ApiResource::error('Ошибка сохранения заказа'), 500);
         }
     }
 
@@ -287,27 +314,26 @@ class ContentController extends Controller
     public function categories($request, array $params = [])
     {
         if (!$this->authorized()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() === 'GET') {
             if (($_GET['action'] ?? '') === 'pickers') {
                 // Для pickers возвращаем простые массивы (совместимость с фронтендом)
-                return $this->json([
-                    'success' => true,
+                return $this->json(ApiResource::success([
                     'pages' => (new \App\Models\LandingPage())->getAll(),
                     'categories' => $this->content->categories(),
                     'articles' => $this->content->articles(),
-                ]);
+                ]));
             }
-            // Обычный список: возвращаем DTO с articles_count
+            // Обычный список: возвращаем DTO через трансформер
             $categories = $this->content->categoriesAsDto();
-            return $this->json(['success' => true, 'categories' => array_map(fn($c) => $c->toApiArray(), $categories)]);
+            return $this->json(ApiResource::success($this->categoryTransformer->transformCollection($categories)));
         }
         if ($request->method() === 'DELETE') {
             \admin_require_csrf();
             return $this->content->deleteCategory($params['id'] ?? '')
-                ? $this->json(['success' => true])
-                : $this->json(['success' => false, 'error' => 'Рубрика не найдена или содержит статьи'], 404);
+                ? $this->json(ApiResource::success())
+                : $this->json(ApiResource::error('Рубрика не найдена или содержит статьи'), 404);
         }
         if ($request->method() !== 'POST' && $request->method() !== 'PUT') {
             return $this->methodNotAllowed(['GET', 'POST', 'PUT', 'DELETE']);
@@ -320,44 +346,44 @@ class ContentController extends Controller
         $dto = CategoryDTO::fromRequest($jsonData, $id);
 
         if (!$dto->validate()) {
-            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
+            return $this->json(ApiResource::error('Ошибки валидации', $dto->getErrors()), 400);
         }
 
         try {
             $savedId = $this->content->saveCategoryFromDTO($dto);
             if ($savedId === false) {
-                return $this->json(['success' => false, 'error' => 'Рубрика не найдена'], 404);
+                return $this->json(ApiResource::error('Рубрика не найдена'), 404);
             }
             // Возвращаем сохранённую категорию с articles_count
             $savedCategory = $this->content->categoryDtoById($savedId);
-            return $this->json(['success' => true, 'category' => $savedCategory?->toApiArray()]);
+            return $this->json(ApiResource::success($savedCategory ? $this->categoryTransformer->transform($savedCategory) : null));
         } catch (\InvalidArgumentException $e) {
-            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+            return $this->json(ApiResource::error($e->getMessage()), 400);
         } catch (\Throwable $e) {
-            error_log('Category save error: ' . $e->getMessage());
-            return $this->json(['success' => false, 'error' => 'Ошибка сохранения рубрики'], 500);
+            $this->logger->logException($e, 'Category save error');
+            return $this->json(ApiResource::error('Ошибка сохранения рубрики'), 500);
         }
     }
 
     public function messages($request, array $params = [])
     {
         if (!$this->authorized()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() === 'GET') {
-            // Новый API: возвращаем DTO с toApiArray
+            // Новый API: возвращаем DTO через трансформер
             $messages = $this->messages->messagesAsDto();
-            return $this->json(['success' => true, 'messages' => array_map(fn($m) => $m->toApiArray(), $messages)]);
+            return $this->json(ApiResource::success($this->messageTransformer->transformCollection($messages)));
         }
         \admin_require_csrf();
         $id = $params['id'] ?? '';
         if (!ctype_digit((string) $id)) {
-            return $this->json(['success' => false, 'error' => 'Некорректный идентификатор обращения'], 400);
+            return $this->json(ApiResource::error('Некорректный идентификатор обращения'), 400);
         }
         if ($request->method() === 'DELETE') {
             return $this->messages->deleteMessage((int) $id)
-                ? $this->json(['success' => true])
-                : $this->json(['success' => false, 'error' => 'Обращение не найдено'], 404);
+                ? $this->json(ApiResource::success())
+                : $this->json(ApiResource::error('Обращение не найдено'), 404);
         }
         if ($request->method() !== 'PATCH') {
             return $this->methodNotAllowed(['GET', 'PATCH', 'DELETE']);
@@ -373,12 +399,12 @@ class ContentController extends Controller
         // Поэтому для PATCH используем прямое обновление через репозиторий (обратная совместимость)
         if (!isset($jsonData['isRead'], $jsonData['isApproved']) ||
             !is_bool($jsonData['isRead']) || !is_bool($jsonData['isApproved'])) {
-            return $this->json(['success' => false, 'error' => 'Некорректный статус обращения'], 400);
+            return $this->json(ApiResource::error('Некорректный статус обращения'), 400);
         }
 
         return $this->messages->updateMessage((int) $id, $jsonData)
-            ? $this->json(['success' => true])
-            : $this->json(['success' => false, 'error' => 'Обращение не найдено'], 404);
+            ? $this->json(ApiResource::success())
+            : $this->json(ApiResource::error('Обращение не найдено'), 404);
     }
 
     /**

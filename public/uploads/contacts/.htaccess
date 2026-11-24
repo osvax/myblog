@@ -1,0 +1,12 @@
+# Запрет исполнения PHP в директории фотографий блока «Обо мне»
+<FilesMatch "\.(php|php2|php3|php4|php5|php6|php7|php8|phtml|phar)$">
+    Require all denied
+</FilesMatch>
+
+# Запрет просмотра директории
+Options -Indexes
+
+# Разрешаем чтение только изображений
+<FilesMatch "\.(jpg|jpeg|png|webp)$">
+    Require all granted
+</FilesMatch>

@@ -5,33 +5,46 @@ namespace App\Controllers\Frontend;
 use App\Controllers\Controller;
 use App\Models\ContentRepository;
 use App\Models\LandingPage;
+use App\Models\SiteSettings;
 
 class HomeController extends Controller
 {
+    private $content;
+    private $settings;
+    private $landingPage;
+
+    public function __construct(
+        ContentRepository $content,
+        SiteSettings $settings,
+        LandingPage $landingPage
+    ) {
+        $this->content = $content;
+        $this->settings = $settings;
+        $this->landingPage = $landingPage;
+    }
+
     public function index($request)
     {
-        $settings = (new \App\Models\SiteSettings())->all();
-        $home = $settings;
+        $home = $this->settings->all();
 
         // Статическая страница по умолчанию: настройка «Что показывать на главной».
         // main — шаблон главной; static — лендинг из БД, а если он не активен — 404.
-        $homePageMode = ($settings['homePageMode'] ?? 'main') === 'static' ? 'static' : 'main';
+        $homePageMode = ($home['homePageMode'] ?? 'main') === 'static' ? 'static' : 'main';
         if ($homePageMode === 'static') {
-            $page = (new LandingPage())->findActive('home');
+            $page = $this->landingPage->findActive('home');
             if ($page && !empty($page['html_content'])) {
                 return render_static_page($page['html_content']);
             }
             return \App\Core\ErrorPages::page(404, 'Главная страница не найдена', 'Статическая главная страница не активна.', '/');
         }
 
-        $content = new ContentRepository();
         $articles = [];
-        foreach ($content->articles(true) as $article) {
+        foreach ($this->content->articles(true) as $article) {
             $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
             $articles[$article['slug']] = $article;
         }
         $projects = [];
-        foreach ($content->projects(true) as $project) {
+        foreach ($this->content->projects(true) as $project) {
             $projects[$project['slug']] = $project;
         }
         $user = current_user();

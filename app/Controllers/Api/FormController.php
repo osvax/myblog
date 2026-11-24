@@ -3,15 +3,16 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
 use App\Models\ContentRepository;
 
 class FormController extends Controller
 {
     private $content;
 
-    public function __construct()
+    public function __construct(ContentRepository $content)
     {
-        $this->content = new ContentRepository();
+        $this->content = $content;
     }
 
     /**
@@ -56,29 +57,29 @@ class FormController extends Controller
     public function order($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         // Rate limiting
         if ($error = $this->checkFormRateLimit('order')) {
-            return $this->json($error, 429);
+            return $this->json(ApiResource::error($error['error'], 429, $error['retryAfter']), 429);
         }
 
         if (!$this->verifyCsrf($request)) {
-            return $this->json(['success' => false, 'error' => 'Неверный CSRF токен'], 419);
+            return $this->json(ApiResource::error('Неверный CSRF токен'), 419);
         }
         $data = $this->fields([
             'name', 'email', 'phone', 'contact_person', 'type', 'budget',
             'deadline_from', 'deadline_to', 'message', 'calculator_details',
         ]);
         if ($data['name'] === '' || !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            return $this->json(['success' => false, 'error' => 'Заполните имя и укажите корректный email'], 400);
+            return $this->json(ApiResource::error('Заполните имя и укажите корректный email'), 400);
         }
         if ($data['deadline_from'] !== '' && !$this->validDate($data['deadline_from']) ||
             $data['deadline_to'] !== '' && !$this->validDate($data['deadline_to']) ||
             $data['deadline_from'] !== '' && $data['deadline_to'] !== '' &&
             $data['deadline_from'] > $data['deadline_to']) {
-            return $this->json(['success' => false, 'error' => 'Укажите корректный срок выполнения'], 400);
+            return $this->json(ApiResource::error('Укажите корректный срок выполнения'), 400);
         }
         if (isset($_FILES['attachment']) && is_array($_FILES['attachment']) &&
             ($_FILES['attachment']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
@@ -94,7 +95,7 @@ class FormController extends Controller
             if ($error !== UPLOAD_ERR_OK || !is_uploaded_file($file) || $extension !== 'zip' ||
                 $size === false || $size < 1 || $size > 10 * 1024 * 1024 ||
                 !is_string($signature) || !preg_match('/^PK(?:\x03\x04|\x05\x06|\x07\x08)$/', $signature)) {
-                return $this->json(['success' => false, 'error' => 'Прикрепите корректный ZIP-архив размером не более 10 МБ'], 400);
+                return $this->json(ApiResource::error('Прикрепите корректный ZIP-архив размером не более 10 МБ'), 400);
             }
         }
 
@@ -159,18 +160,18 @@ class FormController extends Controller
             'type' => $data['type'],
             'budget' => $data['budget'],
         ], $calcPlaceholders), $data['email'], $data['name']);
-        return $this->json(['success' => true, 'orderId' => $order['id'] ?? null]);
+        return $this->json(ApiResource::success(['orderId' => $order['id'] ?? null]));
     }
 
     public function feedback($request)
     {
         if (!$this->verifyCsrf($request)) {
-            return $this->json(['success' => false, 'error' => 'Неверный CSRF токен'], 419);
+            return $this->json(ApiResource::error('Неверный CSRF токен'), 419);
         }
 
         // Rate limiting
         if ($error = $this->checkFormRateLimit('feedback')) {
-            return $this->json($error, 429);
+            return $this->json(ApiResource::error($error['error'], 429, $error['retryAfter']), 429);
         }
 
         return $this->message($request, 'feedback');
@@ -179,12 +180,12 @@ class FormController extends Controller
     public function comment($request)
     {
         if (!$this->verifyCsrf($request)) {
-            return $this->json(['success' => false, 'error' => 'Неверный CSRF токен'], 419);
+            return $this->json(ApiResource::error('Неверный CSRF токен'), 419);
         }
 
         // Rate limiting
         if ($error = $this->checkFormRateLimit('comment')) {
-            return $this->json($error, 429);
+            return $this->json(ApiResource::error($error['error'], 429, $error['retryAfter']), 429);
         }
 
         return $this->message($request, 'comment');
@@ -193,7 +194,7 @@ class FormController extends Controller
     private function message($request, $type)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         $data = $this->fields(['name', 'email', 'phone', 'subject', 'message', 'article']);
 
@@ -209,27 +210,27 @@ class FormController extends Controller
 
         if ($data['name'] === '' || $data['message'] === '' ||
             !filter_var($data['email'], FILTER_VALIDATE_EMAIL)) {
-            return $this->json(['success' => false, 'error' => 'Заполните обязательные поля и укажите корректный email'], 400);
+            return $this->json(ApiResource::error('Заполните обязательные поля и укажите корректный email'), 400);
         }
         $articleSlug = '';
         $parentId = 0;
         if ($type === 'comment') {
             $articleSlug = $data['article'];
             if (!preg_match('/^[a-z0-9-]{1,180}$/', $articleSlug)) {
-                return $this->json(['success' => false, 'error' => 'Не удалось определить статью для комментария'], 400);
+                return $this->json(ApiResource::error('Не удалось определить статью для комментария'), 400);
             }
             // Ответ конкретному пользователю: родитель — существующий корневой
             // одобренный комментарий той же статьи (вложенность один уровень)
             $parentRaw = isset($_POST['parent']) && is_string($_POST['parent']) ? trim($_POST['parent']) : '';
             if ($parentRaw !== '') {
                 if (!ctype_digit($parentRaw) || (int) $parentRaw < 1) {
-                    return $this->json(['success' => false, 'error' => 'Некорректный комментарий для ответа'], 400);
+                    return $this->json(ApiResource::error('Некорректный комментарий для ответа'), 400);
                 }
                 $parent = $this->content->messageById((int) $parentRaw);
                 if (!$parent || $parent['message_type'] !== 'comment' ||
                     $parent['article_slug'] !== $articleSlug || $parent['parent_id'] !== null ||
                     (int) $parent['is_approved'] !== 1) {
-                    return $this->json(['success' => false, 'error' => 'Комментарий для ответа недоступен'], 400);
+                    return $this->json(ApiResource::error('Комментарий для ответа недоступен'), 400);
                 }
                 $parentId = (int) $parentRaw;
             }
@@ -258,7 +259,7 @@ class FormController extends Controller
             'calc_features' => '',
             'calc_total' => '',
         ], $data['email'], $data['name']);
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     private function fields(array $names)

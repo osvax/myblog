@@ -2,17 +2,20 @@
 
 namespace App\Models;
 
-use App\Core\Database;
+use PDO;
+use App\Core\ApplicationLogger;
 use App\Core\QueryBuilder;
 use App\DTO\SiteSettingsDTO;
 
 class SettingsRepository
 {
     private $db;
+    private $logger;
 
-    public function __construct()
+    public function __construct(PDO $db = null, ApplicationLogger $logger = null)
     {
-        $this->db = Database::connection();
+        $this->db = $db ?? \App\Core\Database::connection();
+        $this->logger = $logger ?? (function_exists('container') ? container(ApplicationLogger::class) : null);
     }
 
     /**
@@ -151,7 +154,11 @@ class SettingsRepository
             }
             return ['success' => true];
         } catch (\Throwable $e) {
-            error_log('Settings save error: ' . $e->getMessage());
+            if ($this->logger) {
+                $this->logger->logException($e, 'Settings save error');
+            } else {
+                error_log('Settings save error: ' . $e->getMessage());
+            }
             return ['success' => false, 'error' => 'Ошибка сохранения настроек: ' . $e->getMessage()];
         }
     }

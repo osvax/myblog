@@ -3,10 +3,29 @@
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
-use App\Models\User;
+use App\Models\UserRepository;
+use App\Models\SiteSettings;
+use App\Core\Mailer;
+use App\Core\RateLimiter;
 
 class AuthController extends Controller
 {
+    private $users;
+    private $settings;
+    private $mailer;
+    private $rateLimiter;
+
+    public function __construct(
+        UserRepository $users,
+        SiteSettings $settings,
+        Mailer $mailer,
+        RateLimiter $rateLimiter
+    ) {
+        $this->users = $users;
+        $this->settings = $settings;
+        $this->mailer = $mailer;
+        $this->rateLimiter = $rateLimiter;
+    }
     /**
      * Показать форму входа.
      */
@@ -27,10 +46,9 @@ class AuthController extends Controller
     public function yandexRedirect($request)
     {
         \user_start_session();
-        $settings = new \App\Models\SiteSettings();
-        if (!(bool) $settings->get('yandexAuthEnabled', false)) return \App\Core\Response::redirect('/login.html', 302);
-        $clientId = trim((string) $settings->get('yandexClientId', ''));
-        $redirect = trim((string) $settings->get('yandexRedirectUri', ''));
+        if (!(bool) $this->settings->get('yandexAuthEnabled', false)) return \App\Core\Response::redirect('/login.html', 302);
+        $clientId = trim((string) $this->settings->get('yandexClientId', ''));
+        $redirect = trim((string) $this->settings->get('yandexRedirectUri', ''));
         if ($clientId === '' || $redirect === '') return new \App\Core\Response('Яндекс OAuth не настроен', 503);
         $_SESSION['yandex_oauth_state'] = bin2hex(random_bytes(16));
         $url = 'https://oauth.yandex.ru/authorize?' . http_build_query(['response_type'=>'code','client_id'=>$clientId,'redirect_uri'=>$redirect,'state'=>$_SESSION['yandex_oauth_state']]);
@@ -56,14 +74,13 @@ class AuthController extends Controller
             return new \App\Core\Response('Яндекс не вернул код авторизации', 401);
         }
 
-        $settings = new \App\Models\SiteSettings();
-        $clientId = trim((string) $settings->get('yandexClientId', ''));
-        $redirectUri = trim((string) $settings->get('yandexRedirectUri', ''));
+        $clientId = trim((string) $this->settings->get('yandexClientId', ''));
+        $redirectUri = trim((string) $this->settings->get('yandexRedirectUri', ''));
         $token = $this->oauthPost('https://oauth.yandex.ru/token', [
             'grant_type' => 'authorization_code',
             'code' => $code,
             'client_id' => $clientId,
-            'client_secret' => $settings->get('yandexClientSecret', ''),
+            'client_secret' => $this->settings->get('yandexClientSecret', ''),
             'redirect_uri' => $redirectUri,
         ]);
         if (empty($token['access_token'])) {
@@ -79,24 +96,23 @@ class AuthController extends Controller
             return new \App\Core\Response('Яндекс не вернул email', 401);
         }
 
-        $users = new User();
-        $user = $users->findByYandexId($yandexId) ?: $users->findByEmail($email);
+        $user = $this->users->findByYandexId($yandexId) ?: $this->users->findByEmail($email);
         if (!$user) {
             $name = trim((string) ($profile['real_name'] ?? $profile['display_name'] ?? $email));
-            $created = $users->create($email, password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), $name);
+            $created = $this->users->create($email, password_hash(bin2hex(random_bytes(24)), PASSWORD_DEFAULT), $name);
             if (empty($created['success']) || empty($created['user_id'])) {
                 return new \App\Core\Response('Не удалось создать пользователя: ' . ($created['error'] ?? 'ошибка базы данных'), 500);
             }
-            $users->setRole((int) $created['user_id'], 'user');
-            $user = $users->findById((int) $created['user_id']);
+            $this->users->setRole((int) $created['user_id'], 'user');
+            $user = $this->users->findById((int) $created['user_id']);
         }
 
         if (!$user || empty($user['id'])) {
             return new \App\Core\Response('Пользователь не найден после авторизации', 500);
         }
 
-        $users->linkYandex((int) $user['id'], $yandexId);
-        $user = $users->findById((int) $user['id']);
+        $this->users->linkYandex((int) $user['id'], $yandexId);
+        $user = $this->users->findById((int) $user['id']);
         if (!$user) {
             return new \App\Core\Response('Не удалось загрузить профиль пользователя', 500);
         }
@@ -253,9 +269,8 @@ class AuthController extends Controller
         }
 
         // Rate limiting: лимит попыток и время блокировки — из настроек (Настройки → Безопасность)
-        $securitySettings = new \App\Models\SiteSettings();
-        $maxLoginAttempts = max(1, (int) $securitySettings->get('maxLoginAttempts', (int) ($_ENV['RATE_LIMIT_LOGIN'] ?? 5) ?: 5));
-        $lockoutMinutes = max(1, (int) $securitySettings->get('lockoutMinutes', 15));
+        $maxLoginAttempts = max(1, (int) $this->settings->get('maxLoginAttempts', (int) ($_ENV['RATE_LIMIT_LOGIN'] ?? 5) ?: 5));
+        $lockoutMinutes = max(1, (int) $this->settings->get('lockoutMinutes', 15));
         if ($error = $this->checkRateLimit('auth:login', $maxLoginAttempts, $lockoutMinutes)) {
             return $this->json($error, 429);
         }
@@ -271,7 +286,7 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Пароль должен содержать минимум 8 символов'], 400);
         }
 
-        $result = (new User())->verifyCredentials($email, $password);
+        $result = $this->users->verifyCredentials($email, $password);
         if (!$result['valid']) {
             \App\Core\Logger::write('auth', 'Неудачная попытка входа: ' . $email);
             return $this->json(['success' => false, 'error' => $result['error']], 401);
@@ -315,7 +330,7 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Введите код из приложения'], 400);
         }
 
-        $user = (new User())->findById((int) $pending['id']);
+        $user = $this->users->findById((int) $pending['id']);
         if (!$user || empty($user['totp_enabled']) || empty($user['totp_secret'])) {
             unset($_SESSION['user_2fa_pending']);
             return $this->json(['success' => false, 'error' => 'Двухфакторная аутентификация недоступна — войдите заново'], 401);
@@ -371,7 +386,7 @@ class AuthController extends Controller
         }
 
         $secret = \App\Core\Totp::generateSecret();
-        (new User())->setTotpSecret((int) $user['id'], $secret);
+        $this->users->setTotpSecret((int) $user['id'], $secret);
 
         return $this->json([
             'success' => true,
@@ -397,7 +412,7 @@ class AuthController extends Controller
         $input = $request->json();
         $code = isset($input['code']) && is_string($input['code']) ? trim($input['code']) : '';
 
-        $full = (new User())->findById((int) $user['id']);
+        $full = $this->users->findById((int) $user['id']);
         if (!$full || empty($full['totp_secret'])) {
             return $this->json(['success' => false, 'error' => 'Сначала запустите настройку'], 400);
         }
@@ -405,7 +420,7 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Неверный код'], 401);
         }
 
-        (new User())->setTotpEnabled((int) $user['id'], true);
+        $this->users->setTotpEnabled((int) $user['id'], true);
         return $this->json(['success' => true]);
     }
 
@@ -426,7 +441,7 @@ class AuthController extends Controller
         $input = $request->json();
         $code = isset($input['code']) && is_string($input['code']) ? trim($input['code']) : '';
 
-        $full = (new User())->findById((int) $user['id']);
+        $full = $this->users->findById((int) $user['id']);
         if (!$full || empty($full['totp_secret']) || empty($full['totp_enabled'])) {
             return $this->json(['success' => false, 'error' => 'Двухфакторная аутентификация не включена'], 400);
         }
@@ -434,9 +449,8 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Неверный код'], 401);
         }
 
-        $model = new User();
-        $model->setTotpEnabled((int) $user['id'], false);
-        $model->setTotpSecret((int) $user['id'], '');
+        $this->users->setTotpEnabled((int) $user['id'], false);
+        $this->users->setTotpSecret((int) $user['id'], '');
         return $this->json(['success' => true]);
     }
 
@@ -477,17 +491,16 @@ class AuthController extends Controller
         // Хешируем пароль
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
-        $result = (new User())->create($email, $passwordHash, $name);
+        $result = $this->users->create($email, $passwordHash, $name);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => $result['error']], 400);
         }
 
         // Флаг «Уведомлять о новых пользователях» (Настройки → Уведомления)
-        $notifySettings = new \App\Models\SiteSettings();
-        if ((bool) $notifySettings->get('notifyUsers', false)) {
-            $adminEmail = trim((string) $notifySettings->get('adminEmail', ''));
+        if ((bool) $this->settings->get('notifyUsers', false)) {
+            $adminEmail = trim((string) $this->settings->get('adminEmail', ''));
             if (filter_var($adminEmail, FILTER_VALIDATE_EMAIL)) {
-                \App\Core\Mailer::send(
+                $this->mailer->send(
                     'Новый пользователь на сайте',
                     "Имя: {$name}\nEmail: {$email}",
                     $adminEmail,
@@ -523,14 +536,14 @@ class AuthController extends Controller
             return $this->json(['success' => false, 'error' => 'Введите корректный email'], 400);
         }
 
-        $user = (new User())->findByEmail($email);
+        $user = $this->users->findByEmail($email);
         if (!$user) {
             // Для защиты от enumeration возвращаем успех даже если пользователь не найден
             return $this->json(['success' => true, 'message' => 'Если пользователь с таким email найден, мы отправили ссылку для сброса пароля']);
         }
 
         // Генерируем токен
-        $result = (new User())->updateResetToken((int) $user['id']);
+        $result = $this->users->updateResetToken((int) $user['id']);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => 'Не удалось создать токен сброса'], 500);
         }
@@ -579,7 +592,7 @@ class AuthController extends Controller
         }
 
         // Находим пользователя по токену
-        $user = (new User())->findByResetToken($token);
+        $user = $this->users->findByResetToken($token);
         if (!$user) {
             return $this->json(['success' => false, 'error' => 'Токен недействителен или истёк'], 400);
         }
@@ -588,7 +601,7 @@ class AuthController extends Controller
         $passwordHash = password_hash($password, PASSWORD_DEFAULT);
 
         // Обновляем пароль
-        $result = (new User())->updatePassword((int) $user['id'], $passwordHash);
+        $result = $this->users->updatePassword((int) $user['id'], $passwordHash);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => 'Не удалось обновить пароль'], 500);
         }
@@ -702,6 +715,6 @@ class AuthController extends Controller
         $htmlBody .= '<p><a href="' . htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8') . '">' . htmlspecialchars($resetLink, ENT_QUOTES, 'UTF-8') . '</a></p>';
         $htmlBody .= '<p>Ссылка действует 1 час.</p>';
 
-        \App\Core\Mailer::send($subject, $body, $to, '', $htmlBody);
+        $this->mailer->send($subject, $body, $to, '', $htmlBody);
     }
 }

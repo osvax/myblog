@@ -3,18 +3,27 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
 use App\Core\Response;
 use App\Models\SettingsRepository;
 use App\DTO\SiteSettingsDTO;
 use App\Models\UserActivity;
+use App\Transformers\SiteSettingsTransformer;
 
 class SiteSettingsController extends Controller
 {
     private $settings;
+    private $activity;
+    private $transformer;
 
-    public function __construct()
-    {
-        $this->settings = new SettingsRepository();
+    public function __construct(
+        SettingsRepository $settings,
+        UserActivity $activity,
+        SiteSettingsTransformer $transformer
+    ) {
+        $this->settings = $settings;
+        $this->activity = $activity;
+        $this->transformer = $transformer;
     }
 
     /**
@@ -23,19 +32,18 @@ class SiteSettingsController extends Controller
     public function index($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
-        // Новый API: используем SiteSettingsDTO
-        $grouped = $this->settings->groupedAsDto();
+        // Новый API: используем SiteSettingsDTO через трансформер
+        $dto = $this->settings->groupedAsDto();
 
-        return $this->json([
-            'success' => true,
-            'grouped' => $grouped,
-        ]);
+        return $this->json(ApiResource::success(
+            $this->transformer->transformGrouped($dto)
+        ));
     }
 
     /**
@@ -44,14 +52,14 @@ class SiteSettingsController extends Controller
     public function save($request)
     {
         if ($request->method() !== 'PUT') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
 
         $input = $request->json();
         if (empty($input)) {
-            return $this->json(['success' => false, 'error' => 'Нет данных'], 400);
+            return $this->json(ApiResource::error('Нет данных'), 400);
         }
 
         // Очистка HTML для contactsAboutHtml
@@ -77,10 +85,10 @@ class SiteSettingsController extends Controller
         $result = $this->settings->saveAllFromDTO($dto);
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить'], 500);
+            return $this->json(ApiResource::error($result['error'] ?? 'Не удалось сохранить'), 500);
         }
 
-        $response = ['success' => true];
+        $response = ApiResource::success();
         if ($oldStatisticsSections !== null) {
             $oldAllowed = UserActivity::parseSections($oldStatisticsSections);
             $newAllowed = UserActivity::parseSections($input['statisticsSections']);
@@ -89,7 +97,7 @@ class SiteSettingsController extends Controller
                 try {
                     $deleted = (new UserActivity())->deleteSections($removed);
                 } catch (\Exception $e) {
-                    return $this->json(['success' => false, 'error' => 'Настройки сохранены, но данные по выключенным разделам не удалены: ' . $e->getMessage()], 500);
+                    return $this->json(ApiResource::error('Настройки сохранены, но данные по выключенным разделам не удалены: ' . $e->getMessage()), 500);
                 }
                 if ($deleted > 0) {
                     $response['deletedRecords'] = $deleted;
@@ -106,7 +114,7 @@ class SiteSettingsController extends Controller
     public function addField($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -119,18 +127,18 @@ class SiteSettingsController extends Controller
         $placeholder = isset($input['placeholder']) && is_string($input['placeholder']) ? $input['placeholder'] : '';
 
         if (strlen($key) < 1 || strlen($key) > 100) {
-            return $this->json(['success' => false, 'error' => 'Неверное имя поля'], 400);
+            return $this->json(ApiResource::error('Неверное имя поля'), 400);
         }
         if (!in_array($type, SiteSettingsDTO::getSupportedTypes(), true)) {
-            return $this->json(['success' => false, 'error' => 'Неверный тип поля'], 400);
+            return $this->json(ApiResource::error('Неверный тип поля'), 400);
         }
 
         $result = $this->settings->addCustomField($key, $value, $type, $tabGroup, $placeholder);
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось добавить'], 500);
+            return $this->json(ApiResource::error($result['error'] ?? 'Не удалось добавить'), 500);
         }
 
-        return $this->json(['success' => true, 'id' => $result['id']]);
+        return $this->json(ApiResource::created(['id' => $result['id']]));
     }
 
     /**
@@ -139,22 +147,22 @@ class SiteSettingsController extends Controller
     public function deleteField($request, $parameters)
     {
         if ($request->method() !== 'DELETE') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
 
         $key = isset($parameters['key']) && is_string($parameters['key']) ? $parameters['key'] : '';
         if (empty($key)) {
-            return $this->json(['success' => false, 'error' => 'Не указано имя поля'], 400);
+            return $this->json(ApiResource::error('Не указано имя поля'), 400);
         }
 
         $result = $this->settings->deleteCustomField($key);
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось удалить'], 404);
+            return $this->json(ApiResource::error($result['error'] ?? 'Не удалось удалить'), 404);
         }
 
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     /**
@@ -163,7 +171,7 @@ class SiteSettingsController extends Controller
     public function testEmail($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -206,12 +214,12 @@ class SiteSettingsController extends Controller
     public function contactsAboutPhoto($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         \admin_require_csrf();
         $file = $_FILES['contacts_about_photo'] ?? null;
         if (!is_array($file)) {
-            return $this->json(['success' => false, 'error' => 'Файл не пришёл на сервер. Проверьте выбор файла и повторите загрузку.'], 400);
+            return $this->json(ApiResource::error('Файл не пришёл на сервер. Проверьте выбор файла и повторите загрузку.'), 400);
         }
         $uploadError = (int) ($file['error'] ?? UPLOAD_ERR_NO_FILE);
         if ($uploadError !== UPLOAD_ERR_OK) {
@@ -224,34 +232,34 @@ class SiteSettingsController extends Controller
                 UPLOAD_ERR_CANT_WRITE => 'Сервер не может записать временный файл загрузки',
                 UPLOAD_ERR_EXTENSION => 'Загрузка файла остановлена расширением PHP',
             ];
-            return $this->json(['success' => false, 'error' => $uploadErrors[$uploadError] ?? 'Ошибка загрузки файла'], 400);
+            return $this->json(ApiResource::error($uploadErrors[$uploadError] ?? 'Ошибка загрузки файла'), 400);
         }
         if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-            return $this->json(['success' => false, 'error' => 'Сервер не распознал загруженный файл. Повторите загрузку.'], 400);
+            return $this->json(ApiResource::error('Сервер не распознал загруженный файл. Повторите загрузку.'), 400);
         }
         if ((int) $file['size'] < 1 || (int) $file['size'] > 5 * 1024 * 1024) {
-            return $this->json(['success' => false, 'error' => 'Размер фото должен быть не больше 5 МБ'], 400);
+            return $this->json(ApiResource::error('Размер фото должен быть не больше 5 МБ'), 400);
         }
         if (!extension_loaded('fileinfo') || !function_exists('getimagesize')) {
-            return $this->json(['success' => false, 'error' => 'На сервере не настроена проверка изображений'], 500);
+            return $this->json(ApiResource::error('На сервере не настроена проверка изображений'), 500);
         }
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($file['tmp_name']);
         $extensions = ['image/jpeg' => 'jpg', 'image/png' => 'png', 'image/webp' => 'webp'];
         $image = @getimagesize($file['tmp_name']);
         if (!is_string($mime) || !isset($extensions[$mime]) || $image === false || ($image['mime'] ?? '') !== $mime) {
-            return $this->json(['success' => false, 'error' => 'Разрешены только JPEG, PNG и WebP'], 400);
+            return $this->json(ApiResource::error('Разрешены только JPEG, PNG и WebP'), 400);
         }
         $directory = APP_ROOT . '/public/uploads/contacts';
         if (is_link(APP_ROOT . '/public/uploads') || is_link($directory)) {
-            return $this->json(['success' => false, 'error' => 'Некорректная папка загрузки'], 500);
+            return $this->json(ApiResource::error('Некорректная папка загрузки'), 500);
         }
         if (!is_dir($directory) && !mkdir($directory, 0755, true) && !is_dir($directory)) {
-            return $this->json(['success' => false, 'error' => 'Не удалось создать папку для фото'], 500);
+            return $this->json(ApiResource::error('Не удалось создать папку для фото'), 500);
         }
         $filename = bin2hex(random_bytes(16)) . '.' . $extensions[$mime];
         $target = $directory . '/' . $filename;
         if (!move_uploaded_file($file['tmp_name'], $target)) {
-            return $this->json(['success' => false, 'error' => 'Не удалось сохранить фото'], 500);
+            return $this->json(ApiResource::error('Не удалось сохранить фото'), 500);
         }
 
         // Сохраняем путь через DTO
@@ -261,7 +269,7 @@ class SiteSettingsController extends Controller
             if (is_file($target) && !is_link($target)) {
                 @unlink($target);
             }
-            return $this->json(['success' => false, 'error' => $saveResult['error'] ?? 'Не удалось сохранить путь к фото'], 500);
+            return $this->json(ApiResource::error($saveResult['error'] ?? 'Не удалось сохранить путь к фото'), 500);
         }
 
         // Удаляем старый файл, если он был в uploads/contacts/
@@ -273,7 +281,7 @@ class SiteSettingsController extends Controller
             }
         }
 
-        return $this->json(['success' => true, 'path' => 'uploads/contacts/' . $filename]);
+        return $this->json(ApiResource::success(['path' => 'uploads/contacts/' . $filename]));
     }
 
     /**
@@ -284,7 +292,7 @@ class SiteSettingsController extends Controller
     public function font($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -292,25 +300,25 @@ class SiteSettingsController extends Controller
         $file = $_FILES['font_file'] ?? null;
         if (!is_array($file) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK
             || empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name'])) {
-            return $this->json(['success' => false, 'error' => 'Не передан файл шрифта'], 400);
+            return $this->json(ApiResource::error('Не передан файл шрифта'), 400);
         }
         if ((int) $file['size'] < 1 || (int) $file['size'] > 2 * 1024 * 1024) {
-            return $this->json(['success' => false, 'error' => 'Размер файла шрифта должен быть от 1 байта до 2 МБ'], 400);
+            return $this->json(ApiResource::error('Размер файла шрифта должен быть от 1 байта до 2 МБ'), 400);
         }
         $extension = strtolower(pathinfo((string) $file['name'], PATHINFO_EXTENSION));
         if (!in_array($extension, ['woff', 'woff2', 'ttf', 'otf'], true)) {
-            return $this->json(['success' => false, 'error' => 'Допустимые форматы шрифтов: woff, woff2, ttf, otf'], 400);
+            return $this->json(ApiResource::error('Допустимые форматы шрифтов: woff, woff2, ttf, otf'), 400);
         }
 
         $targetDir = APP_ROOT . '/public/uploads/fonts';
         if (!is_dir($targetDir) && !mkdir($targetDir, 0775, true) && !is_dir($targetDir)) {
-            return $this->json(['success' => false, 'error' => 'Не удалось создать каталог для шрифтов'], 500);
+            return $this->json(ApiResource::error('Не удалось создать каталог для шрифтов'), 500);
         }
 
         $oldPath = trim((string) $this->settings->get('themeFontFile', ''));
         $newName = md5(uniqid('', true)) . '.' . $extension;
         if (!move_uploaded_file($file['tmp_name'], $targetDir . '/' . $newName)) {
-            return $this->json(['success' => false, 'error' => 'Не удалось сохранить файл шрифта'], 500);
+            return $this->json(ApiResource::error('Не удалось сохранить файл шрифта'), 500);
         }
 
         // Сохраняем путь через DTO
@@ -326,7 +334,7 @@ class SiteSettingsController extends Controller
         }
 
         \App\Core\Logger::write('security', 'Загружен файл шрифта: ' . $newName);
-        return $this->json(['success' => true, 'path' => 'uploads/fonts/' . $newName, 'file' => $newName]);
+        return $this->json(ApiResource::success(['path' => 'uploads/fonts/' . $newName, 'file' => $newName]));
     }
 
     /**
@@ -335,11 +343,11 @@ class SiteSettingsController extends Controller
     public function logs($request)
     {
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         $result = \App\Core\Logger::recent(50);
-        return $this->json(['success' => true] + $result);
+        return $this->json(ApiResource::success($result));
     }
 
     /**
@@ -348,12 +356,12 @@ class SiteSettingsController extends Controller
     public function clearLogs($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
 
         $deleted = \App\Core\Logger::clear();
-        return $this->json(['success' => true, 'deleted' => $deleted]);
+        return $this->json(ApiResource::success(['deleted' => $deleted]));
     }
 }

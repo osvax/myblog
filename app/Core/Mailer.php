@@ -14,6 +14,23 @@ class Mailer
     private static ?array $config = null;
 
     /**
+     * Логирование ошибок через ApplicationLogger (если контейнер доступен) или error_log.
+     */
+    private static function logError(string $message): void
+    {
+        if (function_exists('container')) {
+            try {
+                $logger = container(ApplicationLogger::class);
+                $logger->error($message);
+                return;
+            } catch (\Throwable) {
+                // игнорируем, fallback на error_log
+            }
+        }
+        error_log($message);
+    }
+
+    /**
      * Получить конфигурацию SMTP из настроек сайта или .env
      */
     private static function getConfig(): array
@@ -116,7 +133,7 @@ class Mailer
         $content = $htmlBody !== null ? $htmlBody : $body;
         $sent = @mail($toEmail, $subject, $content, $headers);
         if (!$sent) {
-            error_log('PHP mail() failed for ' . $toEmail);
+            self::logError('PHP mail() failed for ' . $toEmail);
         }
         return $sent;
     }
@@ -157,7 +174,7 @@ class Mailer
             $mailer->send($email);
             return true;
         } catch (\Throwable $e) {
-            error_log('Mailer error: ' . $e->getMessage());
+            self::logError('Mailer error: ' . $e->getMessage());
             // Фиксируем в журнале событий: без этого письмо «теряется» молча
             \App\Core\Logger::write('errors', 'Не удалось отправить письмо на ' . $toEmail . ': ' . $e->getMessage());
             return false;

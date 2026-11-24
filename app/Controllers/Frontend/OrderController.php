@@ -3,13 +3,20 @@
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
+use App\Models\SiteSettings;
 
 class OrderController extends Controller
 {
+    private $settings;
+
+    public function __construct(SiteSettings $settings)
+    {
+        $this->settings = $settings;
+    }
+
     public function index($request)
     {
         $user = current_user();
-        $settings = new \App\Models\SiteSettings();
 
         return $this->page('frontend', 'order', [
             'title' => 'Заказать',
@@ -20,8 +27,8 @@ class OrderController extends Controller
             // Конфигурация калькулятора из базы (редактируется в админке)
             'calculatorConfig' => \calculator_config(),
             // Заголовок и подзаголовок из настроек (Настройки → Заголовки → Заказать)
-            'orderHeading' => trim((string) $settings->get('orderTitle', '')) ?: 'Заказать',
-            'orderHeadingLead' => trim((string) $settings->get('orderLead', '')) ?: 'Расскажите о своей задаче — я свяжусь с вами',
+            'orderHeading' => trim((string) $this->settings->get('orderTitle', '')) ?: 'Заказать',
+            'orderHeadingLead' => trim((string) $this->settings->get('orderLead', '')) ?: 'Расскажите о своей задаче — я свяжусь с вами',
             'user' => $user,
             'isAdmin' => $user && $user['role'] === 'admin',
         ]);

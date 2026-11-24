@@ -3,15 +3,24 @@
 namespace App\Controllers\Api;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
+use App\Core\ApplicationLogger;
 use App\Models\Consultant;
 use PDO;
 
 class ConsultantController extends Controller
 {
+    private $logger;
+
+    public function __construct(ApplicationLogger $logger)
+    {
+        $this->logger = $logger;
+    }
+
     public function handle($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'message' => 'Метод не поддерживается.'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается.'), 405);
         }
 
         $payload = $request->json();
@@ -24,7 +33,7 @@ class ConsultantController extends Controller
             ($action === 'sendMessage' && ($payload['role'] ?? '') === 'admin');
 
         if ($adminAction && !\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'message' => 'Требуется авторизация.'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация.'), 401);
         }
         if ($adminAction && !in_array($action, ['getState', 'getTyping'], true)) {
             \admin_require_csrf();
@@ -33,16 +42,16 @@ class ConsultantController extends Controller
         try {
             $pdo = Consultant::connection();
         } catch (\Throwable $error) {
-            error_log('Ошибка подключения к базе консультанта: ' . $error->getMessage());
-            return $this->json(['success' => false, 'message' => 'Не удалось подключиться к базе консультанта.'], 500);
+            $this->logger->logException($error, 'Ошибка подключения к базе консультанта');
+            return $this->json(ApiResource::error('Не удалось подключиться к базе консультанта.'), 500);
         }
         $settings = $this->settings($pdo);
 
         switch ($action) {
             case 'getSettings':
-                return $this->json(['success' => true, 'settings' => array_intersect_key($settings, array_flip([
+                return $this->json(ApiResource::success(['settings' => array_intersect_key($settings, array_flip([
                     'enabled', 'buttonColor', 'buttonTextColor', 'buttonPosition', 'workingHours', 'welcomeMessage',
-                ]))]);
+                ]))]));
 
             case 'getState':
                 return $this->getState($pdo);
@@ -51,7 +60,7 @@ class ConsultantController extends Controller
                 return $this->getTyping($pdo, $payload);
 
             case 'getAdminSettings':
-                return $this->json(['success' => true, 'settings' => $settings]);
+                return $this->json(ApiResource::success(['settings' => $settings]));
 
             case 'saveSettings':
                 return $this->saveSettings($pdo, $payload);
@@ -76,7 +85,7 @@ class ConsultantController extends Controller
                 return $this->thread($pdo, $settings, $action, $payload);
 
             default:
-                return $this->json(['success' => false, 'message' => 'Неизвестное действие.'], 400);
+                return $this->json(ApiResource::error('Неизвестное действие.'), 400);
         }
     }
 
@@ -113,7 +122,7 @@ class ConsultantController extends Controller
             unset($user['created_at'], $user['updated_at']);
         }
         unset($user);
-        return $this->json(['success' => true, 'data' => ['users' => $users, 'messages' => $messages]]);
+        return $this->json(ApiResource::success(['users' => $users, 'messages' => $messages]));
     }
 
     private function getTyping(PDO $pdo, array $payload)
@@ -121,16 +130,16 @@ class ConsultantController extends Controller
         $userId = $this->textValue($payload, 'userId');
         $readerRole = $this->textValue($payload, 'role');
         if (!$this->validUserId($userId) || !in_array($readerRole, ['admin', 'user'], true)) {
-            return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
+            return $this->json(ApiResource::error('Не удалось проверить чат.'), 400);
         }
         if ($readerRole === 'user' && !$this->validToken($pdo, $userId, $this->textValue($payload, 'token'))) {
-            return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
+            return $this->json(ApiResource::error('Чат не найден.'), 404);
         }
         $query = $pdo->prepare('SELECT role FROM ' . db_table('consultant_typing') . '
             WHERE user_id = ? AND role != ? AND updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1');
         $query->execute([$userId, $readerRole]);
         $typingRole = $query->fetchColumn();
-        return $this->json(['success' => true, 'typingRole' => $typingRole === false ? null : $typingRole]);
+        return $this->json(ApiResource::success(['typingRole' => $typingRole === false ? null : $typingRole]));
     }
 
     private function saveSettings(PDO $pdo, array $payload)
@@ -140,19 +149,19 @@ class ConsultantController extends Controller
         foreach (['buttonColor', 'buttonTextColor'] as $color) {
             if (isset($settings[$color]) && (!is_string($settings[$color]) ||
                 !preg_match('/^#[0-9a-f]{6}$/i', $settings[$color]))) {
-                return $this->json(['success' => false, 'message' => $color === 'buttonColor'
+                return $this->json(ApiResource::error($color === 'buttonColor'
                     ? 'Указан неверный цвет кнопки.'
-                    : 'Указан неверный цвет текста кнопки.'], 400);
+                    : 'Указан неверный цвет текста кнопки.'), 400);
             }
         }
         if (isset($settings['buttonPosition']) &&
             !in_array($settings['buttonPosition'], ['left', 'right'], true)) {
-            return $this->json(['success' => false, 'message' => 'Указано неверное расположение кнопки.'], 400);
+            return $this->json(ApiResource::error('Указано неверное расположение кнопки.'), 400);
         }
         if (isset($settings['notificationEmail']) &&
             (!is_string($settings['notificationEmail']) ||
                 ($settings['notificationEmail'] !== '' && !filter_var($settings['notificationEmail'], FILTER_VALIDATE_EMAIL)))) {
-            return $this->json(['success' => false, 'message' => 'Указан неверный email для уведомлений.'], 400);
+            return $this->json(ApiResource::error('Указан неверный email для уведомлений.'), 400);
         }
         if (isset($settings['enabled'])) {
             $settings['enabled'] = filter_var($settings['enabled'], FILTER_VALIDATE_BOOLEAN) ? '1' : '0';
@@ -161,11 +170,11 @@ class ConsultantController extends Controller
             ON DUPLICATE KEY UPDATE setting_value = VALUES(setting_value)');
         foreach ($settings as $key => $value) {
             if (!is_scalar($value)) {
-                return $this->json(['success' => false, 'message' => 'Некорректное значение настройки.'], 400);
+                return $this->json(ApiResource::error('Некорректное значение настройки.'), 400);
             }
             $statement->execute([$key, (string) $value]);
         }
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     private function deleteAnswered(PDO $pdo)
@@ -180,17 +189,17 @@ class ConsultantController extends Controller
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log('Не удалось удалить отвеченные обращения консультанта: ' . $error->getMessage());
-            return $this->json(['success' => false, 'message' => 'Не удалось удалить отвеченные обращения.'], 500);
+            $this->logger->logException($error, 'Не удалось удалить отвеченные обращения консультанта');
+            return $this->json(ApiResource::error('Не удалось удалить отвеченные обращения.'), 500);
         }
-        return $this->json(['success' => true, 'deletedCount' => $deletedCount]);
+        return $this->json(ApiResource::success(['deletedCount' => $deletedCount]));
     }
 
     private function closeThread(PDO $pdo, array $payload)
     {
         $userId = $this->textValue($payload, 'userId');
         if (!$this->validUserId($userId)) {
-            return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
+            return $this->json(ApiResource::error('Не удалось проверить чат.'), 400);
         }
         $close = $pdo->prepare("UPDATE " . db_table('consultant_users') . " SET status = 'closed', updated_at = ? WHERE id = ? AND status != 'closed'");
         $close->execute([gmdate('Y-m-d H:i:s'), $userId]);
@@ -198,10 +207,10 @@ class ConsultantController extends Controller
             $exists = $pdo->prepare('SELECT status FROM ' . db_table('consultant_users') . ' WHERE id = ?');
             $exists->execute([$userId]);
             if ($exists->fetchColumn() === false) {
-                return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
+                return $this->json(ApiResource::error('Чат не найден.'), 404);
             }
         }
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     private function markRead(PDO $pdo, array $payload)
@@ -210,20 +219,20 @@ class ConsultantController extends Controller
         $readerRole = $this->textValue($payload, 'role');
         $level = $this->textValue($payload, 'level');
         if (!$this->validUserId($userId)) {
-            return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
+            return $this->json(ApiResource::error('Не удалось проверить чат.'), 400);
         }
         if (!in_array($readerRole, ['admin', 'user'], true) || !in_array($level, ['viewed', 'read'], true)) {
-            return $this->json(['success' => false, 'message' => 'Некорректный статус сообщения.'], 400);
+            return $this->json(ApiResource::error('Некорректный статус сообщения.'), 400);
         }
         if ($readerRole === 'user' && !$this->validToken($pdo, $userId, $this->textValue($payload, 'token'))) {
-            return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
+            return $this->json(ApiResource::error('Чат не найден.'), 404);
         }
         $messageRole = $readerRole === 'admin' ? 'user' : 'admin';
         $query = $pdo->prepare('SELECT id FROM ' . db_table('consultant_messages') . ' WHERE user_id = ? AND role = ? ORDER BY id DESC LIMIT 1');
         $query->execute([$userId, $messageRole]);
         $messageId = $query->fetchColumn();
         if ($messageId === false) {
-            return $this->json(['success' => true]);
+            return $this->json(ApiResource::success());
         }
         $viewedValue = $level === 'viewed' ? $messageId : null;
         $readValue = $level === 'read' ? $messageId : null;
@@ -244,7 +253,7 @@ class ConsultantController extends Controller
             $readValue,
             gmdate('Y-m-d H:i:s'),
         ]);
-        return $this->json(['success' => true, 'messageId' => (string) $messageId]);
+        return $this->json(ApiResource::success(['messageId' => (string) $messageId]));
     }
 
     private function setTyping(PDO $pdo, array $payload)
@@ -253,17 +262,17 @@ class ConsultantController extends Controller
         $role = $this->textValue($payload, 'role');
         $isTyping = !empty($payload['isTyping']);
         if (!$this->validUserId($userId) || !in_array($role, ['admin', 'user'], true)) {
-            return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
+            return $this->json(ApiResource::error('Не удалось проверить чат.'), 400);
         }
         if ($role === 'user') {
             $query = $pdo->prepare('SELECT token_hash, status FROM ' . db_table('consultant_users') . ' WHERE id = ?');
             $query->execute([$userId]);
             $user = $query->fetch();
             if (!$user || !$this->matchesToken($user['token_hash'], $this->textValue($payload, 'token'))) {
-                return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
+                return $this->json(ApiResource::error('Чат не найден.'), 404);
             }
             if ($isTyping && $user['status'] === 'closed') {
-                return $this->json(['success' => false, 'message' => 'Этот чат закрыт.'], 409);
+                return $this->json(ApiResource::error('Этот чат закрыт.'), 409);
             }
         }
         if ($isTyping) {
@@ -274,22 +283,22 @@ class ConsultantController extends Controller
             $query = $pdo->prepare('DELETE FROM ' . db_table('consultant_typing') . ' WHERE user_id = ? AND role = ?');
             $query->execute([$userId, $role]);
         }
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     private function createThread(PDO $pdo, array $settings, array $payload)
     {
         if (!$settings['enabled']) {
-            return $this->json(['success' => false, 'message' => 'Онлайн-консультант временно отключён.'], 403);
+            return $this->json(ApiResource::error('Онлайн-консультант временно отключён.'), 403);
         }
         $name = $this->normalizeText($payload['name'] ?? '', 100);
         $phone = $this->normalizeText($payload['phone'] ?? '', 40);
         $question = $this->normalizeText($payload['question'] ?? '', 2000);
         if ($name === '' || $phone === '' || $question === '') {
-            return $this->json(['success' => false, 'message' => 'Укажите имя, телефон и вопрос.'], 400);
+            return $this->json(ApiResource::error('Укажите имя, телефон и вопрос.'), 400);
         }
         if (!preg_match('/^[0-9+() .-]{7,40}$/', $phone)) {
-            return $this->json(['success' => false, 'message' => 'Проверьте формат телефона.'], 400);
+            return $this->json(ApiResource::error('Проверьте формат телефона.'), 400);
         }
         try {
             $id = bin2hex(random_bytes(16));
@@ -310,16 +319,15 @@ class ConsultantController extends Controller
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log('Не удалось создать обращение консультанту: ' . $error->getMessage());
-            return $this->json(['success' => false, 'message' => 'Не удалось сохранить обращение.'], 500);
+            $this->logger->logException($error, 'Не удалось создать обращение консультанту');
+            return $this->json(ApiResource::error('Не удалось сохранить обращение.'), 500);
         }
         $this->notifyAdmin($settings['notificationEmail'], $name, $phone, $question);
-        return $this->json([
-            'success' => true,
+        return $this->json(ApiResource::success([
             'userId' => $id,
             'token' => $token,
             'messages' => [['role' => 'user', 'text' => $question, 'createdAt' => gmdate(DATE_ATOM)]],
-        ]);
+        ]));
     }
 
     private function thread(PDO $pdo, array $settings, $action, array $payload)
@@ -327,24 +335,24 @@ class ConsultantController extends Controller
         $userId = $this->textValue($payload, 'userId');
         $role = $action === 'sendMessage' && ($payload['role'] ?? '') === 'admin' ? 'admin' : 'user';
         if (!$this->validUserId($userId)) {
-            return $this->json(['success' => false, 'message' => 'Не удалось проверить чат.'], 400);
+            return $this->json(ApiResource::error('Не удалось проверить чат.'), 400);
         }
         $query = $pdo->prepare('SELECT id, token_hash, status FROM ' . db_table('consultant_users') . ' WHERE id = ?');
         $query->execute([$userId]);
         $user = $query->fetch();
         $token = $this->textValue($payload, 'token');
         if (!$user || ($role !== 'admin' && !$this->matchesToken($user['token_hash'], $token))) {
-            return $this->json(['success' => false, 'message' => 'Чат не найден.'], 404);
+            return $this->json(ApiResource::error('Чат не найден.'), 404);
         }
         if ($action === 'sendMessage' && $user['status'] === 'closed') {
-            return $this->json(['success' => false, 'message' => 'Этот чат закрыт, отправка сообщений недоступна.'], 409);
+            return $this->json(ApiResource::error('Этот чат закрыт, отправка сообщений недоступна.'), 409);
         }
         if ($action === 'getThread') {
             return $this->getThread($pdo, $userId, $user['status']);
         }
         $message = $this->normalizeText($payload['message'] ?? '', 2000);
         if ($message === '') {
-            return $this->json(['success' => false, 'message' => 'Сообщение не может быть пустым.'], 400);
+            return $this->json(ApiResource::error('Сообщение не может быть пустым.'), 400);
         }
         $message = $this->censor($message, $settings['censoredWords']);
         $now = gmdate('Y-m-d H:i:s');
@@ -359,14 +367,14 @@ class ConsultantController extends Controller
             if ($pdo->inTransaction()) {
                 $pdo->rollBack();
             }
-            error_log('Не удалось сохранить сообщение консультанта: ' . $error->getMessage());
-            return $this->json(['success' => false, 'message' => 'Не удалось сохранить сообщение.'], 500);
+            $this->logger->logException($error, 'Не удалось сохранить сообщение консультанта');
+            return $this->json(ApiResource::error('Не удалось сохранить сообщение.'), 500);
         }
-        return $this->json(['success' => true, 'message' => [
+        return $this->json(ApiResource::success(['message' => [
             'role' => $role,
             'text' => $message,
             'createdAt' => gmdate(DATE_ATOM),
-        ]]);
+        ]]));
     }
 
     private function getThread(PDO $pdo, $userId, $status)
@@ -392,13 +400,12 @@ class ConsultantController extends Controller
             WHERE user_id = ? AND role = 'admin' AND updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1");
         $query->execute([$userId]);
         $typingRole = $query->fetchColumn();
-        return $this->json([
-            'success' => true,
+        return $this->json(ApiResource::success([
             'messages' => $messages,
             'readStatus' => $readStatus,
             'typingRole' => $typingRole === false ? null : $typingRole,
             'status' => $status,
-        ]);
+        ]));
     }
 
     private function settings(PDO $pdo)
@@ -494,7 +501,7 @@ class ConsultantController extends Controller
             "MIME-Version: 1.0\r\n";
         $encodedSubject = '=?UTF-8?B?' . base64_encode($subject) . '?=';
         if (!mail($email, $encodedSubject, $body, $headers)) {
-            error_log('Не удалось отправить уведомление о новом обращении консультанту.');
+            $this->logger->warning('Не удалось отправить уведомление о новом обращении консультанту', ['email' => $email]);
         }
     }
 }

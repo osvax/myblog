@@ -5,18 +5,29 @@ namespace App\Controllers\Frontend;
 use App\Controllers\Controller;
 use App\Core\Response;
 use App\Models\ContentRepository;
+use App\Models\SiteSettings;
 
 class BlogController extends Controller
 {
+    private $content;
+    private $settings;
+
+    public function __construct(
+        ContentRepository $content,
+        SiteSettings $settings
+    ) {
+        $this->content = $content;
+        $this->settings = $settings;
+    }
+
     public function index($request)
     {
         $user = current_user();
-        $content = new ContentRepository();
-        $settings = (new \App\Models\SiteSettings())->all();
+        $settings = $this->settings->all();
         $perPage = max(1, min(100, (int) ($settings['articlePerPage'] ?? 12)));
 
         $all = [];
-        foreach ($content->articles(true) as $article) {
+        foreach ($this->content->articles(true) as $article) {
             $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
             $all[$article['slug']] = $article;
         }
@@ -27,7 +38,7 @@ class BlogController extends Controller
                 return strcmp((string) $a['published_at'], (string) $b['published_at']);
             });
         } elseif ($sortOrder === 'popular') {
-            $commentCounts = $content->commentCounts();
+            $commentCounts = $this->content->commentCounts();
             uasort($all, static function (array $a, array $b) use ($commentCounts): int {
                 $countA = (int) ($commentCounts[$a['slug']] ?? 0);
                 $countB = (int) ($commentCounts[$b['slug']] ?? 0);
@@ -41,7 +52,7 @@ class BlogController extends Controller
         $pages = max(1, (int) ceil($total / $perPage));
         $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
         $articles = array_slice($all, ($page - 1) * $perPage, $perPage, true);
-        $categories = $content->categories();
+        $categories = $this->content->categories();
         $categoriesMap = [];
         foreach ($categories as $cat) {
             $categoriesMap[$cat['id']] = $cat['name'];
@@ -83,18 +94,17 @@ class BlogController extends Controller
     public function category($request, array $parameters = [])
     {
         $user = current_user();
-        $content = new ContentRepository();
         $slug = isset($parameters['slug']) ? (string) $parameters['slug'] : '';
-        $category = $content->categoryBySlug($slug);
+        $category = $this->content->categoryBySlug($slug);
         if (!$category) {
             return \App\Core\ErrorPages::page(404, 'Рубрика не найдена', 'Такой рубрики нет или она была переименована.', '/blog.html');
         }
 
-        $settings = (new \App\Models\SiteSettings())->all();
+        $settings = $this->settings->all();
         $perPage = max(1, min(100, (int) ($settings['articlePerPage'] ?? 12)));
 
         $all = [];
-        foreach ($content->articlesByCategory($slug) as $article) {
+        foreach ($this->content->articlesByCategory($slug) as $article) {
             $article['date'] = $article['published_at'] ? date('d.m.Y', strtotime($article['published_at'])) : '';
             $all[$article['slug']] = $article;
         }
@@ -104,7 +114,7 @@ class BlogController extends Controller
                 return strcmp((string) $a['published_at'], (string) $b['published_at']);
             });
         } elseif ($sortOrder === 'popular') {
-            $commentCounts = $content->commentCounts();
+            $commentCounts = $this->content->commentCounts();
             uasort($all, static function (array $a, array $b) use ($commentCounts): int {
                 $countA = (int) ($commentCounts[$a['slug']] ?? 0);
                 $countB = (int) ($commentCounts[$b['slug']] ?? 0);
@@ -119,7 +129,7 @@ class BlogController extends Controller
         $page = max(1, min($pages, (int) ($_GET['page'] ?? 1)));
         $articles = array_slice($all, ($page - 1) * $perPage, $perPage, true);
 
-        $categories = $content->categories();
+        $categories = $this->content->categories();
         $categoriesMap = [];
         foreach ($categories as $cat) {
             $categoriesMap[$cat['id']] = $cat['name'];
@@ -160,8 +170,7 @@ class BlogController extends Controller
     public function article($request, $slug)
     {
         $user = current_user();
-        $content = new ContentRepository();
-        $article = $content->articleBySlug($slug);
+        $article = $this->content->articleBySlug($slug);
         if (!$article) {
             return \App\Core\ErrorPages::page(404, 'Статья не найдена', 'Такой статьи нет или она была удалена.', '/blog.html');
         }
@@ -175,7 +184,7 @@ class BlogController extends Controller
         $template = 'dynamic-article';
 
         $allArticles = [];
-        foreach ($content->articles(true) as $a) {
+        foreach ($this->content->articles(true) as $a) {
             $allArticles[$a['slug']] = [
                 'slug' => $a['slug'],
                 'title' => $a['title'],
@@ -200,10 +209,10 @@ class BlogController extends Controller
         }
 
         // Рубрики для сайдбара страницы статьи (динамически из базы)
-        $sidebarCategories = $content->categories();
+        $sidebarCategories = $this->content->categories();
 
         // Видимость комментариев настраивается в админке (Настройки → Блог → commentsAccess)
-        $commentsSettings = (new \App\Models\SiteSettings());
+        $commentsSettings = $this->settings;
         $commentsAccess = (string) ($commentsSettings->get('commentsAccess', 'users') ?: 'users');
         $commentsVisible = match ($commentsAccess) {
             'guests' => true,
@@ -212,8 +221,8 @@ class BlogController extends Controller
         };
         // Глобальный тумблер «Разрешить комментарии»: выключен — секция не выводится
         $commentsEnabled = (bool) $commentsSettings->get('articleCommentsEnabled', true);
-        $commentsCount = $content->commentsCount($slug);
-        $comments = $commentsVisible ? $content->commentsByArticle($slug) : [];
+        $commentsCount = $this->content->commentsCount($slug);
+        $comments = $commentsVisible ? $this->content->commentsByArticle($slug) : [];
 
         // Тумблеры отображения (Настройки → Статьи)
         $showArticleTags = (bool) $commentsSettings->get('articleTagsEnabled', true);
@@ -226,7 +235,7 @@ class BlogController extends Controller
         // Похожие статьи: те же рубрики, до 3, текущую пропускаем
         $relatedArticles = [];
         if ($showRelatedArticles && !empty($article['category_slug'])) {
-            foreach ($content->articlesByCategory((string) $article['category_slug']) as $related) {
+            foreach ($this->content->articlesByCategory((string) $article['category_slug']) as $related) {
                 if ($related['slug'] === $slug) {
                     continue;
                 }

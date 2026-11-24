@@ -3,32 +3,39 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
 use App\Models\LandingPageSetting;
 
 class LandingPageController extends Controller
 {
+    private $settings;
+
+    public function __construct(LandingPageSetting $settings)
+    {
+        $this->settings = $settings;
+    }
+
     /**
      * Получить все настройки лендинга.
      */
     public function index($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         $sectionKey = isset($_GET['section_key']) && is_string($_GET['section_key']) ? trim($_GET['section_key']) : null;
 
-        $settings = (new LandingPageSetting())->getAll($sectionKey);
-        $sections = (new LandingPageSetting())->getSections();
+        $settings = $this->settings->getAll($sectionKey);
+        $sections = $this->settings->getSections();
 
-        return $this->json([
-            'success' => true,
+        return $this->json(ApiResource::success([
             'settings' => $settings,
             'sections' => $sections,
-        ]);
+        ]));
     }
 
     /**
@@ -37,7 +44,7 @@ class LandingPageController extends Controller
     public function create($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -56,16 +63,16 @@ class LandingPageController extends Controller
         $editId = isset($input['edit_id']) ? (int) $input['edit_id'] : 0;
 
         if (strlen($sectionKey) < 1 || strlen($sectionKey) > 100) {
-            return $this->json(['success' => false, 'error' => 'Неверный ключ секции'], 400);
+            return $this->json(ApiResource::error('Неверный ключ секции'), 400);
         }
         if (strlen($fieldName) < 1 || strlen($fieldName) > 100) {
-            return $this->json(['success' => false, 'error' => 'Неверное имя поля'], 400);
+            return $this->json(ApiResource::error('Неверное имя поля'), 400);
         }
         if (!in_array($fieldType, ['text', 'textarea', 'number', 'email', 'tel', 'url', 'image', 'video', 'audio', 'color', 'checkbox', 'select', 'rich_text'], true)) {
-            return $this->json(['success' => false, 'error' => 'Неверный тип поля'], 400);
+            return $this->json(ApiResource::error('Неверный тип поля'), 400);
         }
 
-        $result = (new LandingPageSetting())->upsert(
+        $result = $this->settings->upsert(
             $section,
             $sectionKey,
             $fieldName,
@@ -80,10 +87,10 @@ class LandingPageController extends Controller
         );
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить'], 500);
+            return $this->json(ApiResource::error($result['error'] ?? 'Не удалось сохранить'), 500);
         }
 
-        return $this->json(['success' => true, 'id' => $result['id'], 'action' => $result['action']]);
+        return $this->json(ApiResource::success(['id' => $result['id'], 'action' => $result['action']]));
     }
 
     /**
@@ -92,7 +99,7 @@ class LandingPageController extends Controller
     public function delete($request, $parameters)
     {
         if ($request->method() !== 'DELETE') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -100,16 +107,16 @@ class LandingPageController extends Controller
         $settingId = isset($parameters['id']) ? (int) $parameters['id'] : 0;
 
         if ($settingId <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID настройки'], 400);
+            return $this->json(ApiResource::error('Неверный ID настройки'), 400);
         }
 
-        $result = (new LandingPageSetting())->delete($settingId);
+        $result = $this->settings->delete($settingId);
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => 'Не удалось удалить'], 404);
+            return $this->json(ApiResource::error('Не удалось удалить'), 404);
         }
 
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     /**
@@ -118,7 +125,7 @@ class LandingPageController extends Controller
     public function toggleActive($request, $parameters)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -126,15 +133,15 @@ class LandingPageController extends Controller
         $settingId = isset($parameters['id']) ? (int) $parameters['id'] : 0;
 
         if ($settingId <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID настройки'], 400);
+            return $this->json(ApiResource::error('Неверный ID настройки'), 400);
         }
 
-        $result = (new LandingPageSetting())->toggleActive($settingId);
+        $result = $this->settings->toggleActive($settingId);
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => 'Не удалось переключить'], 500);
+            return $this->json(ApiResource::error('Не удалось переключить'), 500);
         }
 
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 }

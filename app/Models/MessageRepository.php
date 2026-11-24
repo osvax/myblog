@@ -2,7 +2,7 @@
 
 namespace App\Models;
 
-use App\Core\Database;
+use PDO;
 use App\Core\QueryBuilder;
 use App\DTO\MessageDTO;
 
@@ -10,9 +10,9 @@ class MessageRepository
 {
     private $db;
 
-    public function __construct()
+    public function __construct(PDO $db = null)
     {
-        $this->db = Database::connection();
+        $this->db = $db ?? \App\Core\Database::connection();
     }
 
     /**

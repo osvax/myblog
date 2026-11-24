@@ -3,30 +3,41 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
+use App\Core\ApplicationLogger;
 use App\Models\AdminUser;
 
 class AuthController extends Controller
 {
+    private $adminUser;
+    private $logger;
+
+    public function __construct(AdminUser $adminUser, ApplicationLogger $logger)
+    {
+        $this->adminUser = $adminUser;
+        $this->logger = $logger;
+    }
+
     public function login($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         $input = $request->json();
         $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
         $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
-        $result = (new AdminUser())->verifyCredentials($email, $password);
+        $result = $this->adminUser->verifyCredentials($email, $password);
         if (!$result['configured']) {
-            return $this->json(['success' => false, 'error' => 'Проверьте email входа в админ-панель в настройках сайта'], 503);
+            return $this->json(ApiResource::error('Проверьте email входа в админ-панель в настройках сайта'), 503);
         }
         if (!$result['valid']) {
-            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Неверный email или пароль'], 401);
+            return $this->json(ApiResource::error($result['error'] ?? 'Неверный email или пароль'), 401);
         }
 
         \admin_start_session();
         if (!session_regenerate_id(true)) {
-            return $this->json(['success' => false, 'error' => 'Не удалось создать защищённую сессию'], 500);
+            return $this->json(ApiResource::error('Не удалось создать защищённую сессию'), 500);
         }
         $_SESSION['admin_authenticated'] = true;
         $_SESSION['admin_email'] = $result['email'];
@@ -39,25 +50,25 @@ class AuthController extends Controller
         } catch (\Throwable $error) {
             $_SESSION = [];
             session_destroy();
-            error_log('Could not generate an admin CSRF token.');
-            return $this->json(['success' => false, 'error' => 'Не удалось создать защищённую сессию'], 500);
+            $this->logger->logException($error, 'Could not generate an admin CSRF token');
+            return $this->json(ApiResource::error('Не удалось создать защищённую сессию'), 500);
         }
 
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     public function csrf($request)
     {
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if (empty($_SESSION['admin_csrf_token'])) {
-            return $this->json(['success' => false, 'error' => 'Не удалось получить токен защищённого запроса'], 500);
+            return $this->json(ApiResource::error('Не удалось получить токен защищённого запроса'), 500);
         }
-        return $this->json(['success' => true, 'token' => $_SESSION['admin_csrf_token']]);
+        return $this->json(ApiResource::success(['token' => $_SESSION['admin_csrf_token']]));
     }
 
     public function check($request)
@@ -70,7 +81,7 @@ class AuthController extends Controller
     public function logout($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         if (!\admin_is_authenticated()) {
             return \App\Core\Response::redirect('/admin/login.html', 303);

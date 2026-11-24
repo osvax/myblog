@@ -3,10 +3,19 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
 use App\Core\Response;
+use App\Core\ApplicationLogger;
 
 class FileManagerController extends Controller
 {
+    private $logger;
+
+    public function __construct(ApplicationLogger $logger)
+    {
+        $this->logger = $logger;
+    }
+
     private $categories = [
         'images' => ['jpg', 'jpeg', 'png'],
         'documents' => ['doc', 'docx'],
@@ -19,7 +28,7 @@ class FileManagerController extends Controller
     public function handle($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
 
         if ($request->method() === 'GET') {
@@ -30,11 +39,11 @@ class FileManagerController extends Controller
             if ($action === 'download' || $action === 'preview') {
                 return $this->readFile($action);
             }
-            return $this->json(['success' => false, 'error' => 'Неизвестное действие'], 400);
+            return $this->json(ApiResource::error('Неизвестное действие'), 400);
         }
 
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         \admin_require_csrf();
 
@@ -45,17 +54,17 @@ class FileManagerController extends Controller
         if ($action === 'upload') {
             return $this->uploadFile();
         }
-        return $this->json(['success' => false, 'error' => 'Неизвестное действие'], 400);
+        return $this->json(ApiResource::error('Неизвестное действие'), 400);
     }
 
     private function listFiles()
     {
         $root = $this->uploadsPath();
         if (!is_dir($root)) {
-            return $this->json(['success' => true, 'files' => []]);
+            return $this->json(ApiResource::success(['files' => []]));
         }
         if (is_link($root)) {
-            return $this->json(['success' => false, 'error' => 'Некорректная папка загрузок'], 500);
+            return $this->json(ApiResource::error('Некорректная папка загрузок'), 500);
         }
 
         $files = [];
@@ -66,11 +75,11 @@ class FileManagerController extends Controller
                     continue;
                 }
                 if (is_link($directory)) {
-                    return $this->json(['success' => false, 'error' => 'Некорректная папка загрузок'], 500);
+                    return $this->json(ApiResource::error('Некорректная папка загрузок'), 500);
                 }
                 $entries = scandir($directory);
                 if ($entries === false) {
-                    return $this->json(['success' => false, 'error' => 'Не удалось прочитать папку загрузок'], 500);
+                    return $this->json(ApiResource::error('Не удалось прочитать папку загрузок'), 500);
                 }
                 foreach ($entries as $entry) {
                     // Имя файла: человекочитаемый slug (латиница, цифры, тире)
@@ -101,7 +110,7 @@ class FileManagerController extends Controller
         usort($files, function ($left, $right) {
             return $right['modified'] <=> $left['modified'];
         });
-        return $this->json(['success' => true, 'files' => $files]);
+        return $this->json(ApiResource::success(['files' => $files]));
     }
 
     private function readFile($action)
@@ -138,7 +147,7 @@ class FileManagerController extends Controller
 
         $content = file_get_contents($path);
         if ($content === false) {
-            error_log('Не удалось прочитать файл из файлового менеджера.');
+            $this->logger->warning('Не удалось прочитать файл из файлового менеджера', ['path' => $path]);
             return $this->json(['success' => false, 'error' => 'Не удалось прочитать файл'], 500);
         }
         return new Response($content, 200, [
@@ -154,82 +163,82 @@ class FileManagerController extends Controller
     {
         $path = $this->safePath($relativePath);
         if ($path === null) {
-            return $this->json(['success' => false, 'error' => 'Файл не найден'], 404);
+            return $this->json(ApiResource::error('Файл не найден'), 404);
         }
         if (!unlink($path)) {
-            error_log('Не удалось удалить файл, загруженный через файловый менеджер.');
-            return $this->json(['success' => false, 'error' => 'Не удалось удалить файл'], 500);
+            $this->logger->warning('Не удалось удалить файл, загруженный через файловый менеджер', ['path' => $path]);
+            return $this->json(ApiResource::error('Не удалось удалить файл'), 500);
         }
         $metadataPath = $this->metadataPath($path);
         if (is_file($metadataPath) && !is_link($metadataPath) && !unlink($metadataPath)) {
-            error_log('Не удалось удалить метаданные загруженного файла.');
+            $this->logger->warning('Не удалось удалить метаданные загруженного файла', ['metadataPath' => $metadataPath]);
         }
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     private function uploadFile()
     {
         if (!isset($_FILES['file'], $_POST['category'], $_POST['section']) ||
             !is_array($_FILES['file']) || !is_string($_POST['category']) || !is_string($_POST['section'])) {
-            return $this->json(['success' => false, 'error' => 'Передайте файл, тип и раздел'], 400);
+            return $this->json(ApiResource::error('Передайте файл, тип и раздел'), 400);
         }
         $category = $_POST['category'];
         $section = $_POST['section'];
         $file = $_FILES['file'];
         if (!isset($this->categories[$category]) || !in_array($section, $this->sections, true)) {
-            return $this->json(['success' => false, 'error' => 'Неизвестный тип файла или раздел'], 400);
+            return $this->json(ApiResource::error('Неизвестный тип файла или раздел'), 400);
         }
         if (!isset($file['error'], $file['tmp_name'], $file['size'], $file['name']) ||
             !is_int($file['error']) || !is_string($file['tmp_name']) ||
             !is_int($file['size']) || !is_string($file['name'])) {
-            return $this->json(['success' => false, 'error' => 'Некорректные данные файла'], 400);
+            return $this->json(ApiResource::error('Некорректные данные файла'), 400);
         }
         if ($file['error'] !== UPLOAD_ERR_OK) {
             $message = $file['error'] === UPLOAD_ERR_INI_SIZE || $file['error'] === UPLOAD_ERR_FORM_SIZE
                 ? 'Размер файла превышает допустимый'
                 : 'Не удалось принять файл';
-            return $this->json(['success' => false, 'error' => $message], 400);
+            return $this->json(ApiResource::error($message), 400);
         }
         if (!is_uploaded_file($file['tmp_name']) || $file['size'] < 1 || $file['size'] > 10 * 1024 * 1024) {
-            return $this->json(['success' => false, 'error' => 'Размер файла должен быть не больше 10 МБ'], 400);
+            return $this->json(ApiResource::error('Размер файла должен быть не больше 10 МБ'), 400);
         }
 
         $originalName = basename(str_replace('\\', '/', $file['name']));
         $extension = strtolower(pathinfo($originalName, PATHINFO_EXTENSION));
         if (!in_array($extension, $this->categories[$category], true)) {
-            return $this->json(['success' => false, 'error' => 'Расширение файла не соответствует выбранному типу'], 400);
+            return $this->json(ApiResource::error('Расширение файла не соответствует выбранному типу'), 400);
         }
         if (!extension_loaded('fileinfo')) {
-            error_log('Для загрузок файлового менеджера требуется расширение PHP fileinfo.');
-            return $this->json(['success' => false, 'error' => 'На сервере не настроена проверка файлов'], 500);
+            $this->logger->error('Для загрузок файлового менеджера требуется расширение PHP fileinfo');
+            return $this->json(ApiResource::error('На сервере не настроена проверка файлов'), 500);
         }
         $validation = $this->validateUploadedFile($file['tmp_name'], $extension);
         if ($validation !== null) {
-            return $this->json(['success' => false, 'error' => $validation], 400);
+            return $this->json(ApiResource::error($validation), 400);
         }
 
         $root = $this->uploadsPath();
         $categoryDirectory = $root . DIRECTORY_SEPARATOR . $category;
         $targetDirectory = $categoryDirectory . DIRECTORY_SEPARATOR . $section;
         if (is_link($root) || is_link($categoryDirectory) || is_link($targetDirectory)) {
-            return $this->json(['success' => false, 'error' => 'Некорректная папка загрузки'], 500);
+            return $this->json(ApiResource::error('Некорректная папка загрузки'), 500);
         }
         foreach ([$root, $categoryDirectory, $targetDirectory] as $directory) {
             if (!is_dir($directory) && !mkdir($directory, 0755) && !is_dir($directory)) {
-                return $this->json(['success' => false, 'error' => 'Не удалось создать папку загрузок'], 500);
+                return $this->json(ApiResource::error('Не удалось создать папку загрузок'), 500);
             }
         }
         $this->ensureImagesSecurityHtaccess($categoryDirectory);
         $realRoot = realpath($root);
         $realTarget = realpath($targetDirectory);
         if ($realRoot === false || $realTarget === false || dirname(dirname($realTarget)) !== $realRoot) {
-            return $this->json(['success' => false, 'error' => 'Некорректная папка загрузки'], 500);
+            return $this->json(ApiResource::error('Некорректная папка загрузки'), 500);
         }
         $filename = $this->readableFilename($originalName, $extension, $targetDirectory);
         $destination = $targetDirectory . DIRECTORY_SEPARATOR . $filename;
         if (!move_uploaded_file($file['tmp_name'], $destination)) {
-            error_log('Не удалось переместить загруженный файл в файловый менеджер.');
-            return $this->json(['success' => false, 'error' => 'Не удалось сохранить файл'], 500);
+            $this->logger->warning('Не удалось переместить загруженный файл в файловый менеджер', ['destination' => $destination]);
+            return $this->json(ApiResource::error('Не удалось сохранить файл'), 500);
         }
         $name = preg_replace('/[\x00-\x1F\x7F]/', '', $originalName);
         if (!is_string($name) || preg_match('//u', $name) !== 1) {
@@ -238,17 +247,19 @@ class FileManagerController extends Controller
         $metadata = json_encode(['originalName' => $name], JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
         if ($metadata === false || file_put_contents($this->metadataPath($destination), $metadata, LOCK_EX) === false) {
             @unlink($destination);
-            error_log('Не удалось сохранить исходное имя загруженного файла.');
-            return $this->json(['success' => false, 'error' => 'Не удалось сохранить имя файла'], 500);
+            $this->logger->warning('Не удалось сохранить исходное имя загруженного файла', ['destination' => $destination]);
+            return $this->json(ApiResource::error('Не удалось сохранить имя файла'), 500);
         }
-        return $this->json(['success' => true, 'file' => [
-            'path' => $category . '/' . $section . '/' . $filename,
-            'name' => $name,
-            'category' => $category,
-            'section' => $section,
-            'size' => filesize($destination),
-            'modified' => filemtime($destination),
-        ]]);
+        return $this->json(ApiResource::success([
+            'file' => [
+                'path' => $category . '/' . $section . '/' . $filename,
+                'name' => $name,
+                'category' => $category,
+                'section' => $section,
+                'size' => filesize($destination),
+                'modified' => filemtime($destination),
+            ]
+        ]));
     }
 
     private function validateUploadedFile($path, $extension)

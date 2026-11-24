@@ -71,11 +71,34 @@ class MigrationRunner
     /**
      * @param \PDO|null $pdo PDO соединение (по умолчанию Database::connection())
      * @param string|null $migrationsPath Путь к миграциям (по умолчанию database/migrations)
+     * @param ApplicationLogger|null $logger Логгер для вывода сообщений
      */
-    public function __construct(?\PDO $pdo = null, ?string $migrationsPath = null)
+    public function __construct(?\PDO $pdo = null, ?string $migrationsPath = null, ?ApplicationLogger $logger = null)
     {
         $this->pdo = $pdo ?? \App\Core\Database::connection();
         $this->migrationsPath = $migrationsPath ?? (dirname(__DIR__, 2) . '/database/migrations');
+        $this->logger = $logger;
+    }
+
+    /**
+     * Логирование сообщения.
+     */
+    private function log(string $level, string $message): void
+    {
+        if ($this->logger !== null) {
+            $this->logger->$level($message);
+            return;
+        }
+        if (function_exists('container')) {
+            try {
+                $logger = container(ApplicationLogger::class);
+                $logger->$level($message);
+                return;
+            } catch (\Throwable) {
+                // игнорируем
+            }
+        }
+        error_log($message);
     }
 
     /**
@@ -101,7 +124,7 @@ class MigrationRunner
             ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
         SQL;
         $this->pdo->exec($sql);
-        $this->log("Version table `{$this->versionTable}` initialized.");
+        $this->log('info', "Version table `{$this->versionTable}` initialized.");
     }
 
     /**
@@ -128,7 +151,7 @@ class MigrationRunner
             // Извлекаем версию: 001_, 014_, 2025_01_15_
             // Только для файлов, начинающихся с цифр и подчёркивания
             if (!preg_match('/^(\d+(?:_\d+)*)_/', $basename, $matches)) {
-                $this->log("Warning: Skipping file with invalid name format: $basename");
+                $this->log('warning', "Skipping file with invalid name format: $basename");
                 continue;
             }
 
@@ -148,7 +171,7 @@ class MigrationRunner
                     continue;
                 }
                 // Конфликт версий - логируем предупреждение
-                $this->log("Warning: Duplicate version $version: " . basename($migrations[$version]) . " vs $basename");
+                $this->log('warning', "Duplicate version $version: " . basename($migrations[$version]) . " vs $basename");
                 continue;
             }
 
@@ -209,20 +232,20 @@ class MigrationRunner
         $skipped = [];
 
         if (empty($pending)) {
-            $this->log('No pending migrations.');
+            $this->log('info', 'No pending migrations.');
             return ['applied' => [], 'failed' => [], 'skipped' => []];
         }
 
-        $this->log("Found " . count($pending) . " pending migration(s).");
+        $this->log('info', "Found " . count($pending) . " pending migration(s).");
 
         foreach ($pending as $version => $file) {
             $startTime = microtime(true);
             $name = $this->extractMigrationName($file);
 
-            $this->log("Running migration $version: $name ...");
+            $this->log('info', "Running migration $version: $name ...");
 
             if ($dryRun) {
-                $this->log("  [DRY RUN] Would apply: $file");
+                $this->log('info', "  [DRY RUN] Would apply: $file");
                 $skipped[] = $version;
                 continue;
             }
@@ -242,10 +265,10 @@ class MigrationRunner
                     ':time' => $executionTimeMs,
                 ]);
 
-                $this->log("  OK ({$executionTimeMs} ms)");
+                $this->log('info', "  OK ({$executionTimeMs} ms)");
                 $applied[] = $version;
             } catch (\Throwable $e) {
-                $this->log("  FAILED: " . $e->getMessage());
+                $this->log('error', "  FAILED: " . $e->getMessage());
                 $failed[] = ['version' => $version, 'error' => $e->getMessage()];
                 // Прерываем выполнение при ошибке
                 break;
@@ -267,7 +290,7 @@ class MigrationRunner
 
         $applied = $this->getAppliedMigrations();
         if (empty($applied)) {
-            $this->log('No applied migrations to roll back.');
+            $this->log('info', 'No applied migrations to roll back.');
             return ['rolled_back' => [], 'failed' => []];
         }
 
@@ -282,13 +305,13 @@ class MigrationRunner
         foreach ($toRollback as $version) {
             $file = $this->findMigrationFile($version);
             if (!$file) {
-                $this->log("Migration file for version $version not found. Cannot roll back.");
+                $this->log('error', "Migration file for version $version not found. Cannot roll back.");
                 $failed[] = ['version' => $version, 'error' => 'Migration file not found'];
                 continue;
             }
 
             $name = $this->extractMigrationName($file);
-            $this->log("Rolling back migration $version: $name ...");
+            $this->log('info', "Rolling back migration $version: $name ...");
 
             try {
                 // Проверяем, поддерживает ли миграция down()
@@ -302,10 +325,10 @@ class MigrationRunner
                 $stmt = $this->pdo->prepare("DELETE FROM `{$this->versionTable}` WHERE version = :version");
                 $stmt->execute([':version' => $version]);
 
-                $this->log("  OK");
+                $this->log('info', "  OK");
                 $rolledBack[] = $version;
             } catch (\Throwable $e) {
-                $this->log("  FAILED: " . $e->getMessage());
+                $this->log('error', "  FAILED: " . $e->getMessage());
                 $failed[] = ['version' => $version, 'error' => $e->getMessage()];
                 break;
             }
@@ -379,7 +402,7 @@ class MigrationRunner
         }
 
         file_put_contents($filepath, $content);
-        $this->log("Created migration: $filepath");
+        $this->log('info', "Created migration: $filepath");
 
         return $filepath;
     }
@@ -612,15 +635,4 @@ PHP;
 SQL;
     }
 
-    /**
-     * Логирование.
-     */
-    private function log(string $message): void
-    {
-        if ($this->logger) {
-            ($this->logger)($message);
-        } else {
-            echo $message . "\n";
-        }
     }
-}

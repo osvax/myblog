@@ -1,0 +1,96 @@
+%PDF-1.4
+1 0 obj
+<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>
+endobj
+2 0 obj
+<< /Type /Pages /Kids [3 0 R] /Count 1 >>
+endobj
+3 0 obj
+<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 1 0 R >> >> /Contents 4 0 R >>
+endobj
+4 0 obj
+<< /Length 1360 >>
+stream
+BT
+/F1 16 Tf
+50 760 Td
+(TECHNICAL SPECIFICATION - TEXTILE) Tj
+0 -22 Td
+(Textile design studio) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(1. General information) Tj
+0 -22 Td
+(Type: responsive one-page website) Tj
+0 -22 Td
+(Language: Russian | Year: 2026 | Duration: 4 working days) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(2. Goal) Tj
+0 -22 Td
+(Refactor the project with SCSS, BEM and unique va_ prefix.) Tj
+0 -22 Td
+(Preserve visual concept, content, images and interactions.) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(3. Stack) Tj
+0 -22 Td
+(HTML5, SCSS/Sass, CSS3, JavaScript ES6+, BEM, SVG/JPG.) Tj
+0 -22 Td
+(No frameworks or bundlers.) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(4. Sections) Tj
+0 -22 Td
+(Header, hero, about, works gallery, textile profiles, reviews,) Tj
+0 -22 Td
+(calculator/contact form, contacts and footer.) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(5. Responsive) Tj
+0 -22 Td
+(320 / 375 / 480 / 768 / 1024 / 1280 / 1440 / 1920 px.) Tj
+0 -22 Td
+(Mobile menu, flexible grids, clamp\(\), no horizontal scroll.) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(6. SCSS) Tj
+0 -22 Td
+(abstracts, base, components, utils and style.scss entry point.) Tj
+0 -22 Td
+(Compiled output: styles/style.css.) Tj
+0 -22 Td
+() Tj
+0 -22 Td
+(7. Acceptance) Tj
+0 -22 Td
+(All project classes start with va_ and follow BEM.) Tj
+0 -22 Td
+(SCSS compiles, interactions work, console is clean.) Tj
+0 -22 Td
+(Four portfolio screenshots are included.) Tj
+ET
+endstream
+endobj
+5 0 obj
+<< /Type /Catalog /Pages 2 0 R >>
+endobj
+xref
+0 6
+0000000000 65535 f 
+0000000009 00000 n 
+0000000079 00000 n 
+0000000136 00000 n 
+0000000262 00000 n 
+0000001674 00000 n 
+trailer
+<< /Size 6 /Root 5 0 R >>
+startxref
+1723
+%%EOF

@@ -48,3 +48,24 @@ require_once APP_ROOT . '/app/Core/assets.php';
 require_once APP_ROOT . '/app/Core/calculator.php';
 require_once APP_ROOT . '/app/Core/menu.php';
 require_once APP_ROOT . '/app/Core/static-pages.php';
+
+// ============ DI Container ============
+// Строим контейнер один раз и делаем доступным глобально через container()
+$containerBuilder = new DI\ContainerBuilder();
+$containerDefinitions = require APP_ROOT . '/config/container.php';
+$containerDefinitions($containerBuilder);
+$container = $containerBuilder->build();
+
+// Глобальная функция для доступа к контейнеру
+if (!function_exists('container')) {
+    /**
+     * @template T
+     * @param class-string<T> $id
+     * @return T
+     */
+    function container(string $id): mixed
+    {
+        global $container;
+        return $container->get($id);
+    }
+}

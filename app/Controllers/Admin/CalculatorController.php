@@ -3,6 +3,8 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
+use App\Models\SiteSettings;
 
 /**
  * API калькулятора заказа: конфигурация типов и функций хранится
@@ -11,41 +13,48 @@ use App\Controllers\Controller;
  */
 class CalculatorController extends Controller
 {
+    private $settings;
+
+    public function __construct(SiteSettings $settings)
+    {
+        $this->settings = $settings;
+    }
+
     public function get($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
-        return $this->json(['success' => true, 'config' => \calculator_config()]);
+        return $this->json(ApiResource::success(['config' => \calculator_config()]));
     }
 
     public function save($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         \admin_require_csrf();
 
         $input = $request->json();
         $config = $this->validateConfig($input);
         if ($config === null) {
-            return $this->json(['success' => false, 'error' => 'Проверьте настройки: валюту, названия, цены и сроки'], 400);
+            return $this->json(ApiResource::error('Проверьте настройки: валюту, названия, цены и сроки'), 400);
         }
 
-        $result = (new \App\Models\SiteSettings())->saveAllWithType([
+        $result = $this->settings->saveAllWithType([
             'calculatorConfig' => json_encode($config, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES),
         ]);
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => 'Не удалось сохранить настройки'], 500);
+            return $this->json(ApiResource::error('Не удалось сохранить настройки'), 500);
         }
 
-        return $this->json(['success' => true, 'config' => $config]);
+        return $this->json(ApiResource::success(['config' => $config]));
     }
 
     /**

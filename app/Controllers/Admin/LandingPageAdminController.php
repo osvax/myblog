@@ -3,29 +3,42 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
+use App\Core\ApiResource;
 use App\Models\LandingPage;
 use App\Models\LandingPageManager;
+use App\Models\SettingsRepository;
 
 class LandingPageAdminController extends Controller
 {
+    private $landingPage;
+    private $landingPageManager;
+    private $settings;
+
+    public function __construct(
+        LandingPage $landingPage,
+        LandingPageManager $landingPageManager,
+        SettingsRepository $settings
+    ) {
+        $this->landingPage = $landingPage;
+        $this->landingPageManager = $landingPageManager;
+        $this->settings = $settings;
+    }
+
     /**
      * Получить все страницы.
      */
     public function index($request)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
-        $pages = (new LandingPage())->getAll();
+        $pages = $this->landingPage->getAll();
 
-        return $this->json([
-            'success' => true,
-            'pages' => $pages,
-        ]);
+        return $this->json(ApiResource::success(['pages' => $pages]));
     }
 
     /**
@@ -34,7 +47,7 @@ class LandingPageAdminController extends Controller
     public function generate($request, $parameters)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -43,8 +56,7 @@ class LandingPageAdminController extends Controller
         // ID может быть в query string
         $pageId = isset($_GET['id']) ? (int) $_GET['id'] : 0;
 
-        $manager = new LandingPageManager();
-        $html = $manager->generate($pageSlug);
+        $html = $this->landingPageManager->generate($pageSlug);
 
         // Получаем заголовок из настроек
         $db = \App\Core\Database::connection();
@@ -52,17 +64,16 @@ class LandingPageAdminController extends Controller
         $stmt->execute();
         $title = $stmt->fetchColumn() ?: ucfirst($pageSlug);
 
-        $result = (new LandingPage())->save($pageSlug, $title, $html, 1, $pageId);
+        $result = $this->landingPage->save($pageSlug, $title, $html, 1, $pageId);
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить'], 500);
+            return $this->json(ApiResource::error($result['error'] ?? 'Не удалось сохранить'), 500);
         }
 
-        return $this->json([
-            'success' => true,
+        return $this->json(ApiResource::success([
             'id' => $result['id'],
             'html_length' => strlen($html),
-        ]);
+        ]));
     }
 
     /**
@@ -71,7 +82,7 @@ class LandingPageAdminController extends Controller
     public function create($request)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -84,19 +95,19 @@ class LandingPageAdminController extends Controller
         $editId = isset($input['edit_id']) ? (int) $input['edit_id'] : 0;
 
         if (strlen($slug) < 1 || strlen($slug) > 100) {
-            return $this->json(['success' => false, 'error' => 'Неверный slug страницы'], 400);
+            return $this->json(ApiResource::error('Неверный slug страницы'), 400);
         }
         if (strlen($title) < 1 || strlen($title) > 254) {
-            return $this->json(['success' => false, 'error' => 'Неверный заголовок'], 400);
+            return $this->json(ApiResource::error('Неверный заголовок'), 400);
         }
 
-        $result = (new LandingPage())->save($slug, $title, $htmlContent, $isActive, $editId);
+        $result = $this->landingPage->save($slug, $title, $htmlContent, $isActive, $editId);
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить'], 500);
+            return $this->json(ApiResource::error($result['error'] ?? 'Не удалось сохранить'), 500);
         }
 
-        return $this->json(['success' => true, 'id' => $result['id'], 'action' => $result['action']]);
+        return $this->json(ApiResource::success(['id' => $result['id'], 'action' => $result['action']]));
     }
 
     /**
@@ -105,7 +116,7 @@ class LandingPageAdminController extends Controller
     public function delete($request, $parameters)
     {
         if ($request->method() !== 'DELETE') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -113,16 +124,16 @@ class LandingPageAdminController extends Controller
         $pageId = isset($parameters['id']) ? (int) $parameters['id'] : 0;
 
         if ($pageId <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID страницы'], 400);
+            return $this->json(ApiResource::error('Неверный ID страницы'), 400);
         }
 
-        $result = (new LandingPage())->delete($pageId);
+        $result = $this->landingPage->delete($pageId);
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => 'Не удалось удалить'], 404);
+            return $this->json(ApiResource::error('Не удалось удалить'), 404);
         }
 
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     /**
@@ -131,7 +142,7 @@ class LandingPageAdminController extends Controller
     public function toggleActive($request, $parameters)
     {
         if ($request->method() !== 'POST') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         \admin_require_csrf();
@@ -139,16 +150,16 @@ class LandingPageAdminController extends Controller
         $pageId = isset($parameters['id']) ? (int) $parameters['id'] : 0;
 
         if ($pageId <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID страницы'], 400);
+            return $this->json(ApiResource::error('Неверный ID страницы'), 400);
         }
 
-        $result = (new LandingPage())->toggleActive($pageId);
+        $result = $this->landingPage->toggleActive($pageId);
 
         if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => 'Не удалось переключить'], 500);
+            return $this->json(ApiResource::error('Не удалось переключить'), 500);
         }
 
-        return $this->json(['success' => true]);
+        return $this->json(ApiResource::success());
     }
 
     /**
@@ -157,24 +168,21 @@ class LandingPageAdminController extends Controller
     public function show($request, $parameters)
     {
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
 
         $slug = isset($parameters['slug']) ? trim($parameters['slug']) : 'home';
 
-        $page = (new LandingPage())->findBySlug($slug);
+        $page = $this->landingPage->findBySlug($slug);
 
         if (!$page) {
-            return $this->json(['success' => false, 'error' => 'Страница не найдена'], 404);
+            return $this->json(ApiResource::error('Страница не найдена'), 404);
         }
 
-        return $this->json([
-            'success' => true,
-            'page' => $page,
-        ]);
+        return $this->json(ApiResource::success(['page' => $page]));
     }
 
     /**
@@ -187,20 +195,20 @@ class LandingPageAdminController extends Controller
     public function preview($request, $parameters)
     {
         if ($request->method() !== 'GET') {
-            return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
+            return $this->json(ApiResource::error('Метод не поддерживается'), 405);
         }
         if (!\admin_is_authenticated()) {
-            return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
+            return $this->json(ApiResource::error('Требуется авторизация'), 401);
         }
 
         $pageId = isset($parameters['id']) ? (int) $parameters['id'] : 0;
         if ($pageId <= 0) {
-            return $this->json(['success' => false, 'error' => 'Неверный ID страницы'], 400);
+            return $this->json(ApiResource::error('Неверный ID страницы'), 400);
         }
 
-        $page = (new LandingPage())->findById($pageId);
+        $page = $this->landingPage->findById($pageId);
         if (!$page) {
-            return $this->json(['success' => false, 'error' => 'Страница не найдена'], 404);
+            return $this->json(ApiResource::error('Страница не найдена'), 404);
         }
 
         $html = trim((string) ($page['html_content'] ?? ''));

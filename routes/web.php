@@ -1,29 +1,27 @@
 <?php
 
 use App\Core\Router;
-use App\Controllers\Frontend\HomeController;
-use App\Controllers\Frontend\BlogController;
-use App\Controllers\Frontend\PortfolioController;
-use App\Controllers\Frontend\ContactsController;
-use App\Controllers\Frontend\OrderController;
-use App\Controllers\Frontend\AuthController;
-use App\Controllers\Frontend\ProfileController;
-use App\Controllers\Frontend\SeoController;
-use App\Controllers\Admin\PageController;
+use App\Core\Response;
 
 return function (Router $router) {
-    $frontend = new HomeController();
-    $blog = new BlogController();
-    $portfolio = new PortfolioController();
-    $contacts = new ContactsController();
-    $order = new OrderController();
-    $auth = new AuthController();
-    $profile = new ProfileController();
-    $admin = new PageController();
-
+    // Health check
     $router->get('/health', function () {
-        return \App\Core\Response::json(['success' => true, 'app' => 'myblog']);
+        return Response::json(['success' => true, 'app' => 'myblog']);
     });
+
+    // Frontend controllers from container
+    $frontend = container(\App\Controllers\Frontend\HomeController::class);
+    $blog = container(\App\Controllers\Frontend\BlogController::class);
+    $portfolio = container(\App\Controllers\Frontend\PortfolioController::class);
+    $contacts = container(\App\Controllers\Frontend\ContactsController::class);
+    $order = container(\App\Controllers\Frontend\OrderController::class);
+    $auth = container(\App\Controllers\Frontend\AuthController::class);
+    $profile = container(\App\Controllers\Frontend\ProfileController::class);
+    $seo = container(\App\Controllers\Frontend\SeoController::class);
+
+    // Admin page controller
+    $admin = container(\App\Controllers\Admin\PageController::class);
+
     $router->get('/', [$frontend, 'index']);
     $router->get('/index.html', [$frontend, 'index']);
     $router->get('/mvc', [$frontend, 'index']);
@@ -37,16 +35,12 @@ return function (Router $router) {
     // Страница рубрики блога (важно: до catch-all /{slug}.html)
     $router->get('/category/{slug}.html', [$blog, 'category']);
 
-    $seo = new SeoController();
     $router->get('/robots.txt', [$seo, 'robots']);
     $router->get('/sitemap.xml', [$seo, 'sitemap']);
 
-    // Заглушка режима обслуживания (в общем дизайне сайта).
-    // Статус определяется только полем «Режим сайта» (siteStatus).
-    // Если сайт уже открыт — редирект на страницу, которую открывал
-    // пользователь (параметр ?next), или на главную.
+    // Заглушка режима обслуживания
     $router->get('/maintenance.html', function ($request) {
-        $settings = new \App\Models\SiteSettings();
+        $settings = container(\App\Models\SiteSettings::class);
         // Пустое значение (могло остаться из формы) трактуем как online
         $status = (string) $settings->get('siteStatus', 'online');
         $status = ($status === 'maintenance') ? 'maintenance' : 'online';
@@ -62,9 +56,9 @@ return function (Router $router) {
                 && strpos($next, '//') === false
                 && strpos($next, '\\') === false
                 && !preg_match('#^/(admin|api|maintenance\.html)#', $next)) {
-                return \App\Core\Response::redirect($next, 302);
+                return Response::redirect($next, 302);
             }
-            return \App\Core\Response::redirect('/', 302);
+            return Response::redirect('/', 302);
         }
 
         $user = current_user();
@@ -81,20 +75,22 @@ return function (Router $router) {
         ]);
     });
 
+    // Catch-all для статей, проектов и статических страниц
     $router->get('/{slug}.html', function ($request, $parameters) use ($blog, $portfolio) {
         $slug = $parameters['slug'] ?? '';
-        $content = new \App\Models\ContentRepository();
+        $content = container(\App\Models\ContentRepository::class);
         if ($content->articleBySlug($slug) !== null) {
             return $blog->article($request, $slug);
         }
         // Простые страницы и лендинги из раздела «Страницы» админки:
         // тело — произвольный HTML с плейсхолдерами, раскрываются при рендере
-        $staticPage = (new \App\Models\LandingPage())->findActive($slug);
+        $staticPage = container(\App\Models\LandingPage::class)->findActive($slug);
         if ($staticPage !== null && trim((string) ($staticPage['html_content'] ?? '')) !== '') {
             return render_static_page($staticPage['html_content']);
         }
         return $portfolio->project($request, $slug);
     });
+
     $router->get('/mvc/admin', function ($request) use ($admin) {
         return $admin->show($request, 'index');
     });

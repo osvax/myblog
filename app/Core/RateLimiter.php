@@ -14,6 +14,23 @@ class RateLimiter
     private static ?string $storagePath = null;
 
     /**
+     * Логирование ошибок через ApplicationLogger (если контейнер доступен) или error_log.
+     */
+    private static function logError(string $message): void
+    {
+        if (function_exists('container')) {
+            try {
+                $logger = container(ApplicationLogger::class);
+                $logger->error($message);
+                return;
+            } catch (\Throwable) {
+                // игнорируем, fallback на error_log
+            }
+        }
+        error_log($message);
+    }
+
+    /**
      * Проверить доступность Redis.
      */
     private static function checkRedis(): bool
@@ -101,7 +118,7 @@ class RateLimiter
 
             return ['allowed' => $allowed, 'remaining' => $remaining, 'retryAfter' => $retryAfter];
         } catch (\Throwable $e) {
-            error_log('RateLimiter Redis error: ' . $e->getMessage());
+            self::logError('RateLimiter Redis error: ' . $e->getMessage());
             // Fallback to file
             return self::hitFile($key, $maxAttempts, $decaySeconds, $windowStart, $now);
         }

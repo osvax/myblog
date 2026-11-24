@@ -3,6 +3,8 @@
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
+use App\Models\ContentRepository;
+use App\Models\SiteSettings;
 
 /**
  * SEO-генераторы: /robots.txt и /sitemap.xml.
@@ -11,15 +13,25 @@ use App\Controllers\Controller;
  */
 class SeoController extends Controller
 {
+    private $content;
+    private $settings;
+
+    public function __construct(
+        ContentRepository $content,
+        SiteSettings $settings
+    ) {
+        $this->content = $content;
+        $this->settings = $settings;
+    }
+
     /**
      * robots.txt: при выключенной индексации закрываем весь сайт,
      * иначе — служебные разделы; при включённом sitemap — ссылка на него.
      */
     public function robots($request)
     {
-        $settings = new \App\Models\SiteSettings();
-        $indexing = (bool) $settings->get('robots', true);
-        $sitemapOn = (bool) $settings->get('sitemap', true);
+        $indexing = (bool) $this->settings->get('robots', true);
+        $sitemapOn = (bool) $this->settings->get('sitemap', true);
 
         $lines = ['User-agent: *'];
         if (!$indexing) {
@@ -46,14 +58,12 @@ class SeoController extends Controller
      */
     public function sitemap($request)
     {
-        $settings = new \App\Models\SiteSettings();
-        if (!(bool) $settings->get('sitemap', true)) {
+        if (!(bool) $this->settings->get('sitemap', true)) {
             return new \App\Core\Response('sitemap.xml выключен в настройках сайта', 404, [
                 'Content-Type' => 'text/plain; charset=utf-8',
             ]);
         }
 
-        $content = new \App\Models\ContentRepository();
         $today = date('Y-m-d');
         $urls = [
             ['loc' => '/', 'lastmod' => $today],
@@ -63,18 +73,18 @@ class SeoController extends Controller
             ['loc' => '/order.html', 'lastmod' => $today],
         ];
 
-        foreach ($content->categories() as $category) {
+        foreach ($this->content->categories() as $category) {
             $urls[] = ['loc' => '/category/' . rawurlencode((string) $category['slug']) . '.html', 'lastmod' => $today];
         }
 
-        foreach ($content->articles(true) as $article) {
+        foreach ($this->content->articles(true) as $article) {
             $urls[] = [
                 'loc' => '/' . rawurlencode((string) $article['slug']) . '.html',
                 'lastmod' => $this->lastmod($article['published_at'] ?? null, $article['updated_at'] ?? null),
             ];
         }
 
-        foreach ($content->projects(true) as $project) {
+        foreach ($this->content->projects(true) as $project) {
             $urls[] = [
                 'loc' => '/' . rawurlencode((string) $project['slug']) . '.html',
                 'lastmod' => $this->lastmod($project['updated_at'] ?? null),
