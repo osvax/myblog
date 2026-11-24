@@ -5,6 +5,9 @@ namespace App\Controllers\Admin;
 use App\Controllers\Controller;
 use App\Core\Response;
 use App\Models\ContentRepository;
+use App\DTO\ArticleDTO;
+use App\DTO\ProjectDTO;
+use App\DTO\CategoryDTO;
 
 class ContentController extends Controller
 {
@@ -46,11 +49,25 @@ class ContentController extends Controller
             return $this->methodNotAllowed(['GET', 'POST', 'PUT', 'DELETE']);
         }
         \admin_require_csrf();
-        $article = $this->articleInput($request->json(), $params['id'] ?? null);
-        if ($article === null) {
-            return $this->json(['success' => false, 'error' => 'Проверьте обязательные поля статьи'], 400);
+
+        // Новый способ: используем ArticleDTO для валидации
+        $jsonData = $request->json();
+        $dto = ArticleDTO::fromRequest($jsonData, $params['id'] ?? null);
+
+        if (!$dto->validate()) {
+            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
         }
-        return $this->json(['success' => true, 'article' => $this->content->saveArticle($article)]);
+
+        try {
+            $savedArticle = $this->content->saveArticleFromDTO($dto);
+            return $this->json(['success' => true, 'article' => $savedArticle]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            // Логируем ошибку (в будущем — через Monolog)
+            error_log('Article save error: ' . $e->getMessage());
+            return $this->json(['success' => false, 'error' => 'Ошибка сохранения статьи'], 500);
+        }
     }
 
     public function projects($request, array $params = [])
@@ -77,11 +94,25 @@ class ContentController extends Controller
             return $this->methodNotAllowed(['GET', 'POST', 'PUT', 'DELETE']);
         }
         \admin_require_csrf();
-        $project = $this->projectInput($request->json(), $params['id'] ?? null);
-        if ($project === null) {
-            return $this->json(['success' => false, 'error' => 'Проверьте обязательные поля проекта'], 400);
+
+        // Новый способ: используем ProjectDTO для валидации
+        $jsonData = $request->json();
+        $dto = ProjectDTO::fromRequest($jsonData, $params['id'] ?? null);
+
+        if (!$dto->validate()) {
+            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
         }
-        return $this->json(['success' => true, 'project' => $this->content->saveProject($project)]);
+
+        try {
+            $savedProject = $this->content->saveProjectFromDTO($dto);
+            return $this->json(['success' => true, 'project' => $savedProject]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            // Логируем ошибку (в будущем — через Monolog)
+            error_log('Project save error: ' . $e->getMessage());
+            return $this->json(['success' => false, 'error' => 'Ошибка сохранения проекта'], 500);
+        }
     }
 
     public function orders($request, array $params = [])
@@ -250,6 +281,7 @@ class ContentController extends Controller
         }
         if ($request->method() === 'GET') {
             if (($_GET['action'] ?? '') === 'pickers') {
+                // Для pickers возвращаем простые массивы (совместимость с фронтендом)
                 return $this->json([
                     'success' => true,
                     'pages' => (new \App\Models\LandingPage())->getAll(),
@@ -257,7 +289,9 @@ class ContentController extends Controller
                     'articles' => $this->content->articles(),
                 ]);
             }
-            return $this->json(['success' => true, 'categories' => $this->content->categories()]);
+            // Обычный список: возвращаем DTO с articles_count
+            $categories = $this->content->categoriesAsDto();
+            return $this->json(['success' => true, 'categories' => array_map(fn($c) => $c->toApiArray(), $categories)]);
         }
         if ($request->method() === 'DELETE') {
             \admin_require_csrf();
@@ -269,19 +303,30 @@ class ContentController extends Controller
             return $this->methodNotAllowed(['GET', 'POST', 'PUT', 'DELETE']);
         }
         \admin_require_csrf();
-        $data = $request->json();
-        $name = $data['name'] ?? '';
-        $slug = $data['slug'] ?? '';
-        $description = $data['description'] ?? '';
-        $id = $params['id'] ?? null;
-        if (!is_string($name) || trim($name) === '' || !is_string($slug) ||
-            !preg_match('/^[a-z0-9-]{1,140}$/', $slug) || !is_string($description)) {
-            return $this->json(['success' => false, 'error' => 'Проверьте название, адрес и описание рубрики'], 400);
+
+        // Новый способ: используем CategoryDTO для валидации
+        $jsonData = $request->json();
+        $id = $params['id'] ?? null; // ID из URL для PUT
+        $dto = CategoryDTO::fromRequest($jsonData, $id);
+
+        if (!$dto->validate()) {
+            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
         }
-        $saved = $this->content->saveCategory($id, trim($name), $slug, trim($description));
-        return $saved
-            ? $this->json(['success' => true, 'id' => $saved])
-            : $this->json(['success' => false, 'error' => 'Рубрика не найдена'], 404);
+
+        try {
+            $savedId = $this->content->saveCategoryFromDTO($dto);
+            if ($savedId === false) {
+                return $this->json(['success' => false, 'error' => 'Рубрика не найдена'], 404);
+            }
+            // Возвращаем сохранённую категорию с articles_count
+            $savedCategory = $this->content->categoryDtoById($savedId);
+            return $this->json(['success' => true, 'category' => $savedCategory?->toApiArray()]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            error_log('Category save error: ' . $e->getMessage());
+            return $this->json(['success' => false, 'error' => 'Ошибка сохранения рубрики'], 500);
+        }
     }
 
     public function messages($request, array $params = [])
