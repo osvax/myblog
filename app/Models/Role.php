@@ -4,145 +4,322 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Core\Database;
+use App\Core\QueryBuilder;
+use App\DTO\RoleDTO;
+use PDO;
 
 /**
  * Роли админки и их права на разделы.
  * Ключ роли хранится в users.role и в сессии администратора.
+ *
+ * === МИГРАЦИЯ ===
+ * - Конструктор принимает PDO (для тестов — SQLite :memory:)
+ * - QueryBuilder для простых SELECT/INSERT/UPDATE/DELETE
+ * - Raw PDO для сложных запросов с подзапросами
+ * - Возвращает RoleDTO вместо массивов
+ * - Статические методы-обёртки для обратной совместимости
  */
 final class Role
 {
-    /** Все роли с числом пользователей. */
-    public function all(): array
+    private PDO $db;
+    private string $rolesTable;
+    private string $permsTable;
+
+    /**
+     * @param PDO|null $db PDO соединение (по умолчанию Database::connection())
+     */
+    public function __construct(?PDO $db = null)
     {
-        $db = Database::connection();
-        return $db->query(
-            'SELECT r.id, r.role_key, r.name, r.description, r.is_system,
-                    (SELECT COUNT(*) FROM ' . db_table('users') . ' u WHERE u.role = r.role_key) AS users_count
-             FROM ' . db_table('roles') . ' r ORDER BY r.is_system DESC, r.id ASC'
-        )->fetchAll();
+        $this->db = $db ?? \App\Core\Database::connection();
+        $this->rolesTable = db_table('roles');
+        $this->permsTable = db_table('role_permissions');
     }
 
-    public function byId(int $id): ?array
+    // ===================== ОБРАТНАЯ СОВМЕСТИМОСТЬ (статические) =====================
+
+    /** @return array<int, array<string, mixed>> Все роли с числом пользователей (старый API) */
+    public static function all(): array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM ' . db_table('roles') . ' WHERE id = :id LIMIT 1');
+        return array_map(fn (RoleDTO $dto) => $dto->toApiArray(), (new self())->allNew());
+    }
+
+    /** @return array<string, mixed>|null Роль по ID (старый API) */
+    public static function byId(int $id): ?array
+    {
+        return (new self())->byIdNew($id)?->toApiArray();
+    }
+
+    /** @return array<string, mixed>|null Роль по ключу (старый API) */
+    public static function byKey(string $key): ?array
+    {
+        return (new self())->byKeyNew($key)?->toApiArray();
+    }
+
+    /** @return array<int, string> Разрешения роли (старый API) */
+    public static function permissions(int $roleId): array
+    {
+        return (new self())->permissionsNew($roleId);
+    }
+
+    /** @return array<int, string> Разрешения по ключу роли (старый API) */
+    public static function permissionsForKey(string $key): array
+    {
+        return (new self())->permissionsForKeyNew($key);
+    }
+
+    /** @return array<string, mixed> Создание роли (старый API) */
+    public static function create(string $key, string $name, string $description): array
+    {
+        $dto = new RoleDTO();
+        $dto->roleKey = $key;
+        $dto->name = $name;
+        $dto->description = $description;
+        return (new self())->createNew($dto);
+    }
+
+    /** @return array<string, mixed> Обновление роли (старый API) */
+    public static function update(int $id, string $name, string $description, ?array $permissions = null): array
+    {
+        $dto = new RoleDTO();
+        $dto->id = $id;
+        $dto->name = $name;
+        $dto->description = $description;
+        $dto->permissions = $permissions ?? [];
+        return (new self())->updateNew($dto);
+    }
+
+    /** @return array<string, mixed> Удаление роли (старый API) */
+    public static function delete(int $id): array
+    {
+        return (new self())->deleteNew($id);
+    }
+
+    // ===================== НОВЫЙ API (DTO-based) =====================
+
+    /** @return RoleDTO[] Все роли с permissions и users_count */
+    public function allNew(): array
+    {
+        $usersTable = db_table('users');
+        $sql = <<<SQL
+            SELECT r.*,
+                   rp.permissions,
+                   COALESCE(u.users_count, 0) AS users_count
+            FROM {$this->rolesTable} r
+            LEFT JOIN (
+                SELECT role_id, JSON_ARRAYAGG(page_slug) AS permissions
+                FROM {$this->permsTable}
+                GROUP BY role_id
+            ) rp ON rp.role_id = r.id
+            LEFT JOIN (
+                SELECT role AS role_key, COUNT(*) AS users_count
+                FROM {$usersTable}
+                GROUP BY role
+            ) u ON u.role_key = r.role_key
+            ORDER BY r.is_system DESC, r.id ASC
+        SQL;
+
+        $rows = $this->db->query($sql)->fetchAll();
+        return array_map([RoleDTO::class, 'fromDatabase'], $rows);
+    }
+
+    /** @return RoleDTO|null Роль по ID с permissions */
+    public function byIdNew(int $id): ?RoleDTO
+    {
+        $usersTable = db_table('users');
+        $sql = <<<SQL
+            SELECT r.*,
+                   rp.permissions,
+                   COALESCE(u.users_count, 0) AS users_count
+            FROM {$this->rolesTable} r
+            LEFT JOIN (
+                SELECT role_id, JSON_ARRAYAGG(page_slug) AS permissions
+                FROM {$this->permsTable}
+                GROUP BY role_id
+            ) rp ON rp.role_id = r.id
+            LEFT JOIN (
+                SELECT role AS role_key, COUNT(*) AS users_count
+                FROM {$usersTable}
+                GROUP BY role
+            ) u ON u.role_key = r.role_key
+            WHERE r.id = :id
+        SQL;
+
+        $stmt = $this->db->prepare($sql);
         $stmt->execute(['id' => $id]);
         $row = $stmt->fetch();
-        return $row ?: null;
+
+        return $row ? RoleDTO::fromDatabase($row) : null;
     }
 
-    public function byKey(string $key): ?array
+    /** @return RoleDTO|null Роль по ключу с permissions */
+    public function byKeyNew(string $key): ?RoleDTO
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM ' . db_table('roles') . ' WHERE role_key = :key LIMIT 1');
+        $usersTable = db_table('users');
+        $sql = <<<SQL
+            SELECT r.*,
+                   rp.permissions,
+                   COALESCE(u.users_count, 0) AS users_count
+            FROM {$this->rolesTable} r
+            LEFT JOIN (
+                SELECT role_id, JSON_ARRAYAGG(page_slug) AS permissions
+                FROM {$this->permsTable}
+                GROUP BY role_id
+            ) rp ON rp.role_id = r.id
+            LEFT JOIN (
+                SELECT role AS role_key, COUNT(*) AS users_count
+                FROM {$usersTable}
+                GROUP BY role
+            ) u ON u.role_key = r.role_key
+            WHERE r.role_key = :key
+        SQL;
+
+        $stmt = $this->db->prepare($sql);
         $stmt->execute(['key' => $key]);
         $row = $stmt->fetch();
-        return $row ?: null;
+
+        return $row ? RoleDTO::fromDatabase($row) : null;
     }
 
-    public function exists(string $key): bool
+    /** @return array<int, string> Разрешения роли (слаги страниц) */
+    public function permissionsNew(int $roleId): array
     {
-        return $this->byKey($key) !== null;
+        $rows = (new QueryBuilder($this->db, $this->permsTable))
+            ->select(['page_slug'])
+            ->where('role_id', '=', $roleId)
+            ->orderBy('page_slug', 'ASC')
+            ->get();
+
+        return array_column($rows, 'page_slug');
     }
 
-    /** Разрешённые страницы роли. */
-    public function permissions(int $roleId): array
+    /** @return array<int, string> Разрешения по ключу роли */
+    public function permissionsForKeyNew(string $key): array
     {
-        $stmt = Database::connection()->prepare('SELECT page_slug FROM ' . db_table('role_permissions') . ' WHERE role_id = :id ORDER BY page_slug');
-        $stmt->execute(['id' => $roleId]);
-        return array_column($stmt->fetchAll(), 'page_slug');
+        $role = $this->byKeyNew($key);
+        return $role ? $this->permissionsNew($role->id) : [];
     }
 
-    /** Быстрая проверка прав по ключу роли (для сессии). */
-    public function permissionsForKey(string $key): array
+    /** @return array<string, mixed> Создание роли из DTO */
+    public function createNew(RoleDTO $dto): array
     {
-        $role = $this->byKey($key);
-        return $role ? $this->permissions((int) $role['id']) : [];
-    }
-
-    public function create(string $key, string $name, string $description): array
-    {
-        if (!preg_match('/^[a-z0-9][a-z0-9_-]{1,62}$/', $key)) {
-            return ['success' => false, 'error' => 'Ключ роли: латинские буквы, цифры, дефис и подчёркивание (от 2 символов)'];
+        if (!$dto->validate()) {
+            return ['success' => false, 'error' => implode('; ', $dto->getErrors())];
         }
-        if (trim($name) === '') {
-            return ['success' => false, 'error' => 'Укажите название роли'];
-        }
-        if ($this->exists($key)) {
+
+        // Проверка уникальности role_key
+        if ($this->byKeyNew($dto->roleKey) !== null) {
             return ['success' => false, 'error' => 'Роль с таким ключом уже существует'];
         }
 
-        $stmt = Database::connection()->prepare(
-            'INSERT INTO ' . db_table('roles') . ' (role_key, name, description, is_system) VALUES (:key, :name, :description, 0)'
-        );
-        $stmt->execute([
-            'key' => $key,
-            'name' => trim($name),
-            'description' => trim($description),
-        ]);
-        return ['success' => true, 'id' => (int) Database::connection()->lastInsertId()];
+        try {
+            $data = $dto->toArray();
+            unset($data['id']);
+
+            $columns = implode(',', array_keys($data));
+            $placeholders = ':' . implode(',:', array_keys($data));
+            $sql = "INSERT INTO {$this->rolesTable} ($columns) VALUES ($placeholders)";
+
+            $stmt = $this->db->prepare($sql);
+            $stmt->execute($data);
+
+            $dto->id = (int) $this->db->lastInsertId();
+
+            // Сохраняем permissions
+            if (!empty($dto->permissions)) {
+                $this->savePermissions($dto->id, $dto->permissions);
+            }
+
+            return ['success' => true, 'id' => $dto->id];
+        } catch (\Throwable $e) {
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
     }
 
-    public function update(int $id, string $name, string $description, ?array $permissions = null): array
+    /** @return array<string, mixed> Обновление роли из DTO */
+    public function updateNew(RoleDTO $dto): array
     {
-        $role = $this->byId($id);
-        if (!$role) {
-            return ['success' => false, 'error' => 'Роль не найдена'];
+        if ($dto->id === null) {
+            return ['success' => false, 'error' => 'ID роли не указан'];
         }
-        if (trim($name) === '') {
-            return ['success' => false, 'error' => 'Укажите название роли'];
+        if (!$dto->validateUpdate()) {
+            return ['success' => false, 'error' => implode('; ', $dto->getErrors())];
         }
 
-        $db = Database::connection();
-        $db->beginTransaction();
+        $existing = $this->byIdNew($dto->id);
+        if ($existing === null) {
+            return ['success' => false, 'error' => 'Роль не найдена'];
+        }
+
         try {
-            $stmt = $db->prepare('UPDATE ' . db_table('roles') . ' SET name = :name, description = :description WHERE id = :id');
-            $stmt->execute([
-                'name' => trim($name),
-                'description' => trim($description),
-                'id' => $id,
-            ]);
-            if ($permissions !== null) {
-                $known = $this->knownPages();
-                $stmt = $db->prepare('DELETE FROM ' . db_table('role_permissions') . ' WHERE role_id = :id');
-                $stmt->execute(['id' => $id]);
-                $stmt = $db->prepare('INSERT IGNORE INTO ' . db_table('role_permissions') . ' (role_id, page_slug) VALUES (:id, :page)');
-                foreach (array_unique($permissions) as $page) {
-                    if (!is_string($page) || !in_array($page, $known, true)) {
-                        continue;
-                    }
-                    $stmt->execute(['id' => $id, 'page' => $page]);
+            $this->db->beginTransaction();
+
+            // Обновляем роль
+            $data = [
+                'name' => $dto->name,
+                'description' => $dto->description,
+                'id' => $dto->id,
+            ];
+            $stmt = $this->db->prepare("UPDATE {$this->rolesTable} SET name = :name, description = :description WHERE id = :id");
+            $stmt->execute($data);
+
+            // Обновляем permissions если переданы
+            if ($dto->permissions !== null) {
+                $stmt = $this->db->prepare("DELETE FROM {$this->permsTable} WHERE role_id = :id");
+                $stmt->execute(['id' => $dto->id]);
+
+                if (!empty($dto->permissions)) {
+                    $this->savePermissions($dto->id, $dto->permissions);
                 }
             }
-            $db->commit();
+
+            $this->db->commit();
             return ['success' => true];
         } catch (\Throwable $e) {
-            if ($db->inTransaction()) {
-                $db->rollBack();
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
             }
             return ['success' => false, 'error' => $e->getMessage()];
         }
     }
 
-    public function delete(int $id): array
+    /** @return array<string, mixed> Удаление роли */
+    public function deleteNew(int $id): array
     {
-        $role = $this->byId($id);
-        if (!$role) {
+        $role = $this->byIdNew($id);
+        if ($role === null) {
             return ['success' => false, 'error' => 'Роль не найдена'];
         }
-        if (!empty($role['is_system'])) {
+        if ($role->isSystem) {
             return ['success' => false, 'error' => 'Стартовые роли удалять нельзя'];
         }
-        $stmt = Database::connection()->prepare('SELECT COUNT(*) FROM ' . db_table('users') . ' WHERE role = :key');
-        $stmt->execute(['key' => $role['role_key']]);
+
+        // Проверка пользователей с этой ролью
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM ' . db_table('users') . ' WHERE role = :key');
+        $stmt->execute(['key' => $role->roleKey]);
         if ((int) $stmt->fetchColumn() > 0) {
             return ['success' => false, 'error' => 'Роль назначена пользователям — сначала смените им роль'];
         }
-        $stmt = Database::connection()->prepare('DELETE FROM ' . db_table('roles') . ' WHERE id = :id');
-        $stmt->execute(['id' => $id]);
-        return ['success' => true];
+
+        try {
+            $this->db->beginTransaction();
+
+            $stmt = $this->db->prepare("DELETE FROM {$this->permsTable} WHERE role_id = :id");
+            $stmt->execute(['id' => $id]);
+
+            $stmt = $this->db->prepare("DELETE FROM {$this->rolesTable} WHERE id = :id");
+            $stmt->execute(['id' => $id]);
+
+            $this->db->commit();
+            return ['success' => true];
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            return ['success' => false, 'error' => $e->getMessage()];
+        }
     }
 
-    /** Все известные страницы админки (из конфигурации навигации). */
+    /** Известные страницы админки (из конфигурации навигации). */
     public function knownPages(): array
     {
         $navigation = require APP_ROOT . '/config/admin-navigation.php';
@@ -159,5 +336,20 @@ final class Role
             }
         }
         return array_values(array_unique($pages));
+    }
+
+    // ===================== PRIVATE HELPERS =====================
+
+    /** Сохраняет permissions для роли. */
+    private function savePermissions(int $roleId, array $permissions): void
+    {
+        $known = $this->knownPages();
+        $stmt = $this->db->prepare("INSERT IGNORE INTO {$this->permsTable} (role_id, page_slug) VALUES (:id, :page)");
+        foreach (array_unique($permissions) as $page) {
+            if (!is_string($page) || !in_array($page, $known, true)) {
+                continue;
+            }
+            $stmt->execute(['id' => $roleId, 'page' => $page]);
+        }
     }
 }
