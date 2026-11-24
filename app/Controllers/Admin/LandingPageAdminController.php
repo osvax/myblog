@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -8,7 +10,7 @@ use App\Models\LandingPage;
 use App\Models\LandingPageManager;
 use App\Models\SettingsRepository;
 
-class LandingPageAdminController extends Controller
+final class LandingPageAdminController extends Controller
 {
     private $landingPage;
     private $landingPageManager;
@@ -60,7 +62,7 @@ class LandingPageAdminController extends Controller
 
         // Получаем заголовок из настроек
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT field_value FROM " . db_table('landing_page_settings') . " WHERE field_group = 'hero' AND field_name = 'title' LIMIT 1");
+        $stmt = $db->prepare('SELECT field_value FROM ' . db_table('landing_page_settings') . " WHERE field_group = 'hero' AND field_name = 'title' LIMIT 1");
         $stmt->execute();
         $title = $stmt->fetchColumn() ?: ucfirst($pageSlug);
 

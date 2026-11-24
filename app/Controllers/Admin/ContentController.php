@@ -1,25 +1,27 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
 use App\Core\ApiResource;
 use App\Core\ApplicationLogger;
-use App\Models\ContentRepository;
-use App\Models\OrderRepository;
-use App\Models\MessageRepository;
 use App\DTO\ArticleDTO;
-use App\DTO\ProjectDTO;
 use App\DTO\CategoryDTO;
-use App\DTO\OrderDTO;
 use App\DTO\MessageDTO;
+use App\DTO\OrderDTO;
+use App\DTO\ProjectDTO;
+use App\Models\ContentRepository;
+use App\Models\MessageRepository;
+use App\Models\OrderRepository;
 use App\Transformers\ArticleTransformer;
-use App\Transformers\ProjectTransformer;
 use App\Transformers\CategoryTransformer;
-use App\Transformers\OrderTransformer;
 use App\Transformers\MessageTransformer;
+use App\Transformers\OrderTransformer;
+use App\Transformers\ProjectTransformer;
 
-class ContentController extends Controller
+final class ContentController extends Controller
 {
     private $content;
     private $orders;
@@ -547,11 +549,11 @@ class ContentController extends Controller
      * Допустимые пути снимков проекта: старая папка проекта (uploads/portfolio/{id}/хэш)
      * и раздел «Портфолио» файлового менеджера с читаемым именем.
      */
-    const SCREENSHOT_PATH_REGEX = '#^(?:uploads/portfolio/[A-Za-z0-9_-]+/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$#';
+    public const SCREENSHOT_PATH_REGEX = '#^(?:uploads/portfolio/[A-Za-z0-9_-]+/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$#';
 
     // Прикреплённые файлы дополнительных полей: ТЗ (documents) и сертификаты (images).
-    const DOC_FILE_PATH_REGEX = '#^uploads/documents/portfolio/[a-z0-9][a-z0-9-]*\.(?:doc|docx)$#';
-    const CERT_FILE_PATH_REGEX = '#^uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png)$#';
+    public const DOC_FILE_PATH_REGEX = '#^uploads/documents/portfolio/[a-z0-9][a-z0-9-]*\.(?:doc|docx)$#';
+    public const CERT_FILE_PATH_REGEX = '#^uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png)$#';
 
     /**
      * Снимки с описаниями: список {path, description}. Путь — как у screenshots.

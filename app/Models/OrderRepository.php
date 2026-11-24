@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use PDO;
 use App\Core\QueryBuilder;
 use App\DTO\OrderDTO;
+use PDO;
 
-class OrderRepository
+final class OrderRepository
 {
     private $db;
 
-    public function __construct(PDO $db = null)
+    public function __construct(?PDO $db = null)
     {
         $this->db = $db ?? \App\Core\Database::connection();
     }
@@ -123,7 +125,7 @@ class OrderRepository
                     $updateParts[] = "$col = ?";
                 }
             }
-            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . " WHERE id = ?";
+            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . ' WHERE id = ?';
 
             $values = [];
             foreach ($data as $col => $val) {

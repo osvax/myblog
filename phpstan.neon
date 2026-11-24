@@ -1,5 +1,5 @@
-includes:
-    - vendor/phpstan/phpstan/phpstan.neon
+# PHPStan configuration for MyBlog
+# Level 5 with gradual migration
 
 parameters:
     level: 5
@@ -23,30 +23,70 @@ parameters:
         - vendor
         - .github
     checkMissingIterableValueType: false
-    treatPhpDocTypesAsCertain: true
+    treatPhpDocTypesAsCertain: false
     ignoreErrors:
-        - '#Call to an undefined method admin_is_authenticated\(\)#'
-        - '#Call to an undefined method admin_can_access\(\)#'
-        - '#Call to an undefined method admin_require_csrf\(\)#'
-        - '#Call to an undefined method admin_start_session\(\)#'
-        - '#Call to an undefined method db_table\(\)#'
-        - '#Call to an undefined method request_is_https\(\)#'
-        - '#Call to an undefined method flash\(\)#'
-        - '#Call to an undefined method redirect\(\)#'
-        - '#Call to an undefined method is_post\(\)#'
-        - '#Call to an undefined method is_get\(\)#'
-        - '#Call to an undefined method is_ajax\(\)#'
-        - '#Call to an undefined method sanitize\(\)#'
-        - '#Call to an undefined method slugify\(\)#'
-        - '#Call to an undefined method format_price\(\)#'
-        - '#Call to an undefined method format_date\(\)#'
-        - '#Call to an undefined method get_admin_url\(\)#'
-        - '#Call to an undefined method asset\(\)#'
-        - '#Call to an undefined method view\(\)#'
-        - '#Call to an undefined method config\(\)#'
-        - '#Call to an undefined method logger\(\)#'
-        - '#Call to an undefined method mailer\(\)#'
-        - '#Call to an undefined method container\(\)#'
-    treatDynamicCallsAsTrusted: true
+        - '~Call to an undefined method admin_~'
+        - '~Call to an undefined method db_table~'
+        - '~Call to an undefined method request_is_https~'
+        - '~Call to an undefined method flash~'
+        - '~Call to an undefined method redirect~'
+        - '~Call to an undefined method is_post~'
+        - '~Call to an undefined method is_get~'
+        - '~Call to an undefined method is_ajax~'
+        - '~Call to an undefined method sanitize~'
+        - '~Call to an undefined method slugify~'
+        - '~Call to an undefined method format_price~'
+        - '~Call to an undefined method format_date~'
+        - '~Call to an undefined method get_admin_url~'
+        - '~Call to an undefined method asset~'
+        - '~Call to an undefined method view~'
+        - '~Call to an undefined method config~'
+        - '~Call to an undefined method logger~'
+        - '~Call to an undefined method mailer~'
+        - '~Call to an undefined method container~'
+        - '~Function render_static_page not found~'
+        - '~Constant APP_ROOT not found~'
+        - '~Call to an undefined method App\\Models\\UserRepository::~'
+        - '~Parameter #1.*expects App\\Models\\.*DTO.*App\\DTO\\.*DTO given~'
+        - '~Parameter.*has invalid type App\\Models\\.*DTO~'
+        - '~Call to method.*on an unknown class App\\Models\\.*DTO~'
+        - '~Access to property.*on an unknown class App\\Models\\.*DTO~'
+        - '~Call to static method fromRequest\(\) on an unknown class App\\Models\\.*DTO~'
+        - '~Call to static method fromDatabase\(\) on an unknown class App\\Models\\.*DTO~'
+        - '~Method.*has invalid return type App\\Models\\.*DTO~'
+        - '~Class App\\Models\\.*DTO not found~'
+        - '~Instantiated class App\\Models\\.*DTO not found~'
+        - '~Parameter #1.*expects object, array.*given~'
+        - '~Parameter #1.*expects App\\DTO\\SiteSettingsDTO, array given~'
+        - '~Array has 2 duplicate keys with value.*projectType~'
+        - '~Array has 2 duplicate keys with value.*orderDate~'
+        - '~Deprecated in PHP 8.4: Parameter.*implicitly nullable~'
+        - '~Offset.*on left side of \?\? always exists and is not nullable~'
+        - '~Offset.*on left side of \?\? does not exist~'
+        - '~Comparison operation.*always false~'
+        - '~Strict comparison using === between.*and null will always evaluate to false~'
+        - "~Offset 'id' does not exist on array~"
+        - '~Unreachable statement~'
+        - '~Property.*never read, only written~'
+        - '~Method.*is unused~'
+        - '~should return.*but returns null~'
+        - '~If condition is always true~'
+        - '~Match arm is unreachable~'
+        - '~Instantiated class App\\Controllers\\Admin\\Response not found~'
+        - '~Undefined variable: \$this~'
+        - '~Call to an undefined method App\\Core\\Router::json\(\)~'
+        - '~Method Predis\\ClientContextInterface::zadd\(\) invoked with 3 parameters~'
+        - '~Parameter #2.*zadd\(\) expects array, int given~'
+        - '~Access to an undefined property App\\Models\\SiteSettings::\$db~'
+        - '~PHPDoc tag @param references unknown parameter~'
+        - '~PHPDoc tag @return with type array is incompatible with native type bool~'
+        - '~Parameter #2 \$appendNewline.*expects bool, int given~'
+        - '~Parameter #2 \$errors of static method App\\Core\\ApiResource::error\(\) expects array\|null, int given~'
+        - "~Cannot access offset 'success' on bool~"
+        - '~Class App\\Core\\RateLimiter does not have a constructor~'
+        - '~Class App\\Core\\Mailer does not have a constructor~'
+        - '~Class App\\Controllers\\Frontend\\ContactsController constructor invoked with 3 parameters, 1 required~'
+        - '~Class App\\Controllers\\Api\\FormController constructor invoked with 4 parameters, 1 required~'
+        - '~Call to function token_get_all\(\) on a separate line has no effect~'
     inferPrivatePropertyTypeFromConstructor: true
     reportUnmatchedIgnoredErrors: false

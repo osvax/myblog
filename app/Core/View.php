@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 use RuntimeException;
 
-class View
+final class View
 {
     public static function render($template, array $data = [])
     {
@@ -105,10 +107,10 @@ class View
             }
         }
         $data['title'] = $data['title'] ?? ($page === 'login' ? 'Авторизация — Админ-панель' : 'Администрирование');
-        
+
         // Vite manifest for production asset loading
         $data['viteManifest'] = \vite_manifest();
-        
+
         return self::render($base . '/layout', $data);
     }
 

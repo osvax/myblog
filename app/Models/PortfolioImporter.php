@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
 
-class PortfolioImporter
+final class PortfolioImporter
 {
     public function parse(string $markdown): array
     {

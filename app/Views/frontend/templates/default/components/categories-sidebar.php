@@ -17,7 +17,8 @@ $sidebarCategories = (isset($sidebarCategories) && is_array($sidebarCategories))
         <?= render_menu_rubric('main', 'nav flex-column', 'nav-item mb-2', 'fw-bold text-orange link-orange') ?>
     <?php else: ?>
     <ul class="list-unstyled mb-0">
-        <?php $sidebarIndex = 0; foreach ($sidebarCategories as $sidebarCategory): ?>
+        <?php $sidebarIndex = 0;
+        foreach ($sidebarCategories as $sidebarCategory): ?>
             <li<?= $sidebarIndex < count($sidebarCategories) - 1 ? ' class="mb-2"' : '' ?>><a href="/category/<?= htmlspecialchars($sidebarCategory['slug'], ENT_QUOTES, 'UTF-8') ?>.html" class="fw-bold text-orange link-orange d-flex justify-content-between"><span><?= htmlspecialchars($sidebarCategory['name'], ENT_QUOTES, 'UTF-8') ?></span><span class="badge bg-orange-light text-orange"><?= (int) $sidebarCategory['articles'] ?></span></a></li>
         <?php $sidebarIndex++; endforeach; ?>
         <?php if (empty($sidebarCategories)): ?>

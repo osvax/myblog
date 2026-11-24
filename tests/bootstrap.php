@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * PHPUnit bootstrap для тестов с SQLite :memory:
  *
@@ -41,70 +43,129 @@ spl_autoload_register(function ($className) {
 
 // Подключаем хелперы (без сессий для CLI)
 if (!function_exists('request_is_https')) {
-    function request_is_https(): bool { return false; }
+    function request_is_https(): bool
+    {
+        return false;
+    }
 }
 if (!function_exists('db_table')) {
-    function db_table(string $table): string { return 'va_' . $table; }
+    function db_table(string $table): string
+    {
+        return 'va_' . $table;
+    }
 }
 if (!function_exists('admin_is_authenticated')) {
-    function admin_is_authenticated(): bool { return false; }
+    function admin_is_authenticated(): bool
+    {
+        return false;
+    }
 }
 if (!function_exists('admin_can_access')) {
-    function admin_can_access(string $permission): bool { return true; }
+    function admin_can_access(string $permission): bool
+    {
+        return true;
+    }
 }
 if (!function_exists('admin_require_csrf')) {
-    function admin_require_csrf(): void {}
+    function admin_require_csrf(): void
+    {
+    }
 }
 if (!function_exists('admin_start_session')) {
-    function admin_start_session(): void {}
+    function admin_start_session(): void
+    {
+    }
 }
 if (!function_exists('flash')) {
-    function flash(string $type, string $message): void {}
+    function flash(string $type, string $message): void
+    {
+    }
 }
 if (!function_exists('redirect')) {
-    function redirect(string $url, int $status = 302): void {}
+    function redirect(string $url, int $status = 302): void
+    {
+    }
 }
 if (!function_exists('is_post')) {
-    function is_post(): bool { return $_SERVER['REQUEST_METHOD'] === 'POST'; }
+    function is_post(): bool
+    {
+        return $_SERVER['REQUEST_METHOD'] === 'POST';
+    }
 }
 if (!function_exists('is_get')) {
-    function is_get(): bool { return $_SERVER['REQUEST_METHOD'] === 'GET'; }
+    function is_get(): bool
+    {
+        return $_SERVER['REQUEST_METHOD'] === 'GET';
+    }
 }
 if (!function_exists('is_ajax')) {
-    function is_ajax(): bool { return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest'; }
+    function is_ajax(): bool
+    {
+        return !empty($_SERVER['HTTP_X_REQUESTED_WITH']) && strtolower($_SERVER['HTTP_X_REQUESTED_WITH']) === 'xmlhttprequest';
+    }
 }
 if (!function_exists('sanitize')) {
-    function sanitize(string $input): string { return htmlspecialchars($input, ENT_QUOTES, 'UTF-8'); }
+    function sanitize(string $input): string
+    {
+        return htmlspecialchars($input, ENT_QUOTES, 'UTF-8');
+    }
 }
 if (!function_exists('slugify')) {
-    function slugify(string $text): string { return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $text), '-')); }
+    function slugify(string $text): string
+    {
+        return strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $text), '-'));
+    }
 }
 if (!function_exists('format_price')) {
-    function format_price(float $price, string $currency = '₽'): string { return number_format($price, 0, ',', ' ') . ' ' . $currency; }
+    function format_price(float $price, string $currency = '₽'): string
+    {
+        return number_format($price, 0, ',', ' ') . ' ' . $currency;
+    }
 }
 if (!function_exists('format_date')) {
-    function format_date(string $date, string $format = 'd.m.Y'): string { return date($format, strtotime($date)); }
+    function format_date(string $date, string $format = 'd.m.Y'): string
+    {
+        return date($format, strtotime($date));
+    }
 }
 if (!function_exists('get_admin_url')) {
-    function get_admin_url(string $path = ''): string { return '/admin' . ($path ? '/' . ltrim($path, '/') : ''); }
+    function get_admin_url(string $path = ''): string
+    {
+        return '/admin' . ($path ? '/' . ltrim($path, '/') : '');
+    }
 }
 if (!function_exists('asset')) {
-    function asset(string $path): string { return '/' . ltrim($path, '/'); }
+    function asset(string $path): string
+    {
+        return '/' . ltrim($path, '/');
+    }
 }
 if (!function_exists('view')) {
-    function view(string $path, array $data = []): string { return ''; }
+    function view(string $path, array $data = []): string
+    {
+        return '';
+    }
 }
 if (!function_exists('config')) {
-    function config(string $key, $default = null) { return $_ENV[$key] ?? $default; }
+    function config(string $key, $default = null)
+    {
+        return $_ENV[$key] ?? $default;
+    }
 }
 if (!function_exists('logger')) {
-    function logger(string $message): void {}
+    function logger(string $message): void
+    {
+    }
 }
 if (!function_exists('mailer')) {
-    function mailer(): \App\Core\Mailer { return new \App\Core\Mailer(); }
+    function mailer(): \App\Core\Mailer
+    {
+        return new \App\Core\Mailer();
+    }
 }
 if (!function_exists('container')) {
-    function container(string $id): mixed {
+    function container(string $id): mixed
+    {
         static $container = null;
         if ($container === null) {
             $containerBuilder = new DI\ContainerBuilder();
@@ -130,7 +191,7 @@ $pdo = new PDO('sqlite::memory:', null, null, [
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES => false,
 ]);
-$pdo->exec("PRAGMA foreign_keys = ON");
+$pdo->exec('PRAGMA foreign_keys = ON');
 $property->setValue(null, $pdo);
 
 // Запускаем миграции для создания схемы

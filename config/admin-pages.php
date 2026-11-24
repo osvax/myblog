@@ -1,251 +1,253 @@
 <?php
 
-return array (
-  403 => 
-  array (
-    'scripts' => 
-    array (
-    ),
+declare(strict_types=1);
+
+return  [
+  403 =>
+   [
+    'scripts' =>
+     [
+    ],
     'standalone' => true,
-  ),
-  404 => 
-  array (
-    'scripts' => 
-    array (
-    ),
+  ],
+  404 =>
+   [
+    'scripts' =>
+     [
+    ],
     'standalone' => true,
-  ),
-  500 => 
-  array (
-    'scripts' => 
-    array (
-    ),
+  ],
+  500 =>
+   [
+    'scripts' =>
+     [
+    ],
     'standalone' => true,
-  ),
-  'article-edit' => 
-  array (
+  ],
+  'article-edit' =>
+   [
     'title' => 'Новая статья',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/article-edit.js',
-    ),
-  ),
-  'blog' => 
-  array (
+    ],
+  ],
+  'blog' =>
+   [
     'title' => 'Блог — управление статьями',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/blog.js',
-    ),
-  ),
-  'calculator' => 
-  array (
+    ],
+  ],
+  'calculator' =>
+   [
     'title' => 'Настройка калькулятора',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => '../js/calculator-config.js',
       1 => '../js/calculator-admin.js',
-    ),
-  ),
+    ],
+  ],
   'categories' =>
-  array (
+   [
     'title' => 'Рубрики блога',
     'scripts' =>
-    array (
+     [
       0 => 'js/categories.js',
       1 => '../js/rubric-menus.js',
-    ),
-  ),
-  'consultant' => 
-  array (
+    ],
+  ],
+  'consultant' =>
+   [
     'title' => 'Консультант',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/consultant-admin.js',
-    ),
-  ),
-  'current-orders' => 
-  array (
+    ],
+  ],
+  'current-orders' =>
+   [
     'title' => 'Текущие заказы',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/current-orders.js',
-    ),
-  ),
-  'files' => 
-  array (
+    ],
+  ],
+  'files' =>
+   [
     'title' => 'Файловый менеджер',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/files.js',
-    ),
-  ),
-  'forgot-password' => 
-  array (
-    'scripts' => 
-    array (
+    ],
+  ],
+  'forgot-password' =>
+   [
+    'scripts' =>
+     [
       0 => 'js/admin.js',
-    ),
+    ],
     'standalone' => true,
-  ),
-  'index' => 
-  array (
+  ],
+  'index' =>
+   [
     'title' => 'Дашборд',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/dashboard.js',
-    ),
-  ),
-  'login' => 
-  array (
-    'scripts' => 
-    array (
+    ],
+  ],
+  'login' =>
+   [
+    'scripts' =>
+     [
       0 => 'js/admin.js',
       1 => 'js/login.js',
-    ),
+    ],
     'standalone' => true,
-  ),
+  ],
   'menus' =>
-  array (
+   [
     'title' => 'Меню сайта',
     'scripts' =>
-    array (
+     [
       0 => 'js/menus.js',
-    ),
-  ),
+    ],
+  ],
   'messages' =>
-  array (
+   [
     'title' => 'Сообщения — обратная связь и комментарии',
     'scripts' =>
-    array (
+     [
       0 => 'js/messages.js',
-    ),
-  ),
-  'new-orders' => 
-  array (
+    ],
+  ],
+  'new-orders' =>
+   [
     'title' => 'Новые заказы',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/current-orders.js',
-    ),
-  ),
-  'order-edit' => 
-  array (
+    ],
+  ],
+  'order-edit' =>
+   [
     'title' => 'Карточка клиента',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/order-edit.js',
-    ),
-  ),
+    ],
+  ],
   'orders' =>
-  array (
+   [
     'title' => 'Заказы — заявки с сайта',
     'scripts' =>
-    array (
+     [
       0 => 'js/orders.js',
-    ),
-  ),
+    ],
+  ],
   'roles' =>
-  array (
+   [
     'title' => 'Роли и права доступа',
     'scripts' =>
-    array (
+     [
       0 => 'js/roles.js',
-    ),
-  ),
+    ],
+  ],
   'role-edit' =>
-  array (
+   [
     'title' => 'Настройка роли',
     'scripts' =>
-    array (
+     [
       0 => 'js/role-edit.js',
-    ),
-  ),
-  'portfolio-edit' => 
-  array (
+    ],
+  ],
+  'portfolio-edit' =>
+   [
     'title' => 'Новый проект',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/portfolio-edit.js',
-    ),
-  ),
-  'portfolio' => 
-  array (
+    ],
+  ],
+  'portfolio' =>
+   [
     'title' => 'Портфолио — управление работами',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/portfolio.js',
-    ),
-  ),
-  'profile' => 
-  array (
+    ],
+  ],
+  'profile' =>
+   [
     'title' => 'Профиль',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/profile.js',
-    ),
-  ),
-  'register' => 
-  array (
-    'scripts' => 
-    array (
+    ],
+  ],
+  'register' =>
+   [
+    'scripts' =>
+     [
       0 => 'js/admin.js',
-    ),
+    ],
     'standalone' => true,
-  ),
+  ],
   'settings' =>
-  array (
+   [
     'title' => 'Настройки сайта',
     'scripts' =>
-    array (
+     [
       0 => '../js/site-settings.js',
       1 => 'js/settings.js',
-    ),
-  ),
+    ],
+  ],
   'statistics' =>
-  array (
+   [
     'title' => 'Статистика сайта',
     'scripts' =>
-    array (
+     [
       0 => 'js/statistics.js',
-    ),
-  ),
+    ],
+  ],
   'custom-fields' =>
-  array (
+   [
     'title' => 'Пользовательские поля',
     'scripts' =>
-    array (
+     [
       0 => 'js/custom-fields.js',
-    ),
-  ),
+    ],
+  ],
   'landing-pages' =>
-  array (
+   [
     'title' => 'Управление страницами',
     'styles' =>
-    array (
+     [
       0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
       1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css',
-    ),
+    ],
     'scripts' =>
-    array (
+     [
       0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js',
       1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js',
       2 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js',
       3 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/css/css.min.js',
       4 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js',
       5 => 'js/landing-pages.js',
-    ),
-  ),
+    ],
+  ],
   'templates' =>
-  array (
+   [
     'title' => 'Редактор шаблонов сайта',
     'styles' =>
-    array (
+     [
       0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css',
       1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/theme/material-darker.min.css',
-    ),
+    ],
     'scripts' =>
-    array (
+     [
       0 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.js',
       1 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/xml/xml.min.js',
       2 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/javascript/javascript.min.js',
@@ -254,22 +256,22 @@ return array (
       5 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/php/php.min.js',
       6 => 'https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/mode/htmlmixed/htmlmixed.min.js',
       7 => 'js/templates.js',
-    ),
-  ),
-  'user-edit' => 
-  array (
+    ],
+  ],
+  'user-edit' =>
+   [
     'title' => 'Карточка пользователя',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/user-edit.js',
-    ),
-  ),
-  'users' => 
-  array (
+    ],
+  ],
+  'users' =>
+   [
     'title' => 'Пользователи и права доступа',
-    'scripts' => 
-    array (
+    'scripts' =>
+     [
       0 => 'js/users.js',
-    ),
-  ),
-);
+    ],
+  ],
+];

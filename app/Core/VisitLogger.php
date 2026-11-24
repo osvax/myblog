@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 /**
@@ -8,7 +10,7 @@ namespace App\Core;
  * публичной части сайта (включая гостей; админ-панель и API-запросы
  * в статистику не записываются).
  */
-class VisitLogger
+final class VisitLogger
 {
     /**
      * Окно дедупликации повторных загрузок (секунды): повторное открытие
@@ -55,7 +57,7 @@ class VisitLogger
             if ($userId > 0) {
                 try {
                     $stmt = $db->prepare(
-                        "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip WHERE id = :id"
+                        'UPDATE ' . db_table('users') . ' SET last_visit = NOW(), last_ip = :ip WHERE id = :id'
                     );
                     $stmt->execute([
                         ':ip' => $ipAddress,
@@ -81,8 +83,8 @@ class VisitLogger
                         $stmt->execute([':id' => $recentId]);
                     } else {
                         $stmt = $db->prepare(
-                            "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, referrer, visited_at)
-                             VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, :referrer, NOW())"
+                            'INSERT INTO ' . db_table('user_activities') . ' (user_id, page_url, page_title, ip_address, user_agent, referrer, visited_at)
+                             VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, :referrer, NOW())'
                         );
                         $stmt->execute([
                             ':user_id' => $userId,
@@ -116,9 +118,9 @@ class VisitLogger
     private static function recentVisitId(\PDO $db, int $userId, string $ipAddress, string $userAgent, string $pageUrl): ?int
     {
         $stmt = $db->prepare(
-            'SELECT id FROM ' . db_table('user_activities') . "
+            'SELECT id FROM ' . db_table('user_activities') . '
              WHERE user_id = :user_id AND ip_address = :ip AND user_agent = :ua
-               AND page_url = :url AND visited_at >= (NOW() - INTERVAL " . self::RELOAD_WINDOW . ' SECOND)
+               AND page_url = :url AND visited_at >= (NOW() - INTERVAL ' . self::RELOAD_WINDOW . ' SECOND)
              ORDER BY id DESC LIMIT 1'
         );
         $stmt->execute([

@@ -1,10 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
-use App\Core\ApiResource;
-
-class Router
+final class Router
 {
     private $routes = [];
 

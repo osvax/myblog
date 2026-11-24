@@ -1,18 +1,20 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use PDO;
 use App\Core\ApplicationLogger;
 use App\Core\QueryBuilder;
 use App\DTO\SiteSettingsDTO;
+use PDO;
 
-class SettingsRepository
+final class SettingsRepository
 {
     private $db;
     private $logger;
 
-    public function __construct(PDO $db = null, ApplicationLogger $logger = null)
+    public function __construct(?PDO $db = null, ?ApplicationLogger $logger = null)
     {
         $this->db = $db ?? \App\Core\Database::connection();
         $this->logger = $logger ?? (function_exists('container') ? container(ApplicationLogger::class) : null);
@@ -116,7 +118,7 @@ class SettingsRepository
     public function get(string $key, mixed $default = null): mixed
     {
         $stmt = $this->db->prepare(
-            "SELECT setting_value, setting_type FROM " . db_table('site_settings') . " WHERE setting_key = :key LIMIT 1"
+            'SELECT setting_value, setting_type FROM ' . db_table('site_settings') . ' WHERE setting_key = :key LIMIT 1'
         );
         $stmt->execute([':key' => $key]);
         $row = $stmt->fetch();
@@ -173,7 +175,7 @@ class SettingsRepository
     {
         // Получаем существующие метаданные из БД
         $existingMeta = [];
-        $rows = $this->db->query("SELECT setting_key, setting_type, tab_group, display_order, placeholder, options FROM " . db_table('site_settings'))->fetchAll();
+        $rows = $this->db->query('SELECT setting_key, setting_type, tab_group, display_order, placeholder, options FROM ' . db_table('site_settings'))->fetchAll();
         foreach ($rows as $row) {
             $existingMeta[$row['setting_key']] = [
                 'type' => $row['setting_type'],
@@ -201,7 +203,7 @@ class SettingsRepository
     public function addCustomField(string $key, string $value, string $type, string $tabGroup, string $placeholder): array
     {
         // Проверяем, не существует ли уже
-        $exists = $this->db->prepare("SELECT id FROM " . db_table('site_settings') . " WHERE setting_key = :key");
+        $exists = $this->db->prepare('SELECT id FROM ' . db_table('site_settings') . ' WHERE setting_key = :key');
         $exists->execute([':key' => $key]);
         if ($exists->fetch()) {
             return ['success' => false, 'error' => 'Поле с таким ключом уже существует'];
@@ -209,14 +211,14 @@ class SettingsRepository
 
         // Получаем максимальный display_order для группы
         $orderStmt = $this->db->prepare(
-            "SELECT COALESCE(MAX(display_order), 0) + 1 FROM " . db_table('site_settings') . " WHERE tab_group = :tab_group"
+            'SELECT COALESCE(MAX(display_order), 0) + 1 FROM ' . db_table('site_settings') . ' WHERE tab_group = :tab_group'
         );
         $orderStmt->execute([':tab_group' => $tabGroup]);
         $displayOrder = (int) $orderStmt->fetchColumn();
 
         $stmt = $this->db->prepare(
-            "INSERT INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
-             VALUES (:key, :value, :type, :tab_group, :display_order, :placeholder)"
+            'INSERT INTO ' . db_table('site_settings') . ' (setting_key, setting_value, setting_type, tab_group, display_order, placeholder)
+             VALUES (:key, :value, :type, :tab_group, :display_order, :placeholder)'
         );
         $stmt->execute([
             ':key' => $key,
@@ -243,7 +245,7 @@ class SettingsRepository
             return ['success' => false, 'error' => 'Системные поля нельзя удалять'];
         }
 
-        $stmt = $this->db->prepare("DELETE FROM " . db_table('site_settings') . " WHERE setting_key = :key");
+        $stmt = $this->db->prepare('DELETE FROM ' . db_table('site_settings') . ' WHERE setting_key = :key');
         $stmt->execute([':key' => $key]);
 
         if ($stmt->rowCount() > 0) {
@@ -264,18 +266,18 @@ class SettingsRepository
         $options = $meta['options'] ?? [];
 
         // Проверяем, существует ли настройка
-        $exists = $this->db->prepare("SELECT id FROM " . db_table('site_settings') . " WHERE setting_key = :key");
+        $exists = $this->db->prepare('SELECT id FROM ' . db_table('site_settings') . ' WHERE setting_key = :key');
         $exists->execute([':key' => $key]);
         $row = $exists->fetch();
 
         if ($row) {
             // UPDATE
             $stmt = $this->db->prepare(
-                "UPDATE " . db_table('site_settings') . "
+                'UPDATE ' . db_table('site_settings') . '
                  SET setting_value = :value, setting_type = :type, tab_group = :tab_group,
                      display_order = :display_order, placeholder = :placeholder,
                      options = :options, updated_at = NOW()
-                 WHERE setting_key = :key"
+                 WHERE setting_key = :key'
             );
             $stmt->execute([
                 ':value' => $value,
@@ -289,9 +291,9 @@ class SettingsRepository
         } else {
             // INSERT
             $stmt = $this->db->prepare(
-                "INSERT INTO " . db_table('site_settings') . "
+                'INSERT INTO ' . db_table('site_settings') . '
                  (setting_key, setting_value, setting_type, tab_group, display_order, placeholder, options)
-                 VALUES (:key, :value, :type, :tab_group, :display_order, :placeholder, :options)"
+                 VALUES (:key, :value, :type, :tab_group, :display_order, :placeholder, :options)'
             );
             $stmt->execute([
                 ':key' => $key,

@@ -2,10 +2,13 @@
     
 
     <!-- ================= ЗАГОЛОВОК СТРАНИЦЫ ================= -->
-    <?php $heading = $contactsHeading ?? 'Контакты'; $headingLead = $contactsHeadingLead ?? 'Буду рад связи и сотрудничеству'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
+    <?php $heading = $contactsHeading ?? 'Контакты';
+    $headingLead = $contactsHeadingLead ?? 'Буду рад связи и сотрудничеству';
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
 
     <!-- Волна: оранжевый → светло-оранжевый -->
-    <?php $waveColors = ['#ff8c1a', '#fff3e6']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ff8c1a', '#fff3e6'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= КОНТАКТЫ ================= -->
 <?php $contactSettings = is_array($contacts ?? null) ? $contacts : []; ?>
@@ -13,9 +16,9 @@
         <div class="container">
             <?php
             $aboutHtml = (string) ($contactSettings['contactsAboutHtml'] ?? '');
-            $aboutPhoto = (string) ($contactSettings['contactsAboutPhoto'] ?? '');
-            $aboutPhotoSafe = preg_match('#^uploads/contacts/[a-f0-9]{32}\.(?:jpg|png|webp)$#', $aboutPhoto) === 1;
-            ?>
+    $aboutPhoto = (string) ($contactSettings['contactsAboutPhoto'] ?? '');
+    $aboutPhotoSafe = preg_match('#^uploads/contacts/[a-f0-9]{32}\.(?:jpg|png|webp)$#', $aboutPhoto) === 1;
+    ?>
             <?php if ((string) ($contactSettings['contactsAboutEnabled'] ?? '1') === '1' && ($aboutHtml !== '' || $aboutPhotoSafe)): ?>
             <section class="contacts-about mb-5">
                 <div class="row g-4 align-items-center">
@@ -33,13 +36,13 @@
             </section>
             <?php endif; ?>
             <?php
-            $contactCards = [
-                ['contactAddress', 'contactAddressEnabled', 'contactAddressLabel', 'Адрес', 'г. Самара, ул. Примерная, 1', 'bi-geo-alt'],
-                ['contactEmail', 'contactEmailEnabled', 'contactEmailLabel', 'Email', 'hello@moyblog.ru', 'bi-envelope'],
-                ['contactPhone', 'contactPhoneEnabled', 'contactPhoneLabel', 'Телефон', '+7 (900) 123-45-67', 'bi-telephone'],
-                ['contactHours', 'contactHoursEnabled', 'contactHoursLabel', 'Часы работы', 'Пн–Пт, 10:00–18:00', 'bi-clock'],
-            ];
-            ?>
+    $contactCards = [
+        ['contactAddress', 'contactAddressEnabled', 'contactAddressLabel', 'Адрес', 'г. Самара, ул. Примерная, 1', 'bi-geo-alt'],
+        ['contactEmail', 'contactEmailEnabled', 'contactEmailLabel', 'Email', 'hello@moyblog.ru', 'bi-envelope'],
+        ['contactPhone', 'contactPhoneEnabled', 'contactPhoneLabel', 'Телефон', '+7 (900) 123-45-67', 'bi-telephone'],
+        ['contactHours', 'contactHoursEnabled', 'contactHoursLabel', 'Часы работы', 'Пн–Пт, 10:00–18:00', 'bi-clock'],
+    ];
+    ?>
             <div class="row g-4 justify-content-center">
                 <?php foreach ($contactCards as [$valueKey, $enabledKey, $labelKey, $fallbackLabel, $fallbackValue, $icon]): ?>
                     <?php if ((string) ($contactSettings[$enabledKey] ?? '1') === '1'): ?>
@@ -92,22 +95,22 @@
 
             <!-- Социальные сети (значения — из настроек сайта, показываются только заполненные) -->
             <?php
-            $socialNetworks = [
-                'Telegram' => ['socialTelegram', 'socialTelegramEnabled', 'socialTelegramLabel', 'Telegram', 'bi-telegram'],
-                'Vk' => ['socialVk', 'socialVkEnabled', 'socialVkLabel', 'VK', 'bi-chat-dots'],
-                'Github' => ['socialGithub', 'socialGithubEnabled', 'socialGithubLabel', 'GitHub', 'bi-github'],
-                'Youtube' => ['socialYoutube', 'socialYoutubeEnabled', 'socialYoutubeLabel', 'YouTube', 'bi-youtube'],
-            ];
-            $hasSocialLinks = false;
-            foreach ($socialNetworks as $networkName => $networkConfig) {
-                $networkUrl = trim((string) ($contactSettings[$networkConfig[0]] ?? ''));
-                $networkEnabled = (string) ($contactSettings[$networkConfig[1]] ?? '1') === '1';
-                if ($networkEnabled && $networkUrl !== '' && preg_match('#^https?://#i', $networkUrl)) {
-                    $hasSocialLinks = true;
-                    break;
-                }
-            }
-            ?>
+    $socialNetworks = [
+        'Telegram' => ['socialTelegram', 'socialTelegramEnabled', 'socialTelegramLabel', 'Telegram', 'bi-telegram'],
+        'Vk' => ['socialVk', 'socialVkEnabled', 'socialVkLabel', 'VK', 'bi-chat-dots'],
+        'Github' => ['socialGithub', 'socialGithubEnabled', 'socialGithubLabel', 'GitHub', 'bi-github'],
+        'Youtube' => ['socialYoutube', 'socialYoutubeEnabled', 'socialYoutubeLabel', 'YouTube', 'bi-youtube'],
+    ];
+    $hasSocialLinks = false;
+    foreach ($socialNetworks as $networkName => $networkConfig) {
+        $networkUrl = trim((string) ($contactSettings[$networkConfig[0]] ?? ''));
+        $networkEnabled = (string) ($contactSettings[$networkConfig[1]] ?? '1') === '1';
+        if ($networkEnabled && $networkUrl !== '' && preg_match('#^https?://#i', $networkUrl)) {
+            $hasSocialLinks = true;
+            break;
+        }
+    }
+    ?>
             <?php if ($hasSocialLinks): ?>
             <div class="text-center mt-5">
                 <h5 class="fw-bold mb-4">Я в социальных сетях</h5>
@@ -128,7 +131,8 @@
     </section>
 
     <!-- Волна: светло-оранжевый → тёмный -->
-    <?php $waveColors = ['#fff3e6', '#353535']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#fff3e6', '#353535'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= ПОДВАЛ ================= -->
     

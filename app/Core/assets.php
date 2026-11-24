@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Версионированный URL статического файла: ?v=<mtime>.
  * При каждом изменении файла браузер получает свежую версию вместо кэша.
@@ -34,21 +36,21 @@ function asset_version(string $path): string
 function vite_manifest(): ?array
 {
     static $manifest = null;
-    
+
     if ($manifest !== null) {
         return $manifest;
     }
-    
+
     // Vite outputs manifest.json in .vite subfolder within outDir
     $manifestPath = APP_ROOT . '/public/build/.vite/manifest.json';
-    
+
     if (!is_file($manifestPath)) {
         return $manifest = null;
     }
-    
+
     $content = file_get_contents($manifestPath);
     $manifest = json_decode($content, true);
-    
+
     return $manifest ?? null;
 }
 
@@ -66,11 +68,11 @@ function has_vite_manifest(): bool
 function vite_asset(string $entry): string
 {
     $manifest = vite_manifest();
-    
+
     if (!$manifest || !isset($manifest[$entry])) {
         return '';
     }
-    
+
     return asset_version('/build/' . $manifest[$entry]['file']);
 }
 
@@ -82,18 +84,18 @@ function vite_asset(string $entry): string
 function vite_css_raw(string $entry): array
 {
     $manifest = vite_manifest();
-    
+
     if (!$manifest || !isset($manifest[$entry])) {
         return [];
     }
-    
+
     $css = $manifest[$entry]['css'] ?? [];
-    
+
     // Рекурсивно собираем CSS из импортов
     foreach ($manifest[$entry]['imports'] ?? [] as $import) {
         $css = array_merge($css, vite_css_raw($import));
     }
-    
+
     return array_unique($css);
 }
 
@@ -105,9 +107,9 @@ function vite_css_raw(string $entry): array
 function vite_css(string $entry): array
 {
     $raw = vite_css_raw($entry);
-    
+
     return array_map('asset_version', array_map(
-        fn($c) => '/build/' . $c,
+        fn ($c) => '/build/' . $c,
         $raw
     ));
 }
@@ -120,19 +122,19 @@ function vite_css(string $entry): array
 function vite_imports_raw(string $entry): array
 {
     $manifest = vite_manifest();
-    
+
     if (!$manifest || !isset($manifest[$entry])) {
         return [];
     }
-    
+
     $imports = $manifest[$entry]['imports'] ?? [];
     $allImports = $imports;
-    
+
     // Рекурсивно собираем все транзитивные импорты
     foreach ($imports as $import) {
         $allImports = array_merge($allImports, vite_imports_raw($import));
     }
-    
+
     return array_unique($allImports);
 }
 
@@ -147,11 +149,11 @@ function vite_imports(string $entry): array
     if (!$manifest) {
         return [];
     }
-    
+
     $raw = vite_imports_raw($entry);
-    
+
     return array_map(
-        fn($import) => asset_version('/build/' . $manifest[$import]['file']),
+        fn ($import) => asset_version('/build/' . $manifest[$import]['file']),
         $raw
     );
 }
@@ -162,29 +164,29 @@ function vite_imports(string $entry): array
 function vite_entry_tags(string $entry): string
 {
     $manifest = vite_manifest();
-    
+
     if (!$manifest || !isset($manifest[$entry])) {
         return '';
     }
-    
+
     $tags = [];
-    
+
     // CSS
     foreach (vite_css($entry) as $css) {
         $tags[] = '<link rel="stylesheet" href="' . htmlspecialchars($css, ENT_QUOTES, 'UTF-8') . '">';
     }
-    
+
     // Module preload for imports
     foreach (vite_imports($entry) as $import) {
         $tags[] = '<link rel="modulepreload" href="' . htmlspecialchars($import, ENT_QUOTES, 'UTF-8') . '">';
     }
-    
+
     // JS entry
     $jsUrl = vite_asset($entry);
     if ($jsUrl) {
         $tags[] = '<script type="module" src="' . htmlspecialchars($jsUrl, ENT_QUOTES, 'UTF-8') . '"></script>';
     }
-    
+
     return implode("\n", $tags);
 }
 

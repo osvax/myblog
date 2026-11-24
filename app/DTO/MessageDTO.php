@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DTO;
 
 /**
@@ -58,7 +60,7 @@ namespace App\DTO;
  * - 'question' — вопрос с сайта (требует email)
  * - 'comment' — комментарий к статье (требует article_slug)
  */
-class MessageDTO
+final class MessageDTO
 {
     // === Основные поля (колонки va_messages) ===
 

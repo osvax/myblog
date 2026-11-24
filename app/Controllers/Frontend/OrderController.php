@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
 use App\Models\SiteSettings;
 
-class OrderController extends Controller
+final class OrderController extends Controller
 {
     private $settings;
 

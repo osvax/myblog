@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 /**
@@ -12,9 +14,9 @@ namespace App\Core;
  *  - security  — блокировки по IP, отказы в доступе к админке
  *  - errors    — внутренние ошибки (500)
  */
-class Logger
+final class Logger
 {
-    const TYPES = ['auth', 'forms', 'security', 'errors'];
+    public const TYPES = ['auth', 'forms', 'security', 'errors'];
 
     /**
      * Записать событие в журнал (если включено соответствующим настроек).
@@ -47,8 +49,8 @@ class Logger
             $ip = $ip !== null ? mb_substr($ip, 0, 45) : self::clientIp();
 
             $stmt = $db->prepare(
-                "INSERT INTO " . db_table('logs') . " (log_type, message, user_id, ip, created_at)
-                 VALUES (:type, :message, :user_id, :ip, NOW())"
+                'INSERT INTO ' . db_table('logs') . ' (log_type, message, user_id, ip, created_at)
+                 VALUES (:type, :message, :user_id, :ip, NOW())'
             );
             $stmt->execute([
                 ':type' => $type,
@@ -82,13 +84,13 @@ class Logger
 
         $db = Database::connection();
         $stmt = $db->prepare(
-            "DELETE FROM " . db_table('logs') . " WHERE created_at < DATE_SUB(NOW(), INTERVAL :days DAY)"
+            'DELETE FROM ' . db_table('logs') . ' WHERE created_at < DATE_SUB(NOW(), INTERVAL :days DAY)'
         );
         $stmt->execute([':days' => $retention]);
 
         // Маркер последней очистки
         $marker = $db->prepare(
-            "INSERT INTO " . db_table('site_settings') . " (setting_key, setting_value, setting_type, updated_at)
+            'INSERT INTO ' . db_table('site_settings') . " (setting_key, setting_value, setting_type, updated_at)
              VALUES ('logsLastCleanAt', :v, 'text', NOW())
              ON DUPLICATE KEY UPDATE setting_value = :v2, updated_at = NOW()"
         );
@@ -121,7 +123,7 @@ class Logger
     public static function clear(): int
     {
         $db = Database::connection();
-        $stmt = $db->exec("DELETE FROM " . db_table('logs'));
+        $stmt = $db->exec('DELETE FROM ' . db_table('logs'));
         return (int) $stmt;
     }
 

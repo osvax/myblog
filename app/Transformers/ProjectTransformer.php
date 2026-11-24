@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Transformers;
 
 use App\DTO\ProjectDTO;
@@ -12,7 +14,7 @@ use App\DTO\ProjectDTO;
  * - transformList() — упрощённое для списков
  * - transformPublic() — для публичного API
  */
-class ProjectTransformer extends Transformer
+final class ProjectTransformer extends Transformer
 {
     /**
      * Полное представление проекта (для админки и детального просмотра).

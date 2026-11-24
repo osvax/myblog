@@ -1,17 +1,19 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
 use App\Core\ApiResource;
 use App\Core\ApplicationLogger;
-use App\Models\UserRepository;
+use App\DTO\UserDTO;
 use App\Models\Role;
 use App\Models\SiteSettings;
-use App\DTO\UserDTO;
+use App\Models\UserRepository;
 use App\Transformers\UserTransformer;
 
-class UsersController extends Controller
+final class UsersController extends Controller
 {
     private $users;
     private $role;

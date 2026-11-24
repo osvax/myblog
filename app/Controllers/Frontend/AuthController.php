@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
-use App\Models\UserRepository;
-use App\Models\SiteSettings;
 use App\Core\Mailer;
 use App\Core\RateLimiter;
+use App\Models\SiteSettings;
+use App\Models\UserRepository;
 
-class AuthController extends Controller
+final class AuthController extends Controller
 {
     private $users;
     private $settings;
@@ -46,12 +48,16 @@ class AuthController extends Controller
     public function yandexRedirect($request)
     {
         \user_start_session();
-        if (!(bool) $this->settings->get('yandexAuthEnabled', false)) return \App\Core\Response::redirect('/login.html', 302);
+        if (!(bool) $this->settings->get('yandexAuthEnabled', false)) {
+            return \App\Core\Response::redirect('/login.html', 302);
+        }
         $clientId = trim((string) $this->settings->get('yandexClientId', ''));
         $redirect = trim((string) $this->settings->get('yandexRedirectUri', ''));
-        if ($clientId === '' || $redirect === '') return new \App\Core\Response('Яндекс OAuth не настроен', 503);
+        if ($clientId === '' || $redirect === '') {
+            return new \App\Core\Response('Яндекс OAuth не настроен', 503);
+        }
         $_SESSION['yandex_oauth_state'] = bin2hex(random_bytes(16));
-        $url = 'https://oauth.yandex.ru/authorize?' . http_build_query(['response_type'=>'code','client_id'=>$clientId,'redirect_uri'=>$redirect,'state'=>$_SESSION['yandex_oauth_state']]);
+        $url = 'https://oauth.yandex.ru/authorize?' . http_build_query(['response_type' => 'code','client_id' => $clientId,'redirect_uri' => $redirect,'state' => $_SESSION['yandex_oauth_state']]);
         return \App\Core\Response::redirect($url, 302);
     }
 

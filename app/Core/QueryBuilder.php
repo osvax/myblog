@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 /**
@@ -7,7 +9,7 @@ namespace App\Core;
  * Не является полноценным ORM, просто удобный fluent-интерфейс.
  * Убирает дублирование db_table() и ручных JOIN/WHERE по проекту.
  */
-class QueryBuilder
+final class QueryBuilder
 {
     /** @var \PDO */
     private $pdo;
@@ -359,7 +361,7 @@ class QueryBuilder
      */
     private function buildSelect(): string
     {
-        $sql = "SELECT " . implode(', ', $this->selects) . " FROM {$this->table}";
+        $sql = 'SELECT ' . implode(', ', $this->selects) . " FROM {$this->table}";
 
         // JOINs
         foreach ($this->joins as $join) {

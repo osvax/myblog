@@ -1,16 +1,15 @@
 <?php
 
-namespace App\DTO;
+declare(strict_types=1);
 
-use Respect\Validation\Validator as v;
-use Respect\Validation\Exceptions\ValidationException;
+namespace App\DTO;
 
 /**
  * ArticleDTO — объект переноса данных для статьи.
  * Инкапсулирует валидацию и преобразование из/в массив/БД.
  * Использует respect/validation (composer require respect/validation).
  */
-class ArticleDTO
+final class ArticleDTO
 {
     // === Поля ===
 

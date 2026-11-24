@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 /**
  * Конфигурация калькулятора заказа: типы сайтов, функции, цены.
  * Хранится в site_settings (ключ calculatorConfig, тип json) и

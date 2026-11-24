@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Transformers;
 
 use App\DTO\MessageDTO;
@@ -10,7 +12,7 @@ use App\DTO\MessageDTO;
  * Сообщения имеют типы: contact, question, comment.
  * Трансформер предоставляет представления для админки и публичного API.
  */
-class MessageTransformer extends Transformer
+final class MessageTransformer extends Transformer
 {
     /**
      * Полное представление сообщения (для админки).

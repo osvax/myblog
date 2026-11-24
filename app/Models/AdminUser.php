@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-class AdminUser
+final class AdminUser
 {
     public function verifyCredentials($email, $password)
     {
@@ -19,7 +21,7 @@ class AdminUser
 
         $db = \App\Core\Database::connection();
 
-        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE LOWER(email) = :email LIMIT 1");
+        $stmt = $db->prepare('SELECT * FROM ' . db_table('users') . ' WHERE LOWER(email) = :email LIMIT 1');
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 

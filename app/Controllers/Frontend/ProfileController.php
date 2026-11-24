@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
 use App\Core\Response;
-use App\Models\UserRepository;
 use App\Models\SiteSettings;
+use App\Models\UserRepository;
 
-class ProfileController extends Controller
+final class ProfileController extends Controller
 {
     private $users;
     private $settings;
@@ -182,7 +184,7 @@ class ProfileController extends Controller
         $newPasswordConfirm = isset($input['new_password_confirm']) && is_string($input['new_password_confirm']) ? $input['new_password_confirm'] : '';
 
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT password_hash FROM " . db_table('users') . " WHERE id = :id LIMIT 1");
+        $stmt = $db->prepare('SELECT password_hash FROM ' . db_table('users') . ' WHERE id = :id LIMIT 1');
         $stmt->execute([':id' => $user['id']]);
         $dbUser = $stmt->fetch();
 
@@ -198,7 +200,7 @@ class ProfileController extends Controller
         }
 
         $passwordHash = password_hash($newPassword, PASSWORD_DEFAULT);
-        $stmt = $db->prepare("UPDATE " . db_table('users') . " SET password_hash = :hash, updated_at = NOW() WHERE id = :id");
+        $stmt = $db->prepare('UPDATE ' . db_table('users') . ' SET password_hash = :hash, updated_at = NOW() WHERE id = :id');
         $stmt->execute([':hash' => $passwordHash, ':id' => $user['id']]);
 
         return $this->json(['success' => true]);
@@ -219,7 +221,7 @@ class ProfileController extends Controller
         $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
 
         $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT password_hash FROM " . db_table('users') . " WHERE id = :id LIMIT 1");
+        $stmt = $db->prepare('SELECT password_hash FROM ' . db_table('users') . ' WHERE id = :id LIMIT 1');
         $stmt->execute([':id' => $user['id']]);
         $dbUser = $stmt->fetch();
 
@@ -227,7 +229,7 @@ class ProfileController extends Controller
             return $this->json(['success' => false, 'error' => 'Неверный пароль'], 400);
         }
 
-        $stmt = $db->prepare("DELETE FROM " . db_table('users') . " WHERE id = :id");
+        $stmt = $db->prepare('DELETE FROM ' . db_table('users') . ' WHERE id = :id');
         $stmt->execute([':id' => $user['id']]);
 
         if (session_status() === PHP_SESSION_NONE) {

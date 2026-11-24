@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
 
-class LandingPageManager
+final class LandingPageManager
 {
     /**
      * Сгенерировать HTML страницы из настроек.
@@ -15,7 +17,7 @@ class LandingPageManager
     public function generate(string $pageSlug = 'home'): string
     {
         $db = Database::connection();
-        $stmt = $db->query("SELECT * FROM " . db_table('landing_page_settings') . " WHERE is_active = 1 ORDER BY field_group ASC, display_order ASC");
+        $stmt = $db->query('SELECT * FROM ' . db_table('landing_page_settings') . ' WHERE is_active = 1 ORDER BY field_group ASC, display_order ASC');
         $settings = $stmt->fetchAll();
 
         // Группируем по секциям
@@ -91,7 +93,9 @@ class LandingPageManager
      */
     private function getFieldValue(array $sections, string $sectionKey, string $fieldName, string $default): string
     {
-        if (!isset($sections[$sectionKey])) return $default;
+        if (!isset($sections[$sectionKey])) {
+            return $default;
+        }
         foreach ($sections[$sectionKey] as $field) {
             if ($field['field_name'] === $fieldName) {
                 return $field['field_value'] ?: $default;
@@ -105,7 +109,9 @@ class LandingPageManager
      */
     private function getGlobalSetting(array $sections, string $fieldName, string $default): string
     {
-        if (!isset($sections['global'])) return '';
+        if (!isset($sections['global'])) {
+            return '';
+        }
         foreach ($sections['global'] as $field) {
             if ($field['field_name'] === $fieldName && !empty($field['field_value'])) {
                 if ($fieldName === 'google_analytics') {

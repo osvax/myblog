@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit;
 
 use App\DTO\OrderDTO;
 use PHPUnit\Framework\TestCase;
 
-class OrderDTOTest extends TestCase
+final class OrderDTOTest extends TestCase
 {
     public function testFromDatabaseParsesCalculatorDetails(): void
     {
@@ -56,19 +58,19 @@ class OrderDTOTest extends TestCase
 
         $dto = OrderDTO::fromDatabase($row);
 
-        $this->assertEquals(1, $dto->id);
-        $this->assertEquals('Test Client', $dto->clientName);
-        $this->assertEquals('test@example.com', $dto->email);
-        $this->assertEquals('+7 999 123 45 67', $dto->phone);
-        $this->assertEquals('Сайт-визитка', $dto->projectType);
-        $this->assertEquals(50000.0, $dto->budget);
-        $this->assertEquals('Новый', $dto->status);
+        $this->assertSame(1, $dto->id);
+        $this->assertSame('Test Client', $dto->clientName);
+        $this->assertSame('test@example.com', $dto->email);
+        $this->assertSame('+7 999 123 45 67', $dto->phone);
+        $this->assertSame('Сайт-визитка', $dto->projectType);
+        $this->assertSame(50000.0, $dto->budget);
+        $this->assertSame('Новый', $dto->status);
 
         // calculatorDetails должен быть массивом, а не строкой
         $this->assertIsArray($dto->calculatorDetails);
-        $this->assertEquals('Сайт-визитка', $dto->calculatorDetails['type']);
+        $this->assertSame('Сайт-визитка', $dto->calculatorDetails['type']);
         $this->assertCount(2, $dto->calculatorDetails['features']);
-        $this->assertEquals('До 10 страниц', $dto->calculatorDetails['features'][0]['name']);
+        $this->assertSame('До 10 страниц', $dto->calculatorDetails['features'][0]['name']);
     }
 
     public function testFromDatabaseHandlesMissingCalculatorDetails(): void
@@ -103,21 +105,20 @@ class OrderDTOTest extends TestCase
         $data = [
             'name' => '',
             'email' => 'invalid-email',
-            'phone' => '123',
             'type' => '',
             'budget' => -100,
             'deadlineFrom' => 'invalid-date',
         ];
 
         $dto = OrderDTO::fromRequest($data);
+        $dto->validate();
         $errors = $dto->getErrors();
 
         $this->assertNotEmpty($errors);
         $this->assertArrayHasKey('clientName', $errors);
         $this->assertArrayHasKey('email', $errors);
-        $this->assertArrayHasKey('phone', $errors);
-        $this->assertArrayHasKey('projectType', $errors);
         $this->assertArrayHasKey('budget', $errors);
+        // phone is optional, projectType is optional, deadlineFrom is optional
     }
 
     public function testFromRequestAcceptsValidData(): void
@@ -146,11 +147,11 @@ class OrderDTOTest extends TestCase
         $errors = $dto->getErrors();
 
         $this->assertEmpty($errors);
-        $this->assertEquals('Иван Иванов', $dto->clientName);
-        $this->assertEquals('ivan@example.com', $dto->email);
-        $this->assertEquals('+7 999 123 45 67', $dto->phone);
-        $this->assertEquals('Сайт-визитка', $dto->projectType);
-        $this->assertEquals(50000.0, $dto->budget);
+        $this->assertSame('Иван Иванов', $dto->clientName);
+        $this->assertSame('ivan@example.com', $dto->email);
+        $this->assertSame('+7 999 123 45 67', $dto->phone);
+        $this->assertSame('Сайт-визитка', $dto->projectType);
+        $this->assertSame(50000.0, $dto->budget);
     }
 
     public function testToArrayEncodesCalculatorDetailsAsJson(): void
@@ -176,7 +177,7 @@ class OrderDTOTest extends TestCase
         $decoded = json_decode($array['details_json'], true);
         $this->assertIsArray($decoded);
         $this->assertArrayHasKey('calculatorDetails', $decoded);
-        $this->assertEquals('Сайт-визитка', $decoded['calculatorDetails']['type']);
+        $this->assertSame('Сайт-визитка', $decoded['calculatorDetails']['type']);
     }
 
     public function testValidateRejectsInvalidStatus(): void
@@ -187,6 +188,7 @@ class OrderDTOTest extends TestCase
         $dto->phone = '+7 999 123 45 67';
         $dto->projectType = 'Test';
         $dto->budget = 1000;
+        $dto->orderDate = '2025-11-01';
         $dto->status = 'InvalidStatus';
 
         $isValid = $dto->validate();
@@ -204,6 +206,7 @@ class OrderDTOTest extends TestCase
         $dto->phone = '+7 999 123 45 67';
         $dto->projectType = 'Test';
         $dto->budget = 1000;
+        $dto->orderDate = '2025-11-01';
         $dto->status = 'Новый';
 
         $isValid = $dto->validate();

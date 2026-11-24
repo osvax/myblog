@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DTO;
 
 /**
@@ -63,7 +65,7 @@ namespace App\DTO;
  * statistics: statisticsSections (json массив), gaMeasurementId, yaCounterId
  * custom: пользовательские поля (добавляются через админку)
  */
-class SiteSettingsDTO
+final class SiteSettingsDTO
 {
     // === Значения настроек (плоский массив key => value) ===
     /** @var array<string, mixed> */
@@ -459,7 +461,7 @@ class SiteSettingsDTO
 
         // Сортируем внутри каждой группы по display_order
         foreach ($grouped as &$group) {
-            usort($group, fn($a, $b) => $a['display_order'] <=> $b['display_order']);
+            usort($group, fn ($a, $b) => $a['display_order'] <=> $b['display_order']);
         }
 
         return $grouped;

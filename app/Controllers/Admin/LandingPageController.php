@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
 use App\Core\ApiResource;
 use App\Models\LandingPageSetting;
 
-class LandingPageController extends Controller
+final class LandingPageController extends Controller
 {
     private $settings;
 

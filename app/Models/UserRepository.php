@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use PDO;
 use App\Core\QueryBuilder;
 use App\DTO\UserDTO;
+use PDO;
 
-class UserRepository
+final class UserRepository
 {
     private $db;
 
-    public function __construct(PDO $db = null)
+    public function __construct(?PDO $db = null)
     {
         $this->db = $db ?? \App\Core\Database::connection();
     }
@@ -158,7 +160,7 @@ class UserRepository
                     $updateParts[] = "$col = ?";
                 }
             }
-            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . " WHERE id = ?";
+            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . ' WHERE id = ?';
 
             $values = [];
             foreach ($data as $col => $val) {
@@ -207,9 +209,9 @@ class UserRepository
             }
         }
         // Всегда обновляем updated_at
-        $updateParts[] = "updated_at = NOW()";
+        $updateParts[] = 'updated_at = NOW()';
 
-        $sql = "UPDATE $table SET " . implode(', ', $updateParts) . " WHERE id = ?";
+        $sql = "UPDATE $table SET " . implode(', ', $updateParts) . ' WHERE id = ?';
 
         $values = [];
         foreach ($data as $col => $val) {
@@ -244,7 +246,7 @@ class UserRepository
     public function create(string $email, string $passwordHash, string $name, string $phone = '', string $position = ''): array
     {
         // Проверяем, не занят ли email
-        $stmt = $this->db->prepare("SELECT id FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
+        $stmt = $this->db->prepare('SELECT id FROM ' . db_table('users') . ' WHERE email = :email LIMIT 1');
         $stmt->execute([':email' => $email]);
         if ($stmt->fetch()) {
             return ['success' => false, 'error' => 'Пользователь с таким email уже существует'];
@@ -289,7 +291,7 @@ class UserRepository
      */
     public function updatePassword(int $id, string $newPasswordHash): bool
     {
-        $stmt = $this->db->prepare("UPDATE " . db_table('users') . " SET password_hash = :password_hash, updated_at = NOW() WHERE id = :id");
+        $stmt = $this->db->prepare('UPDATE ' . db_table('users') . ' SET password_hash = :password_hash, updated_at = NOW() WHERE id = :id');
         $stmt->execute([
             ':password_hash' => $newPasswordHash,
             ':id' => $id,
@@ -306,7 +308,7 @@ class UserRepository
      */
     public function updateAvatar(int $id, string $avatarPath): bool
     {
-        $stmt = $this->db->prepare("UPDATE " . db_table('users') . " SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id");
+        $stmt = $this->db->prepare('UPDATE ' . db_table('users') . ' SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id');
         $stmt->execute([
             ':avatar_path' => $avatarPath,
             ':id' => $id,
@@ -322,7 +324,7 @@ class UserRepository
      */
     public function getAvatarPath(int $id): ?string
     {
-        $stmt = $this->db->prepare("SELECT avatar_path FROM " . db_table('users') . " WHERE id = :id");
+        $stmt = $this->db->prepare('SELECT avatar_path FROM ' . db_table('users') . ' WHERE id = :id');
         $stmt->execute([':id' => $id]);
         return $stmt->fetchColumn() ?: null;
     }
@@ -336,7 +338,7 @@ class UserRepository
      */
     public function updateLastVisit(int $id, string $ip): bool
     {
-        $stmt = $this->db->prepare("UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip WHERE id = :id");
+        $stmt = $this->db->prepare('UPDATE ' . db_table('users') . ' SET last_visit = NOW(), last_ip = :ip WHERE id = :id');
         $stmt->execute([
             ':ip' => $ip,
             ':id' => $id,
@@ -353,14 +355,14 @@ class UserRepository
      */
     public function emailExists(string $email, ?int $excludeId = null): bool
     {
-        $sql = "SELECT id FROM " . db_table('users') . " WHERE email = :email";
+        $sql = 'SELECT id FROM ' . db_table('users') . ' WHERE email = :email';
         $params = [':email' => $email];
 
         if ($excludeId !== null) {
-            $sql .= " AND id != :id";
+            $sql .= ' AND id != :id';
             $params[':id'] = $excludeId;
         }
-        $sql .= " LIMIT 1";
+        $sql .= ' LIMIT 1';
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
@@ -375,7 +377,7 @@ class UserRepository
      */
     public function roleExists(string $roleKey): bool
     {
-        $stmt = $this->db->prepare("SELECT 1 FROM " . db_table('roles') . " WHERE role_key = :role_key LIMIT 1");
+        $stmt = $this->db->prepare('SELECT 1 FROM ' . db_table('roles') . ' WHERE role_key = :role_key LIMIT 1');
         $stmt->execute([':role_key' => $roleKey]);
         return $stmt->fetch() !== false;
     }
@@ -422,7 +424,7 @@ class UserRepository
      */
     public function count(): int
     {
-        $stmt = $this->db->query("SELECT COUNT(*) FROM " . db_table('users'));
+        $stmt = $this->db->query('SELECT COUNT(*) FROM ' . db_table('users'));
         return (int) $stmt->fetchColumn();
     }
 }

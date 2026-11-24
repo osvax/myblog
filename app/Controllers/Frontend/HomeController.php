@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
@@ -7,7 +9,7 @@ use App\Models\ContentRepository;
 use App\Models\LandingPage;
 use App\Models\SiteSettings;
 
-class HomeController extends Controller
+final class HomeController extends Controller
 {
     private $content;
     private $settings;

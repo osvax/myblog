@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
 use App\Core\QueryBuilder;
 use App\DTO\ArticleDTO;
 
-class ContentRepository
+final class ContentRepository
 {
     private $db;
     private $qb;
@@ -63,7 +65,7 @@ class ContentRepository
     public function articles(bool $publishedOnly = false): array
     {
         $query = $this->baseArticlesQuery()
-            ->when($publishedOnly, fn($q) => $q->where('a.is_published', '=', 1))
+            ->when($publishedOnly, fn ($q) => $q->where('a.is_published', '=', 1))
             ->orderBy('a.published_at', 'DESC')
             ->orderBy('a.created_at', 'DESC');
 
@@ -135,7 +137,7 @@ class ContentRepository
     public function articlesAsDto(bool $publishedOnly = false): array
     {
         $query = $this->baseArticlesQuery()
-            ->when($publishedOnly, fn($q) => $q->where('a.is_published', '=', 1))
+            ->when($publishedOnly, fn ($q) => $q->where('a.is_published', '=', 1))
             ->orderBy('a.published_at', 'DESC')
             ->orderBy('a.created_at', 'DESC');
 
@@ -151,7 +153,7 @@ class ContentRepository
     public function commentCounts(): array
     {
         $rows = $this->db->query(
-            "SELECT article_slug, COUNT(*) AS n FROM " . db_table('messages') . "
+            'SELECT article_slug, COUNT(*) AS n FROM ' . db_table('messages') . "
              WHERE message_type = 'comment' AND is_approved = 1 AND article_slug <> ''
              GROUP BY article_slug"
         )->fetchAll();
@@ -193,7 +195,7 @@ class ContentRepository
     {
         $query = $this->baseArticlesQuery()
             ->where('c.slug', '=', $categorySlug)
-            ->when($publishedOnly, fn($q) => $q->where('a.is_published', '=', 1))
+            ->when($publishedOnly, fn ($q) => $q->where('a.is_published', '=', 1))
             ->orderBy('a.published_at', 'DESC')
             ->orderBy('a.created_at', 'DESC');
 
@@ -297,7 +299,7 @@ class ContentRepository
     public function projects(bool $publishedOnly = false): array
     {
         $query = $this->baseProjectsQuery()
-            ->when($publishedOnly, fn($q) => $q->where('is_published', '=', 1))
+            ->when($publishedOnly, fn ($q) => $q->where('is_published', '=', 1))
             ->orderBy('created_at', 'DESC');
 
         $rows = $query->get();
@@ -621,7 +623,7 @@ class ContentRepository
                     $updateParts[] = "$col = ?";
                 }
             }
-            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . " WHERE id = ?";
+            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . ' WHERE id = ?';
 
             $values = [];
             foreach ($data as $col => $val) {
@@ -868,7 +870,7 @@ class ContentRepository
     public function commentsByArticle(string $slug): array
     {
         $statement = $this->db->prepare(
-            "SELECT id, parent_id, is_staff, name, body, created_at FROM " . db_table('messages') . "
+            'SELECT id, parent_id, is_staff, name, body, created_at FROM ' . db_table('messages') . "
              WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1
              ORDER BY created_at ASC, id ASC"
         );
@@ -885,7 +887,7 @@ class ContentRepository
     public function commentsCount(string $slug): int
     {
         $statement = $this->db->prepare(
-            "SELECT COUNT(*) FROM " . db_table('messages') . "
+            'SELECT COUNT(*) FROM ' . db_table('messages') . "
              WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1"
         );
         $statement->execute(['slug' => $slug]);
@@ -1032,7 +1034,7 @@ class ContentRepository
     public function projectsAsDto(bool $publishedOnly = false): array
     {
         $query = $this->baseProjectsQuery()
-            ->when($publishedOnly, fn($q) => $q->where('is_published', '=', 1))
+            ->when($publishedOnly, fn ($q) => $q->where('is_published', '=', 1))
             ->orderBy('created_at', 'DESC');
 
         $rows = $query->get();

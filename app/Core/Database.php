@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core {
 
     use PDO;
     use PDOException;
     use RuntimeException;
 
-    class Database
+    final class Database
     {
         private static $connection;
         private static $config;
@@ -75,6 +77,7 @@ namespace App\Core {
 }
 
 // Глобальный хелпер: имя таблицы с префиксом из .env (DB_PREFIX)
+
 namespace {
     if (!function_exists('db_table')) {
         /**

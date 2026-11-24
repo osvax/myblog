@@ -1,5 +1,6 @@
 <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/article-heading.php'; ?>
-<?php $waveColors = ['#ff8c1a', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+<?php $waveColors = ['#ff8c1a', '#ffffff'];
+require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 <?php
 // Сайдбар страницы статьи (Настройки → Статьи): слева / справа / выключен
 $articleSide = in_array($articlePageSidebar ?? 'right', ['left', 'right'], true) ? $articlePageSidebar : ($articlePageSidebar === 'none' ? 'none' : 'right');

@@ -5,7 +5,8 @@
     <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/article-heading.php'; ?>
 
     <!-- Волна: оранжевый → белый -->
-    <?php $waveColors = ['#ff8c1a', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ff8c1a', '#ffffff'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= СТАТЬЯ + САЙДБАР ================= -->
     <section class="py-5">
@@ -120,6 +121,7 @@
     </section>
 
     <!-- Волна: белый → тёмный -->
-    <?php $waveColors = ['#ffffff', '#353535']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ffffff', '#353535'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= ПОДВАЛ ================= -->

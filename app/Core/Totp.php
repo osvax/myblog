@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 use RuntimeException;
@@ -9,7 +11,7 @@ use RuntimeException;
  * двухфакторной аутентификации. Совместимо с Google Authenticator,
  * Яндекс.Ключом и другими приложениями-аутентификаторами.
  */
-class Totp
+final class Totp
 {
     private const BASE32_ALPHABET = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
     private const PERIOD = 30;

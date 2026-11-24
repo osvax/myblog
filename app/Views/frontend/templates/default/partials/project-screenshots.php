@@ -1,12 +1,12 @@
 <?php
-    $projectGallery = isset($project['gallery']) && is_array($project['gallery']) ? $project['gallery'] : [];
-    $projectGalleryMap = [];
-    foreach ($projectGallery as $entry) {
-        if (is_array($entry) && isset($entry['path']) && is_string($entry['path'])) {
-            $projectGalleryMap[$entry['path']] = isset($entry['description']) && is_string($entry['description']) ? $entry['description'] : '';
-        }
+$projectGallery = isset($project['gallery']) && is_array($project['gallery']) ? $project['gallery'] : [];
+$projectGalleryMap = [];
+foreach ($projectGallery as $entry) {
+    if (is_array($entry) && isset($entry['path']) && is_string($entry['path'])) {
+        $projectGalleryMap[$entry['path']] = isset($entry['description']) && is_string($entry['description']) ? $entry['description'] : '';
     }
-    $projectScreenshots = isset($project['screenshots']) && is_array($project['screenshots']) ? $project['screenshots'] : [];
+}
+$projectScreenshots = isset($project['screenshots']) && is_array($project['screenshots']) ? $project['screenshots'] : [];
 ?>
 <section class="py-5 bg-orange-light">
     <div class="container">

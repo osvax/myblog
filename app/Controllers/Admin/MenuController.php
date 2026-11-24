@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -13,7 +15,7 @@ use App\Models\SiteSettings;
  * API построителя меню: редактирование текущего меню, создание новых,
  * заготовки, пункты-ссылки и пункты из статических страниц/рубрик/статей.
  */
-class MenuController extends Controller
+final class MenuController extends Controller
 {
     private string $menuPrefix = '';
     private $menu;

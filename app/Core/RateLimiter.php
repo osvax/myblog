@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 use Predis\Client as RedisClient;
@@ -7,7 +9,7 @@ use Predis\Client as RedisClient;
 /**
  * Простой rate limiter с поддержкой Redis и файловым fallback.
  */
-class RateLimiter
+final class RateLimiter
 {
     private static ?RedisClient $redis = null;
     private static ?bool $redisAvailable = null;

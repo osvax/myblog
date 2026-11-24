@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 /**
@@ -54,7 +56,7 @@ namespace App\Core;
  * - Порядок: по версии (строгое сравнение строк, работает для 001, 002... и 2025_01_15)
  * - Безопасность: down() только если явно вызван, требует подтверждения
  */
-class MigrationRunner
+final class MigrationRunner
 {
     /** @var \PDO */
     private $pdo;
@@ -65,7 +67,7 @@ class MigrationRunner
     /** @var string Имя таблицы версий */
     private string $versionTable = 'va_migrations';
 
-    /** @var callable|null Логгер (например, fn($msg) => error_log($msg)) */
+    /** @var ApplicationLogger|callable|null Логгер для вывода сообщений */
     private $logger = null;
 
     /**
@@ -112,17 +114,31 @@ class MigrationRunner
 
     /**
      * Инициализировать таблицу версий (создаёт если не существует).
+     * Поддерживает MySQL и SQLite (для тестов).
      */
     public function initVersionTable(): void
     {
-        $sql = <<<SQL
-            CREATE TABLE IF NOT EXISTS `{$this->versionTable}` (
-                `version` VARCHAR(50) NOT NULL PRIMARY KEY,
-                `name` VARCHAR(255) NOT NULL,
-                `applied_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
-                `execution_time_ms` INT NOT NULL DEFAULT 0
-            ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
-        SQL;
+        $driver = $this->pdo->getAttribute(\PDO::ATTR_DRIVER_NAME);
+
+        if ($driver === 'sqlite') {
+            $sql = <<<SQL
+                CREATE TABLE IF NOT EXISTS `{$this->versionTable}` (
+                    `version` VARCHAR(50) NOT NULL PRIMARY KEY,
+                    `name` VARCHAR(255) NOT NULL,
+                    `applied_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `execution_time_ms` INTEGER NOT NULL DEFAULT 0
+                );
+            SQL;
+        } else {
+            $sql = <<<SQL
+                CREATE TABLE IF NOT EXISTS `{$this->versionTable}` (
+                    `version` VARCHAR(50) NOT NULL PRIMARY KEY,
+                    `name` VARCHAR(255) NOT NULL,
+                    `applied_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+                    `execution_time_ms` INT NOT NULL DEFAULT 0
+                ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+            SQL;
+        }
         $this->pdo->exec($sql);
         $this->log('info', "Version table `{$this->versionTable}` initialized.");
     }
@@ -236,7 +252,7 @@ class MigrationRunner
             return ['applied' => [], 'failed' => [], 'skipped' => []];
         }
 
-        $this->log('info', "Found " . count($pending) . " pending migration(s).");
+        $this->log('info', 'Found ' . count($pending) . ' pending migration(s).');
 
         foreach ($pending as $version => $file) {
             $startTime = microtime(true);
@@ -268,7 +284,7 @@ class MigrationRunner
                 $this->log('info', "  OK ({$executionTimeMs} ms)");
                 $applied[] = $version;
             } catch (\Throwable $e) {
-                $this->log('error', "  FAILED: " . $e->getMessage());
+                $this->log('error', '  FAILED: ' . $e->getMessage());
                 $failed[] = ['version' => $version, 'error' => $e->getMessage()];
                 // Прерываем выполнение при ошибке
                 break;
@@ -325,10 +341,10 @@ class MigrationRunner
                 $stmt = $this->pdo->prepare("DELETE FROM `{$this->versionTable}` WHERE version = :version");
                 $stmt->execute([':version' => $version]);
 
-                $this->log('info', "  OK");
+                $this->log('info', '  OK');
                 $rolledBack[] = $version;
             } catch (\Throwable $e) {
-                $this->log('error', "  FAILED: " . $e->getMessage());
+                $this->log('error', '  FAILED: ' . $e->getMessage());
                 $failed[] = ['version' => $version, 'error' => $e->getMessage()];
                 break;
             }
@@ -635,4 +651,4 @@ PHP;
 SQL;
     }
 
-    }
+}

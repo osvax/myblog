@@ -1,10 +1,13 @@
 <!-- Заглушка «Сайт на обслуживании» — в общий дизайн сайта -->
 
     <!-- ================= ЗАГОЛОВОК СТРАНИЦЫ ================= -->
-    <?php $heading = 'Сайт на обслуживании'; $headingLead = 'Скоро вернёмся!'; require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
+    <?php $heading = 'Сайт на обслуживании';
+    $headingLead = 'Скоро вернёмся!';
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/page-heading.php'; ?>
 
     <!-- Волна: оранжевый → светло-оранжевый -->
-    <?php $waveColors = ['#ff8c1a', '#fff3e6']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ff8c1a', '#fff3e6'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= ЗАГЛУШКА ================= -->
     <section class="py-5 bg-orange-light">
@@ -97,4 +100,5 @@
     <?php endif; ?>
 
     <!-- Волна: светло-оранжевый → тёмный -->
-    <?php $waveColors = ['#fff3e6', '#353535']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#fff3e6', '#353535'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>

@@ -1,13 +1,14 @@
 <!doctype html>
-<html lang="<?php $layoutLang = stripos((string) ($siteLanguage ?? ''), 'english') !== false ? 'en' : 'ru'; echo htmlspecialchars($layoutLang, ENT_QUOTES, 'UTF-8'); ?>">
+<html lang="<?php $layoutLang = stripos((string) ($siteLanguage ?? ''), 'english') !== false ? 'en' : 'ru';
+echo htmlspecialchars($layoutLang, ENT_QUOTES, 'UTF-8'); ?>">
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <?php
     // Заголовок вкладки: «Страница — Заголовок вкладки (SEO)» из настроек сайта
     $layoutSiteTitle = trim((string) ($siteTitle ?? ''));
-    $layoutFullTitle = $layoutSiteTitle !== '' ? $title . ' — ' . $layoutSiteTitle : $title;
-    ?>
+$layoutFullTitle = $layoutSiteTitle !== '' ? $title . ' — ' . $layoutSiteTitle : $title;
+?>
     <title><?= htmlspecialchars($layoutFullTitle, ENT_QUOTES, 'UTF-8') ?></title>
     <meta name="description" content="<?= htmlspecialchars($description ?? 'Личный блог о веб-разработке и дизайне.', ENT_QUOTES, 'UTF-8') ?>">
     <?php if (trim((string) ($siteKeywords ?? '')) !== ''): ?>
@@ -21,17 +22,17 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
 
     <?php
-    // «Оформление» (Настройки → Оформление): шрифт из CDN-ссылки или
-    // загруженного файла + CSS-переменные темы для SCSS (var(--theme-*))
-    $themeFontFamily = trim((string) ($themeFontFamily ?? ''));
-    $themeFontUrl = trim((string) ($themeFontUrl ?? ''));
-    $themeFontFile = trim((string) ($themeFontFile ?? ''));
-    $themeUrlSafe = preg_match('#^https?://#i', $themeFontUrl) === 1;
-    $themeFileSafe = $themeFontFamily !== ''
-        && preg_match('#^uploads/fonts/[A-Za-z0-9._-]+\.(woff|woff2|ttf|otf)$#i', $themeFontFile) === 1
-        && is_file(APP_ROOT . '/public/' . $themeFontFile);
-    $themeFontCssName = str_replace(['"', '\\', ';', '{', '}'], '', $themeFontFamily);
-    ?>
+// «Оформление» (Настройки → Оформление): шрифт из CDN-ссылки или
+// загруженного файла + CSS-переменные темы для SCSS (var(--theme-*))
+$themeFontFamily = trim((string) ($themeFontFamily ?? ''));
+$themeFontUrl = trim((string) ($themeFontUrl ?? ''));
+$themeFontFile = trim((string) ($themeFontFile ?? ''));
+$themeUrlSafe = preg_match('#^https?://#i', $themeFontUrl) === 1;
+$themeFileSafe = $themeFontFamily !== ''
+    && preg_match('#^uploads/fonts/[A-Za-z0-9._-]+\.(woff|woff2|ttf|otf)$#i', $themeFontFile) === 1
+    && is_file(APP_ROOT . '/public/' . $themeFontFile);
+$themeFontCssName = str_replace(['"', '\\', ';', '{', '}'], '', $themeFontFamily);
+?>
     <?php if ($themeUrlSafe): ?>
     <!-- Шрифт по ссылке из настроек (CDN, например Google Fonts) -->
     <link rel="stylesheet" href="<?= htmlspecialchars($themeFontUrl, ENT_QUOTES, 'UTF-8') ?>">
@@ -90,10 +91,10 @@
             <div class="collapse navbar-collapse" id="mainNav">
                 <ul class="navbar-nav ms-auto fw-bold align-items-center gap-2">
                     <?php
-                    // Основное меню из базы (редактируется в админке → «Меню»);
-                    // при пустом меню — стандартные пункты
-                    echo menu_items_html('main');
-                    ?>
+                // Основное меню из базы (редактируется в админке → «Меню»);
+                // при пустом меню — стандартные пункты
+                echo menu_items_html('main');
+?>
                     <?php if (!empty($user)): ?>
                         <li class="nav-item dropdown">
                             <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">

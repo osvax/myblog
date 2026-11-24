@@ -1,11 +1,13 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
-use Monolog\Logger as MonologLogger;
-use Monolog\Handler\RotatingFileHandler;
 use Monolog\Formatter\JsonFormatter;
+use Monolog\Handler\RotatingFileHandler;
 use Monolog\Level;
+use Monolog\Logger as MonologLogger;
 
 /**
  * ApplicationLogger — обёртка над Monolog для файловых JSON-логов.
@@ -19,7 +21,7 @@ use Monolog\Level;
  * - Не зависит от настроек сайта (всегда активен)
  * - Поддерживает уровни PSR-3: debug, info, notice, warning, error, critical, alert, emergency
  */
-class ApplicationLogger
+final class ApplicationLogger
 {
     private MonologLogger $logger;
 

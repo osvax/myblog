@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Transformers;
 
 use App\DTO\SiteSettingsDTO;
@@ -10,7 +12,7 @@ use App\DTO\SiteSettingsDTO;
  * Настройки сайта — это плоский массив key => value с метаданными типов.
  * Трансформер предоставляет плоское и сгруппированное представления.
  */
-class SiteSettingsTransformer extends Transformer
+final class SiteSettingsTransformer extends Transformer
 {
     /**
      * Плоское представление настроек (для API: key => value).

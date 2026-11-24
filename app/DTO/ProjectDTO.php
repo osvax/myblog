@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DTO;
 
 /**
  * ProjectDTO — объект переноса данных для проекта портфолио.
  * Включает вложенные структуры: галерея, доп. поля, задача, результаты, скриншоты.
  */
-class ProjectDTO
+final class ProjectDTO
 {
     // === Основные поля ===
 
@@ -105,9 +107,13 @@ class ProjectDTO
     {
         $result = [];
         foreach ($raw as $item) {
-            if (!is_array($item)) continue;
+            if (!is_array($item)) {
+                continue;
+            }
             $path = trim((string)($item['path'] ?? ''));
-            if ($path === '') continue;
+            if ($path === '') {
+                continue;
+            }
             $result[] = [
                 'path' => $path,
                 'description' => is_string($item['description'] ?? null) ? $item['description'] : '',
@@ -126,11 +132,15 @@ class ProjectDTO
     {
         $result = [];
         foreach ($raw as $item) {
-            if (!is_array($item)) continue;
+            if (!is_array($item)) {
+                continue;
+            }
             $kind = trim((string)($item['kind'] ?? ''));
             $name = trim((string)($item['name'] ?? ''));
             $value = trim((string)($item['value'] ?? ''));
-            if ($kind === '' || $name === '' || $value === '') continue;
+            if ($kind === '' || $name === '' || $value === '') {
+                continue;
+            }
 
             $normalized = [
                 'kind' => $kind,

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Transformers;
 
 use App\DTO\OrderDTO;
@@ -10,7 +12,7 @@ use App\DTO\OrderDTO;
  * Заказ имеет много полей, включая вложенные details_json.
  * Трансформер предоставляет разные уровни детализации.
  */
-class OrderTransformer extends Transformer
+final class OrderTransformer extends Transformer
 {
     /**
      * Полное представление заказа (для админки: детали + история).

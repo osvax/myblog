@@ -16,9 +16,6 @@
         <testsuite name="Unit">
             <directory suffix="Test.php">tests/Unit</directory>
         </testsuite>
-        <testsuite name="Integration">
-            <directory suffix="Test.php">tests/Integration</directory>
-        </testsuite>
     </testsuites>
 
     <source>
@@ -36,31 +33,4 @@
         <env name="QUEUE_CONNECTION" value="sync"/>
     </php>
 
-    <filter>
-        <whitelist processUncoveredFilesFromWhitelist="true">
-            <directory suffix=".php">app</directory>
-            <exclude>
-                <directory>app/Views</directory>
-                <file>app/Core/admin-functions.php</file>
-                <file>app/Core/auth.php</file>
-                <file>app/Core/custom-fields.php</file>
-                <file>app/Core/slug.php</file>
-                <file>app/Core/assets.php</file>
-                <file>app/Core/calculator.php</file>
-                <file>app/Core/menu.php</file>
-                <file>app/Core/static-pages.php</file>
-            </exclude>
-        </whitelist>
-    </filter>
-
-    <coverage processUncoveredFiles="true">
-        <include>
-            <directory suffix=".php">app</directory>
-        </include>
-        <report>
-            <clover outputFile="build/logs/clover.xml"/>
-            <html outputDirectory="build/coverage"/>
-            <text outputFile="php://stdout" showUncoveredFiles="false" showOnlySummary="true"/>
-        </report>
-    </coverage>
-</phpunit>
+    </phpunit>

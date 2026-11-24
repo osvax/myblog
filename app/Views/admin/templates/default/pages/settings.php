@@ -358,7 +358,7 @@ Email: {email}
                                     ['contactPhone', 'contactPhoneEnabled', 'contactPhoneLabel', 'Телефон', 'tel', '+7 (900) 123-45-67'],
                                 ];
                                 foreach ($contactAdminFields as [$valueId, $enabledId, $labelId, $fallbackLabel, $type, $value]):
-                                ?>
+                                    ?>
                                 <div class="col-md-6">
                                     <div class="border rounded p-3 h-100">
                                         <div class="form-check form-switch mb-2">
@@ -374,14 +374,14 @@ Email: {email}
                                 <?php endforeach; ?>
 
                                 <?php
-                                $socialAdminFields = [
-                                    ['socialTelegram', 'socialTelegramEnabled', 'socialTelegramLabel', 'Telegram', 'https://t.me/username'],
-                                    ['socialVk', 'socialVkEnabled', 'socialVkLabel', 'VK', 'https://vk.com/username'],
-                                    ['socialGithub', 'socialGithubEnabled', 'socialGithubLabel', 'GitHub', 'https://github.com/username'],
-                                    ['socialYoutube', 'socialYoutubeEnabled', 'socialYoutubeLabel', 'YouTube', 'https://youtube.com/@username'],
-                                ];
+                                    $socialAdminFields = [
+                                        ['socialTelegram', 'socialTelegramEnabled', 'socialTelegramLabel', 'Telegram', 'https://t.me/username'],
+                                        ['socialVk', 'socialVkEnabled', 'socialVkLabel', 'VK', 'https://vk.com/username'],
+                                        ['socialGithub', 'socialGithubEnabled', 'socialGithubLabel', 'GitHub', 'https://github.com/username'],
+                                        ['socialYoutube', 'socialYoutubeEnabled', 'socialYoutubeLabel', 'YouTube', 'https://youtube.com/@username'],
+                                    ];
                                 foreach ($socialAdminFields as [$valueId, $enabledId, $labelId, $fallbackLabel, $placeholder]):
-                                ?>
+                                    ?>
                                 <div class="col-md-6">
                                     <div class="border rounded p-3 h-100">
                                         <div class="form-check form-switch mb-2">

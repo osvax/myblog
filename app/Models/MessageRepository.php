@@ -1,16 +1,18 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
-use PDO;
 use App\Core\QueryBuilder;
 use App\DTO\MessageDTO;
+use PDO;
 
-class MessageRepository
+final class MessageRepository
 {
     private $db;
 
-    public function __construct(PDO $db = null)
+    public function __construct(?PDO $db = null)
     {
         $this->db = $db ?? \App\Core\Database::connection();
     }
@@ -123,7 +125,7 @@ class MessageRepository
                     $updateParts[] = "$col = ?";
                 }
             }
-            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . " WHERE id = ?";
+            $sql = "UPDATE $table SET " . implode(', ', $updateParts) . ' WHERE id = ?';
 
             $values = [];
             foreach ($data as $col => $val) {
@@ -231,7 +233,7 @@ class MessageRepository
     public function commentsByArticle(string $slug): array
     {
         $stmt = $this->db->prepare(
-            "SELECT id, parent_id, is_staff, name, body, created_at FROM " . db_table('messages') . "
+            'SELECT id, parent_id, is_staff, name, body, created_at FROM ' . db_table('messages') . "
              WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1
              ORDER BY created_at ASC, id ASC"
         );
@@ -268,7 +270,7 @@ class MessageRepository
     public function commentsCount(string $slug): int
     {
         $stmt = $this->db->prepare(
-            "SELECT COUNT(*) FROM " . db_table('messages') . "
+            'SELECT COUNT(*) FROM ' . db_table('messages') . "
              WHERE message_type = 'comment' AND article_slug = :slug AND is_approved = 1"
         );
         $stmt->execute(['slug' => $slug]);
@@ -283,7 +285,7 @@ class MessageRepository
     public function commentCounts(): array
     {
         $rows = $this->db->query(
-            "SELECT article_slug, COUNT(*) AS n FROM " . db_table('messages') . "
+            'SELECT article_slug, COUNT(*) AS n FROM ' . db_table('messages') . "
              WHERE message_type = 'comment' AND is_approved = 1 AND article_slug <> ''
              GROUP BY article_slug"
         )->fetchAll();
@@ -320,7 +322,7 @@ class MessageRepository
     public function unreadCount(): int
     {
         $stmt = $this->db->prepare(
-            "SELECT COUNT(*) FROM " . db_table('messages') . "
+            'SELECT COUNT(*) FROM ' . db_table('messages') . "
              WHERE message_type IN ('contact', 'question') AND is_read = 0"
         );
         $stmt->execute();

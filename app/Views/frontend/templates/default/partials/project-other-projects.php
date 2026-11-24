@@ -1,6 +1,6 @@
 <?php
-    // Карточка «Другие проекты» — остальные опубликованные проекты из БД.
-    $otherProjects = isset($otherProjects) && is_array($otherProjects) ? array_values($otherProjects) : [];
+// Карточка «Другие проекты» — остальные опубликованные проекты из БД.
+$otherProjects = isset($otherProjects) && is_array($otherProjects) ? array_values($otherProjects) : [];
 ?>
 <?php if ($otherProjects): ?>
     <div class="card border-0 shadow-sm p-4">

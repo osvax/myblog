@@ -49,7 +49,7 @@
     </style>
 
     <?php if (!empty($viteManifest['resources/js/admin.js'])): ?>
-        <?php // Vite CSS админки: порт admin.css + тема сайта (bootstrap и иконки уже в бандле) ?>
+        <?php // Vite CSS админки: порт admin.css + тема сайта (bootstrap и иконки уже в бандле)?>
         <?php foreach (vite_css('resources/js/admin.js') as $css): ?>
             <link rel="stylesheet" href="<?= htmlspecialchars($css, ENT_QUOTES, 'UTF-8') ?>">
         <?php endforeach; ?>
@@ -76,8 +76,8 @@
             <i class="bi bi-lightning-charge-fill text-orange"></i> МойБлог
             <?php
             $roleLabel = $userRoleName !== '' ? $userRoleName : ($userRole ?? 'Администратор');
-            $roleBadgeClass = $userRole === 'admin' ? 'bg-warning text-dark' : ($userRole === 'editor' ? 'bg-info text-white' : ($userRole === 'manager' ? 'bg-success text-white' : 'bg-secondary'));
-            ?>
+    $roleBadgeClass = $userRole === 'admin' ? 'bg-warning text-dark' : ($userRole === 'editor' ? 'bg-info text-white' : ($userRole === 'manager' ? 'bg-success text-white' : 'bg-secondary'));
+    ?>
             <span class="badge <?= $roleBadgeClass ?> fw-bold"><?= htmlspecialchars($roleLabel, ENT_QUOTES, 'UTF-8') ?></span>
         </div>
         <nav class="nav flex-column p-2 admin-nav" id="adminNav" aria-label="Административное меню">
@@ -86,9 +86,11 @@
             <?php foreach (($navigation ?? []) as $entry): ?>
                 <?php if (($entry['type'] ?? 'link') === 'group'): ?>
                     <?php
-                    // Группа разделов: выпадающий список, открыт у активного пункта
-                    $visibleItems = array_values(array_filter($entry['items'], static fn ($i) => !empty($i['allowed'])));
-                    if (!$visibleItems) continue;
+            // Группа разделов: выпадающий список, открыт у активного пункта
+            $visibleItems = array_values(array_filter($entry['items'], static fn ($i) => !empty($i['allowed'])));
+                    if (!$visibleItems) {
+                        continue;
+                    }
                     ?>
                     <button class="admin-nav-group-btn" type="button"
                             data-bs-toggle="collapse" data-bs-target="#<?= htmlspecialchars($entry['id'], ENT_QUOTES, 'UTF-8') ?>"
@@ -124,11 +126,11 @@
             <div class="dropdown admin-user-menu">
                 <?php
                 $userName = $adminUser['name'] ?? 'Администратор';
-                $userAvatar = '';
-                if (!empty($adminUser['avatar_path'])) {
-                    $userAvatar = $adminUser['avatar_path'];
-                }
-                ?>
+    $userAvatar = '';
+    if (!empty($adminUser['avatar_path'])) {
+        $userAvatar = $adminUser['avatar_path'];
+    }
+    ?>
                 <a href="#" class="d-flex align-items-center gap-2 text-decoration-none" data-bs-toggle="dropdown">
                     <?php if ($userAvatar): ?>
                         <img src="<?= htmlspecialchars($userAvatar, ENT_QUOTES, 'UTF-8') ?>"
@@ -161,7 +163,7 @@
 <!-- Bootstrap — CDN в обоих режимах: page-скрипты обращаются к window.bootstrap вне DOMContentLoaded -->
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <?php if (!empty($viteManifest['resources/js/admin.js'])): ?>
-    <?php // Vite entry админки: порт admin.js + admin-api.js (window.AdminApi, window.AdminNotifications) ?>
+    <?php // Vite entry админки: порт admin.js + admin-api.js (window.AdminApi, window.AdminNotifications)?>
     <?php foreach (vite_imports('resources/js/admin.js') as $import): ?>
         <link rel="modulepreload" href="<?= htmlspecialchars($import, ENT_QUOTES, 'UTF-8') ?>">
     <?php endforeach; ?>

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -11,7 +13,7 @@ use App\Models\SiteSettings;
  * в базе (site_settings, ключ calculatorConfig) и отдаётся
  * публичной странице заказа.
  */
-class CalculatorController extends Controller
+final class CalculatorController extends Controller
 {
     private $settings;
 

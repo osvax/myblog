@@ -1,41 +1,41 @@
 <?php
-    // Блоки «О проекте / Задача / Решение / Результат» — данные проекта из БД.
-    $briefDescription = trim((string) ($project['description'] ?? ''));
-    $briefDescriptionBlocks = [];
-    if ($briefDescription !== '') {
-        foreach (preg_split('/\r?\n{2,}/', $briefDescription) as $briefBlock) {
-            $briefBlock = trim($briefBlock);
-            if ($briefBlock !== '') {
-                $briefDescriptionBlocks[] = $briefBlock;
-            }
+// Блоки «О проекте / Задача / Решение / Результат» — данные проекта из БД.
+$briefDescription = trim((string) ($project['description'] ?? ''));
+$briefDescriptionBlocks = [];
+if ($briefDescription !== '') {
+    foreach (preg_split('/\r?\n{2,}/', $briefDescription) as $briefBlock) {
+        $briefBlock = trim($briefBlock);
+        if ($briefBlock !== '') {
+            $briefDescriptionBlocks[] = $briefBlock;
         }
     }
-    $briefTasks = [];
-    if (isset($project['task']) && is_array($project['task'])) {
-        foreach ($project['task'] as $briefTask) {
-            $briefTask = trim((string) $briefTask);
-            if ($briefTask !== '') {
-                $briefTasks[] = $briefTask;
-            }
+}
+$briefTasks = [];
+if (isset($project['task']) && is_array($project['task'])) {
+    foreach ($project['task'] as $briefTask) {
+        $briefTask = trim((string) $briefTask);
+        if ($briefTask !== '') {
+            $briefTasks[] = $briefTask;
         }
     }
-    $briefSolution = trim((string) ($project['solution'] ?? ''));
-    $briefResultText = trim((string) ($project['result'] ?? ''));
-    $briefResults = [];
-    if (isset($project['results']) && is_array($project['results'])) {
-        foreach ($project['results'] as $briefResult) {
-            if (!is_array($briefResult)) {
-                continue;
-            }
-            $briefResultValue = trim((string) ($briefResult['value'] ?? ''));
-            $briefResultLabel = trim((string) ($briefResult['label'] ?? ''));
-            if ($briefResultValue === '' && $briefResultLabel === '') {
-                continue;
-            }
-            $briefResults[] = ['value' => $briefResultValue, 'label' => $briefResultLabel];
+}
+$briefSolution = trim((string) ($project['solution'] ?? ''));
+$briefResultText = trim((string) ($project['result'] ?? ''));
+$briefResults = [];
+if (isset($project['results']) && is_array($project['results'])) {
+    foreach ($project['results'] as $briefResult) {
+        if (!is_array($briefResult)) {
+            continue;
         }
+        $briefResultValue = trim((string) ($briefResult['value'] ?? ''));
+        $briefResultLabel = trim((string) ($briefResult['label'] ?? ''));
+        if ($briefResultValue === '' && $briefResultLabel === '') {
+            continue;
+        }
+        $briefResults[] = ['value' => $briefResultValue, 'label' => $briefResultLabel];
     }
-    $briefFirstHeading = true; // первый блок в колонке без верхнего отступа
+}
+$briefFirstHeading = true; // первый блок в колонке без верхнего отступа
 ?>
 <?php if ($briefDescriptionBlocks): ?>
     <h2 class="<?= $briefFirstHeading ? 'fw-bold mb-3' : 'fw-bold mt-5 mb-3' ?>">О проекте</h2>

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Transformers;
 
 use App\DTO\UserDTO;
@@ -12,7 +14,7 @@ use App\DTO\UserDTO;
  * - Публичный профиль (ограниченные поля)
  * - Сессия (для авторизации)
  */
-class UserTransformer extends Transformer
+final class UserTransformer extends Transformer
 {
     /**
      * Полное представление пользователя (для админки: список/детали).

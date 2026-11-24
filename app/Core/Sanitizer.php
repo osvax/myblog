@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 use HTMLPurifier;
@@ -9,7 +11,7 @@ use HTMLPurifier_Config;
  * Санитизация HTML контента для защиты от XSS.
  * Использует HTMLPurifier с безопасной конфигурацией.
  */
-class Sanitizer
+final class Sanitizer
 {
     private static ?HTMLPurifier $purifier = null;
     private static ?HTMLPurifier $purifierStrict = null;

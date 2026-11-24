@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DTO;
 
 /**
@@ -42,7 +44,7 @@ namespace App\DTO;
  * - 1 категория → много статей (articles.category_id)
  * - Навигация (category_navigation) ссылается на категории
  */
-class CategoryDTO
+final class CategoryDTO
 {
     // === Основные поля (соответствуют колонкам va_categories) ===
 
@@ -129,7 +131,7 @@ class CategoryDTO
         $dto->slug = $row['slug'] ?? '';
         $dto->description = $row['description'] ?? '';
         // articles_count приходит из LEFT JOIN + COUNT(a.id) в запросе categories()
-        $dto->articles_count = isset($row['articles']) ? (int)$row['articles'] : 
+        $dto->articles_count = isset($row['articles']) ? (int)$row['articles'] :
                               (isset($row['articles_count']) ? (int)$row['articles_count'] : 0);
 
         return $dto;
@@ -157,14 +159,14 @@ class CategoryDTO
         if ($this->name === '') {
             $this->errors['name'] = 'Название рубрики обязательно';
         } elseif (mb_strlen($this->name) > self::NAME_MAX_LENGTH) {
-            $this->errors['name'] = "Название не длиннее " . self::NAME_MAX_LENGTH . " символов";
+            $this->errors['name'] = 'Название не длиннее ' . self::NAME_MAX_LENGTH . ' символов';
         }
 
         // --- slug ---
         if ($this->slug === '') {
             $this->errors['slug'] = 'Адрес (slug) обязателен';
         } elseif (mb_strlen($this->slug) > self::SLUG_MAX_LENGTH) {
-            $this->errors['slug'] = "Адрес не длиннее " . self::SLUG_MAX_LENGTH . " символов";
+            $this->errors['slug'] = 'Адрес не длиннее ' . self::SLUG_MAX_LENGTH . ' символов';
         } elseif (!preg_match(self::SLUG_PATTERN, $this->slug)) {
             $this->errors['slug'] = 'Адрес: только латиница, цифры, дефис (например: my-category)';
         }

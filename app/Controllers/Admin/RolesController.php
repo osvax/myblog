@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -9,7 +11,7 @@ use App\Models\Role;
 /**
  * API управления ролями и правами. Раздел «Роли и права».
  */
-class RolesController extends Controller
+final class RolesController extends Controller
 {
     private $role;
 

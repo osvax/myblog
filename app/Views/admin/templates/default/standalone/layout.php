@@ -7,7 +7,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@600;700;800&display=swap" rel="stylesheet">
     
     <?php if (!empty($viteManifest['resources/js/admin.js'])): ?>
-        <?php // Vite CSS админки: порт admin.css + тема сайта (login-страницы используют тот же бандл) ?>
+        <?php // Vite CSS админки: порт admin.css + тема сайта (login-страницы используют тот же бандл)?>
         <?php foreach (vite_css('resources/js/admin.js') as $css): ?>
             <link rel="stylesheet" href="<?= htmlspecialchars($css, ENT_QUOTES, 'UTF-8') ?>">
         <?php endforeach; ?>

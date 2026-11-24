@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -7,7 +9,7 @@ use App\Core\ApiResource;
 use App\Models\SiteSettings;
 use App\Models\UserActivity;
 
-class SystemController extends Controller
+final class SystemController extends Controller
 {
     private $activity;
     private $settings;
@@ -194,7 +196,7 @@ class SystemController extends Controller
 
         $deleted = $this->activity->cleanupOld($days);
         \App\Core\Database::connection()->exec(
-            "UPDATE " . db_table('site_settings') . " SET setting_value = (SELECT NOW()), updated_at = NOW() WHERE setting_key = 'statisticsLastCleanAt'"
+            'UPDATE ' . db_table('site_settings') . " SET setting_value = (SELECT NOW()), updated_at = NOW() WHERE setting_key = 'statisticsLastCleanAt'"
         );
         return $this->json(ApiResource::success(['deleted' => $deleted]));
     }

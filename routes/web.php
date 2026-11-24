@@ -1,7 +1,9 @@
 <?php
 
-use App\Core\Router;
+declare(strict_types=1);
+
 use App\Core\Response;
+use App\Core\Router;
 
 return function (Router $router) {
     // Health check

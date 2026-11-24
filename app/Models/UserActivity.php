@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
 
-class UserActivity
+final class UserActivity
 {
     /**
      * Разделы сайта, используемые в статистике (sectionCaseSql / sectionOfUrl).
@@ -25,8 +27,8 @@ class UserActivity
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, visited_at)
-             VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())"
+            'INSERT INTO ' . db_table('user_activities') . ' (user_id, page_url, page_title, ip_address, user_agent, visited_at)
+             VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())'
         );
         return $stmt->execute([
             ':user_id' => $userId,
@@ -48,7 +50,7 @@ class UserActivity
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id"
+            'UPDATE ' . db_table('users') . ' SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id'
         );
         return $stmt->execute([
             ':ip_address' => $ipAddress,
@@ -70,11 +72,11 @@ class UserActivity
         $offset = ($page - 1) * $perPage;
 
         $stmt = $db->prepare(
-            "SELECT id, page_url, page_title, ip_address, user_agent, visited_at
-             FROM " . db_table('user_activities') . "
+            'SELECT id, page_url, page_title, ip_address, user_agent, visited_at
+             FROM ' . db_table('user_activities') . '
              WHERE user_id = :user_id
              ORDER BY visited_at DESC
-             LIMIT :limit OFFSET :offset"
+             LIMIT :limit OFFSET :offset'
         );
         $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
         $stmt->bindValue(':limit', $perPage, \PDO::PARAM_INT);
@@ -92,7 +94,7 @@ class UserActivity
     public function getTotalCount(int $userId): int
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT COUNT(*) as count FROM " . db_table('user_activities') . " WHERE user_id = :user_id");
+        $stmt = $db->prepare('SELECT COUNT(*) as count FROM ' . db_table('user_activities') . ' WHERE user_id = :user_id');
         $stmt->execute([':user_id' => $userId]);
         $result = $stmt->fetch();
         return (int) ($result['count'] ?? 0);
@@ -109,12 +111,12 @@ class UserActivity
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "SELECT page_url, page_title, COUNT(*) as visits
-             FROM " . db_table('user_activities') . "
+            'SELECT page_url, page_title, COUNT(*) as visits
+             FROM ' . db_table('user_activities') . '
              WHERE user_id = :user_id
              GROUP BY page_url, page_title
              ORDER BY visits DESC
-             LIMIT :limit"
+             LIMIT :limit'
         );
         $stmt->bindValue(':user_id', $userId, \PDO::PARAM_INT);
         $stmt->bindValue(':limit', $limit, \PDO::PARAM_INT);
@@ -184,7 +186,7 @@ class UserActivity
         if ($slug !== '') {
             try {
                 $stmt = Database::connection()->prepare(
-                    "SELECT 1 FROM " . db_table('articles') . " WHERE slug = :slug LIMIT 1"
+                    'SELECT 1 FROM ' . db_table('articles') . ' WHERE slug = :slug LIMIT 1'
                 );
                 $stmt->execute([':slug' => $slug]);
                 if ($stmt->fetch()) {
@@ -198,7 +200,7 @@ class UserActivity
         if (strpos($path, '/project-') === 0 && substr($path, -5) === '.html') {
             try {
                 $stmt = Database::connection()->prepare(
-                    "SELECT 1 FROM " . db_table('portfolio_projects') . " WHERE CONCAT('/', slug, '.html') = :path LIMIT 1"
+                    'SELECT 1 FROM ' . db_table('portfolio_projects') . " WHERE CONCAT('/', slug, '.html') = :path LIMIT 1"
                 );
                 $stmt->execute([':path' => $path]);
                 if ($stmt->fetch()) {
@@ -283,8 +285,8 @@ class UserActivity
         }
 
         $stmt = $db->prepare(
-            'DELETE t0 FROM ' . db_table('user_activities') . " t0
-             WHERE (" . self::sectionCaseSql('t0') . ') IN (' . implode(', ', $in) . ')'
+            'DELETE t0 FROM ' . db_table('user_activities') . ' t0
+             WHERE (' . self::sectionCaseSql('t0') . ') IN (' . implode(', ', $in) . ')'
         );
         $stmt->execute($params);
         return (int) $stmt->rowCount();
@@ -454,9 +456,9 @@ class UserActivity
         }
         $whereSql = $where !== [] ? ' WHERE ' . implode(' AND ', $where) : '';
 
-        $subQuery = "SELECT t0.id, t0.ip_address, t0.visited_at, t0.user_agent, t0.referrer, t0.page_url,
-                " . self::browserCaseSql() . " AS browser,
-                " . self::sectionCaseSql() . " AS section
+        $subQuery = 'SELECT t0.id, t0.ip_address, t0.visited_at, t0.user_agent, t0.referrer, t0.page_url,
+                ' . self::browserCaseSql() . ' AS browser,
+                ' . self::sectionCaseSql() . " AS section
             FROM {$table} t0";
 
         $countStmt = $db->prepare("SELECT COUNT(*) FROM ({$subQuery}) t{$whereSql}");
@@ -503,7 +505,7 @@ class UserActivity
         $params = [];
         $condition = self::sectionConditionSql('t0', $allowed, $params);
         $stmt = $db->prepare(
-            "SELECT MIN(" . $expr . ") FROM " . db_table('user_activities') . " t0"
+            'SELECT MIN(' . $expr . ') FROM ' . db_table('user_activities') . ' t0'
             . ($condition !== '' ? ' WHERE ' . $condition : '')
         );
         $stmt->execute($params);
@@ -527,7 +529,7 @@ class UserActivity
         $totalParams = [];
         $totalCondition = self::sectionConditionSql('t0', $allowed, $totalParams);
         $totalStmt = $db->prepare(
-            "SELECT COUNT(*) FROM " . db_table('user_activities') . " t0"
+            'SELECT COUNT(*) FROM ' . db_table('user_activities') . ' t0'
             . ($totalCondition !== '' ? ' WHERE ' . $totalCondition : '')
         );
         $totalStmt->execute($totalParams);
@@ -626,13 +628,17 @@ class UserActivity
         foreach ($this->groupedCounts(self::sectionCaseSql('t0'), 'section', null, $allowed) as $section => $count) {
             $bySection[] = ['section' => $section, 'c' => $count];
         }
-        usort($bySection, static function ($a, $b) { return $b['c'] <=> $a['c']; });
+        usort($bySection, static function ($a, $b) {
+            return $b['c'] <=> $a['c'];
+        });
 
         $byBrowser = [];
         foreach ($this->groupedCounts(self::browserCaseSql('t0'), 'browser', null, $allowed) as $browser => $count) {
             $byBrowser[] = ['browser' => $browser, 'c' => $count];
         }
-        usort($byBrowser, static function ($a, $b) { return $b['c'] <=> $a['c']; });
+        usort($byBrowser, static function ($a, $b) {
+            return $b['c'] <=> $a['c'];
+        });
 
         $settings = new SiteSettings();
         $lastClean = (string) $settings->get('statisticsLastCleanAt', '');
@@ -668,7 +674,8 @@ class UserActivity
             $byMinute[str_pad((string) $m, 2, '0', STR_PAD_LEFT)] = 0;
         }
         foreach ($this->groupedCounts(
-            "LPAD(MINUTE(t0.visited_at), 2, '0')", 'm',
+            "LPAD(MINUTE(t0.visited_at), 2, '0')",
+            'm',
             'HOUR(t0.visited_at) = ' . $hour,
             self::allowedSections()
         ) as $minute => $count) {

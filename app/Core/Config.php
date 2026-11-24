@@ -1,8 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
-class Config
+final class Config
 {
     private array $config = [];
     private bool $loaded = false;

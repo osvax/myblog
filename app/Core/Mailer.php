@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
+use App\Models\SiteSettings;
 use Symfony\Component\Mailer\Mailer as SymfonyMailer;
 use Symfony\Component\Mailer\Transport;
 use Symfony\Component\Mime\Address;
 use Symfony\Component\Mime\Email;
-use App\Models\SiteSettings;
 
-class Mailer
+final class Mailer
 {
     private static ?SymfonyMailer $instance = null;
     private static ?array $config = null;
@@ -148,7 +150,7 @@ class Mailer
      * @param string|null $htmlBody (optional HTML version)
      * @return bool
      */
-    public static function send(string $subject, string $body, string $toEmail, string $toName = '', string $htmlBody = null): bool
+    public static function send(string $subject, string $body, string $toEmail, string $toName = '', ?string $htmlBody = null): bool
     {
         try {
             $config = self::getConfig();

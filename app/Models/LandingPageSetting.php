@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
 
-class LandingPageSetting
+final class LandingPageSetting
 {
     /**
      * Получить все настройки лендинга.
@@ -18,12 +20,12 @@ class LandingPageSetting
 
         if ($sectionKey !== null && $sectionKey !== '') {
             $stmt = $db->prepare(
-                "SELECT * FROM " . db_table('landing_page_settings') . " WHERE section_key = :key ORDER BY display_order ASC, created_at ASC"
+                'SELECT * FROM ' . db_table('landing_page_settings') . ' WHERE section_key = :key ORDER BY display_order ASC, created_at ASC'
             );
             $stmt->execute([':key' => $sectionKey]);
         } else {
             $stmt = $db->query(
-                "SELECT * FROM " . db_table('landing_page_settings') . " ORDER BY field_group ASC, display_order ASC, created_at ASC"
+                'SELECT * FROM ' . db_table('landing_page_settings') . ' ORDER BY field_group ASC, display_order ASC, created_at ASC'
             );
         }
 
@@ -41,7 +43,7 @@ class LandingPageSetting
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "SELECT * FROM " . db_table('landing_page_settings') . " WHERE section_key = :section AND field_name = :name LIMIT 1"
+            'SELECT * FROM ' . db_table('landing_page_settings') . ' WHERE section_key = :section AND field_name = :name LIMIT 1'
         );
         $stmt->execute([':section' => $sectionKey, ':name' => $fieldName]);
         $result = $stmt->fetch();
@@ -57,7 +59,7 @@ class LandingPageSetting
     {
         $db = Database::connection();
         $stmt = $db->query(
-            "SELECT DISTINCT section, section_key, field_group FROM " . db_table('landing_page_settings') . " ORDER BY display_order ASC"
+            'SELECT DISTINCT section, section_key, field_group FROM ' . db_table('landing_page_settings') . ' ORDER BY display_order ASC'
         );
         return $stmt->fetchAll();
     }
@@ -96,11 +98,11 @@ class LandingPageSetting
         // Если есть edit_id, обновляем существующее
         if ($editId > 0) {
             $stmt = $db->prepare(
-                "UPDATE " . db_table('landing_page_settings') . "
+                'UPDATE ' . db_table('landing_page_settings') . '
                  SET field_value = :value, field_type = :type, field_group = :group,
                      display_order = :order, placeholder = :placeholder, options = :options,
                      is_active = :active, updated_at = NOW()
-                 WHERE id = :id"
+                 WHERE id = :id'
             );
             $stmt->execute([
                 ':value' => $fieldValue,
@@ -122,7 +124,7 @@ class LandingPageSetting
 
         // Проверяем, существует ли уже такое поле
         $stmt = $db->prepare(
-            "SELECT id FROM " . db_table('landing_page_settings') . " WHERE section_key = :section AND field_name = :name LIMIT 1"
+            'SELECT id FROM ' . db_table('landing_page_settings') . ' WHERE section_key = :section AND field_name = :name LIMIT 1'
         );
         $stmt->execute([':section' => $sectionKey, ':name' => $fieldName]);
         $existing = $stmt->fetch();
@@ -130,11 +132,11 @@ class LandingPageSetting
         if ($existing) {
             // Обновляем
             $stmt = $db->prepare(
-                "UPDATE " . db_table('landing_page_settings') . "
+                'UPDATE ' . db_table('landing_page_settings') . '
                  SET field_value = :value, field_type = :type, field_group = :group,
                      display_order = :order, placeholder = :placeholder, options = :options,
                      is_active = :active, updated_at = NOW()
-                 WHERE id = :id"
+                 WHERE id = :id'
             );
             $stmt->execute([
                 ':value' => $fieldValue,
@@ -152,9 +154,9 @@ class LandingPageSetting
 
         // Создаём новое
         $stmt = $db->prepare(
-            "INSERT INTO " . db_table('landing_page_settings') . "
+            'INSERT INTO ' . db_table('landing_page_settings') . '
              (section, section_key, field_name, field_value, field_type, field_group, display_order, placeholder, options, is_active, created_at, updated_at)
-             VALUES (:section, :section_key, :name, :value, :type, :group, :order, :placeholder, :options, :active, NOW(), NOW())"
+             VALUES (:section, :section_key, :name, :value, :type, :group, :order, :placeholder, :options, :active, NOW(), NOW())'
         );
         $stmt->execute([
             ':section' => $section,
@@ -181,7 +183,7 @@ class LandingPageSetting
     public function delete(int $settingId): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("DELETE FROM " . db_table('landing_page_settings') . " WHERE id = :id");
+        $stmt = $db->prepare('DELETE FROM ' . db_table('landing_page_settings') . ' WHERE id = :id');
         $stmt->execute([':id' => $settingId]);
 
         return ['success' => $stmt->rowCount() > 0];
@@ -197,7 +199,7 @@ class LandingPageSetting
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE " . db_table('landing_page_settings') . " SET is_active = NOT is_active, updated_at = NOW() WHERE id = :id"
+            'UPDATE ' . db_table('landing_page_settings') . ' SET is_active = NOT is_active, updated_at = NOW() WHERE id = :id'
         );
         $stmt->execute([':id' => $settingId]);
 

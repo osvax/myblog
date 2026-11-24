@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Transformers;
 
 use App\DTO\ArticleDTO;
@@ -12,7 +14,7 @@ use App\DTO\ArticleDTO;
  * - transformList() — упрощённое для списков (без content)
  * - transformPublic() — для публичного API (только опубликованные поля)
  */
-class ArticleTransformer extends Transformer
+final class ArticleTransformer extends Transformer
 {
     /**
      * Полное представление статьи (для админки и детального просмотра).

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 /**
@@ -12,7 +14,7 @@ namespace App\Core;
  * - errors: array|null — ошибки валидации/бизнеса (только при success=false)
  * - message: string|null — человекочитаемое сообщение (для уведомлений)
  */
-class ApiResource
+final class ApiResource
 {
     /**
      * Создаёт успешный ответ с данными.

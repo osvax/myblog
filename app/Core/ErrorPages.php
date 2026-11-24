@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Core;
 
 /**
@@ -7,7 +9,7 @@ namespace App\Core;
  * Автономный HTML без зависимости от шаблонов — должен работать даже
  * если конфигурация тем или БД недоступна.
  */
-class ErrorPages
+final class ErrorPages
 {
     /**
      * @param int    $code  HTTP-код ошибки (404, 403, 500)

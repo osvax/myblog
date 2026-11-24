@@ -1,5 +1,6 @@
 <?php require APP_ROOT . '/app/Views/frontend/templates/default/partials/project-heading.php'; ?>
-<?php $waveColors = ['#ff8c1a', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+<?php $waveColors = ['#ff8c1a', '#ffffff'];
+require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 <?php
 // Сайдбар страницы проекта (Настройки → Портфолио): слева / справа / выключен
 // (выключен — инфо-карточка и «Другие проекты» выводятся под описанием)
@@ -20,12 +21,12 @@ $projectSidebarHtml = ob_get_clean();
                 <?php
                     // Подписи к снимкам — из таблицы project_gallery (описания из админки)
                     $projectGalleryMap = [];
-                    foreach ($project['gallery'] ?? [] as $entry) {
-                        if (is_array($entry) && isset($entry['path']) && is_string($entry['path'])) {
-                            $projectGalleryMap[$entry['path']] = $entry['description'] ?? '';
-                        }
-                    }
-                ?>
+foreach ($project['gallery'] ?? [] as $entry) {
+    if (is_array($entry) && isset($entry['path']) && is_string($entry['path'])) {
+        $projectGalleryMap[$entry['path']] = $entry['description'] ?? '';
+    }
+}
+?>
                 <?php if (!empty($project['screenshots'])): ?>
                     <h2 class="fw-bold mt-5 mb-3">Галерея проекта</h2>
                     <div class="row g-3"><?php foreach ($project['screenshots'] as $image): ?>

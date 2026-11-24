@@ -11,7 +11,8 @@
     ?>
 
     <!-- Волна: оранжевый → светло-оранжевый -->
-    <?php $waveColors = ['#ff8c1a', '#fff3e6']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ff8c1a', '#fff3e6'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= БЛОГ ================= -->
     <section class="py-5 bg-orange-light">
@@ -19,9 +20,9 @@
             <?php
             // Раскладка (Настройки → Статьи): статей в ряд и сайдбар слева/справа
             $blogPerRow = max(1, min(3, (int) ($articlesPerRow ?? 3)));
-            $blogCardCol = ['1' => 'col-12', '2' => 'col-md-6', '3' => 'col-md-4'][$blogPerRow] ?? 'col-md-4';
-            $blogSide = in_array($blogSidebar ?? 'none', ['left', 'right'], true) ? $blogSidebar : 'none';
-            ?>
+    $blogCardCol = ['1' => 'col-12', '2' => 'col-md-6', '3' => 'col-md-4'][$blogPerRow] ?? 'col-md-4';
+    $blogSide = in_array($blogSidebar ?? 'none', ['left', 'right'], true) ? $blogSidebar : 'none';
+    ?>
             <div class="row g-4">
                 <?php if ($blogSide === 'left'): ?>
                     <aside class="col-lg-4 sidebar-block">
@@ -80,7 +81,7 @@
             <?php $blogPagination = is_array($pagination ?? null) ? $pagination : null; ?>
             <?php if ($blogPagination !== null && (int) $blogPagination['pages'] > 1): ?>
                 <?php
-                $blogBaseUrl = !empty($categorySlug) ? '/category/' . rawurlencode($categorySlug) . '.html' : '/blog.html';
+        $blogBaseUrl = !empty($categorySlug) ? '/category/' . rawurlencode($categorySlug) . '.html' : '/blog.html';
                 ?>
                 <nav class="mt-5" aria-label="Постраничная навигация">
                     <ul class="pagination justify-content-center">
@@ -109,6 +110,7 @@
     </section>
 
     <!-- Волна: светло-оранжевый → тёмный -->
-    <?php $waveColors = ['#fff3e6', '#353535']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#fff3e6', '#353535'];
+    require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= ПОДВАЛ ================= -->

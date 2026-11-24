@@ -1,23 +1,25 @@
 <?php
-    $projectInfoItems = isset($project['infoItems']) && is_array($project['infoItems']) ? $project['infoItems'] : [];
-    $projectInfoIcons = [
-        'link' => 'bi-box-arrow-up-right',
-        'document' => 'bi-file-earmark-text',
-        'certificate' => 'bi-patch-check',
-    ];
-    // Пути прикреплённых файлов: только из разделов файлового менеджера.
-    $projectInfoDocRegex = '#^uploads/documents/portfolio/[a-z0-9][a-z0-9-]*\.(?:doc|docx)$#';
-    $projectInfoCertRegex = '#^uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png)$#';
+$projectInfoItems = isset($project['infoItems']) && is_array($project['infoItems']) ? $project['infoItems'] : [];
+$projectInfoIcons = [
+    'link' => 'bi-box-arrow-up-right',
+    'document' => 'bi-file-earmark-text',
+    'certificate' => 'bi-patch-check',
+];
+// Пути прикреплённых файлов: только из разделов файлового менеджера.
+$projectInfoDocRegex = '#^uploads/documents/portfolio/[a-z0-9][a-z0-9-]*\.(?:doc|docx)$#';
+$projectInfoCertRegex = '#^uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png)$#';
 ?>
 <?php foreach ($projectInfoItems as $item): ?>
-    <?php if (empty($item['name'])) { continue; } ?>
+    <?php if (empty($item['name'])) {
+        continue;
+    } ?>
     <?php
         $itemKind = isset($item['kind']) && isset($projectInfoIcons[$item['kind']]) ? $item['kind'] : 'link';
-        $itemValue = isset($item['value']) && is_string($item['value']) ? $item['value'] : '';
-        $itemFilePath = isset($item['file_path']) && is_string($item['file_path']) ? $item['file_path'] : '';
-        $isUrl = (bool) preg_match('#^(?:https?://|/portfolio/[a-z0-9_-]+/(?:index\.html|job/TZ-template\.(?:pdf|html|docx?))$)#i', $itemValue);
-        $docUrl = ($itemKind === 'document' && preg_match($projectInfoDocRegex, $itemFilePath)) ? $itemFilePath : '';
-        $certUrl = ($itemKind === 'certificate' && preg_match($projectInfoCertRegex, $itemFilePath)) ? $itemFilePath : '';
+    $itemValue = isset($item['value']) && is_string($item['value']) ? $item['value'] : '';
+    $itemFilePath = isset($item['file_path']) && is_string($item['file_path']) ? $item['file_path'] : '';
+    $isUrl = (bool) preg_match('#^(?:https?://|/portfolio/[a-z0-9_-]+/(?:index\.html|job/TZ-template\.(?:pdf|html|docx?))$)#i', $itemValue);
+    $docUrl = ($itemKind === 'document' && preg_match($projectInfoDocRegex, $itemFilePath)) ? $itemFilePath : '';
+    $certUrl = ($itemKind === 'certificate' && preg_match($projectInfoCertRegex, $itemFilePath)) ? $itemFilePath : '';
     ?>
     <p class="fw-bold mb-2">
         <i class="bi <?= $projectInfoIcons[$itemKind] ?> text-orange"></i>

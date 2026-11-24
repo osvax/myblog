@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -10,7 +12,7 @@ use App\Models\CustomField;
  * API пользовательских полей: произвольные данные и изображения,
  * используемые в публичных шаблонах через custom_field('ключ').
  */
-class CustomFieldController extends Controller
+final class CustomFieldController extends Controller
 {
     private $customField;
 

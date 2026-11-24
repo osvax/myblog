@@ -1,10 +1,12 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
 
-class User
+final class User
 {
     /**
      * Создать нового пользователя.
@@ -21,15 +23,15 @@ class User
         $db = Database::connection();
 
         // Проверяем, не занят ли email
-        $stmt = $db->prepare("SELECT id FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare('SELECT id FROM ' . db_table('users') . ' WHERE email = :email LIMIT 1');
         $stmt->execute([':email' => $email]);
         if ($stmt->fetch()) {
             return ['success' => false, 'error' => 'Пользователь с таким email уже существует'];
         }
 
         $stmt = $db->prepare(
-            "INSERT INTO " . db_table('users') . " (email, password_hash, name, phone, position, created_at, updated_at)
-             VALUES (:email, :password_hash, :name, :phone, :position, NOW(), NOW())"
+            'INSERT INTO ' . db_table('users') . ' (email, password_hash, name, phone, position, created_at, updated_at)
+             VALUES (:email, :password_hash, :name, :phone, :position, NOW(), NOW())'
         );
         $stmt->execute([
             ':email' => $email,
@@ -51,7 +53,7 @@ class User
     public function findByEmail(string $email): ?array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare('SELECT * FROM ' . db_table('users') . ' WHERE email = :email LIMIT 1');
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
         return $user ?: null;
@@ -59,14 +61,14 @@ class User
 
     public function findByYandexId(string $yandexId): ?array
     {
-        $stmt = Database::connection()->prepare("SELECT * FROM " . db_table('users') . " WHERE yandex_id = :id LIMIT 1");
+        $stmt = Database::connection()->prepare('SELECT * FROM ' . db_table('users') . ' WHERE yandex_id = :id LIMIT 1');
         $stmt->execute(['id' => $yandexId]);
         return $stmt->fetch() ?: null;
     }
 
     public function linkYandex(int $userId, string $yandexId): void
     {
-        $stmt = Database::connection()->prepare("UPDATE " . db_table('users') . " SET yandex_id = :id, updated_at = NOW() WHERE id = :user");
+        $stmt = Database::connection()->prepare('UPDATE ' . db_table('users') . ' SET yandex_id = :id, updated_at = NOW() WHERE id = :user');
         $stmt->execute(['id' => $yandexId, 'user' => $userId]);
     }
 
@@ -77,7 +79,7 @@ class User
         if (!in_array($role, $allowed, true)) {
             $role = 'user';
         }
-        $stmt = Database::connection()->prepare("UPDATE " . db_table('users') . " SET role = :role, updated_at = NOW() WHERE id = :id");
+        $stmt = Database::connection()->prepare('UPDATE ' . db_table('users') . ' SET role = :role, updated_at = NOW() WHERE id = :id');
         $stmt->execute(['role' => $role, 'id' => $userId]);
     }
 
@@ -91,10 +93,10 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
+            'SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
                     last_visit, last_ip, phone, about, position, bio, timezone, language,
                     totp_secret, totp_enabled
-             FROM " . db_table('users') . " WHERE id = :id LIMIT 1"
+             FROM ' . db_table('users') . ' WHERE id = :id LIMIT 1'
         );
         $stmt->execute([':id' => $id]);
         $user = $stmt->fetch();
@@ -111,7 +113,7 @@ class User
     public function verifyCredentials(string $email, string $password): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT * FROM " . db_table('users') . " WHERE email = :email LIMIT 1");
+        $stmt = $db->prepare('SELECT * FROM ' . db_table('users') . ' WHERE email = :email LIMIT 1');
         $stmt->execute([':email' => $email]);
         $user = $stmt->fetch();
 
@@ -162,7 +164,7 @@ class User
 
         $db = Database::connection();
         $stmt = $db->prepare(
-            "SELECT * FROM " . db_table('users') . " WHERE reset_token = :token AND reset_expires > NOW() LIMIT 1"
+            'SELECT * FROM ' . db_table('users') . ' WHERE reset_token = :token AND reset_expires > NOW() LIMIT 1'
         );
         $stmt->execute([':token' => $token]);
         $user = $stmt->fetch();
@@ -179,7 +181,7 @@ class User
     public function updateAvatar(int $userId, string $avatarPath): bool
     {
         $stmt = Database::connection()->prepare(
-            "UPDATE " . db_table('users') . " SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id"
+            'UPDATE ' . db_table('users') . ' SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id'
         );
         return $stmt->execute(['avatar_path' => $avatarPath, 'id' => $userId]);
     }
@@ -188,7 +190,7 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE " . db_table('users') . " SET password_hash = :password_hash, reset_token = '', reset_expires = NULL, updated_at = NOW()
+            'UPDATE ' . db_table('users') . " SET password_hash = :password_hash, reset_token = '', reset_expires = NULL, updated_at = NOW()
              WHERE id = :id"
         );
         $stmt->execute([
@@ -212,8 +214,8 @@ class User
 
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE " . db_table('users') . " SET reset_token = :token, reset_expires = :expires, updated_at = NOW()
-             WHERE id = :id"
+            'UPDATE ' . db_table('users') . ' SET reset_token = :token, reset_expires = :expires, updated_at = NOW()
+             WHERE id = :id'
         );
         $stmt->execute([
             ':token' => $token,
@@ -251,7 +253,7 @@ class User
     ): array {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE " . db_table('users') . " SET
+            'UPDATE ' . db_table('users') . ' SET
                 name = :name,
                 phone = :phone,
                 about = :about,
@@ -261,7 +263,7 @@ class User
                 timezone = :timezone,
                 language = :language,
                 updated_at = NOW()
-             WHERE id = :id"
+             WHERE id = :id'
         );
         $stmt->execute([
             ':name' => $name,
@@ -295,7 +297,7 @@ class User
         // Обновляем last_visit и last_ip
         try {
             $stmt = $db->prepare(
-                "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id"
+                'UPDATE ' . db_table('users') . ' SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id'
             );
             $stmt->execute([
                 ':ip_address' => $ipAddress,
@@ -308,8 +310,8 @@ class User
         // Записываем активность
         try {
             $stmt = $db->prepare(
-                "INSERT INTO " . db_table('user_activities') . " (user_id, page_url, page_title, ip_address, user_agent, visited_at)
-                 VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())"
+                'INSERT INTO ' . db_table('user_activities') . ' (user_id, page_url, page_title, ip_address, user_agent, visited_at)
+                 VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())'
             );
             $stmt->execute([
                 ':user_id' => $userId,
@@ -346,7 +348,7 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE " . db_table('users') . " SET totp_secret = :secret, totp_enabled = 0, updated_at = NOW() WHERE id = :id"
+            'UPDATE ' . db_table('users') . ' SET totp_secret = :secret, totp_enabled = 0, updated_at = NOW() WHERE id = :id'
         );
         $stmt->execute(['secret' => $secret, 'id' => $userId]);
         return ['success' => true];
@@ -359,7 +361,7 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->prepare(
-            "UPDATE " . db_table('users') . " SET totp_enabled = :enabled, updated_at = NOW() WHERE id = :id"
+            'UPDATE ' . db_table('users') . ' SET totp_enabled = :enabled, updated_at = NOW() WHERE id = :id'
         );
         $stmt->execute([
             'enabled' => $enabled ? 1 : 0,
@@ -377,9 +379,9 @@ class User
     {
         $db = Database::connection();
         $stmt = $db->query(
-            "SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
+            'SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
                     last_visit, last_ip, phone, about, position
-             FROM " . db_table('users') . " ORDER BY created_at DESC"
+             FROM ' . db_table('users') . ' ORDER BY created_at DESC'
         );
         return $stmt->fetchAll();
     }

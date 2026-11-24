@@ -1,14 +1,16 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
 use App\Core\Response;
 use App\Core\View;
-use App\Models\UserRepository;
 use App\Models\Role;
+use App\Models\UserRepository;
 
-class PageController extends Controller
+final class PageController extends Controller
 {
     private $users;
     private $role;
@@ -152,7 +154,7 @@ class PageController extends Controller
 
             // Обновляем last_visit и last_ip (используется в списке пользователей и профиле)
             $stmt = $db->prepare(
-                "UPDATE " . db_table('users') . " SET last_visit = NOW(), last_ip = :ip WHERE id = :id"
+                'UPDATE ' . db_table('users') . ' SET last_visit = NOW(), last_ip = :ip WHERE id = :id'
             );
             $stmt->execute([':ip' => self::getIpAddress(), ':id' => $userId]);
         } catch (\Exception $e) {

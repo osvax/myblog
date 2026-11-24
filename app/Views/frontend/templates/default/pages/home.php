@@ -24,7 +24,8 @@
 </section>
 
     <!-- Волна: оранжевый → белый -->
-    <?php $waveColors = ['#ff8c1a', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ff8c1a', '#ffffff'];
+require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= РАЗДЕЛ «БЛОГ» (превью статей) ================= -->
     <section id="blog-preview" class="lp-section py-5">
@@ -51,7 +52,8 @@
     </section>
 
     <!-- Волна: белый → тёмный -->
-    <?php $waveColors = ['#ffffff', '#353535']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ffffff', '#353535'];
+require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= РАЗДЕЛ «ПОРТФОЛИО» (тёмная секция) ================= -->
     <section id="portfolio-preview" class="lp-portfolio py-5">
@@ -75,7 +77,8 @@
     </section>
 
     <!-- Волна: тёмный → оранжевый -->
-    <?php $waveColors = ['#353535', '#ff8c1a']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#353535', '#ff8c1a'];
+require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= РАЗДЕЛ «ЗАКАЗАТЬ» (шаги + CTA) ================= -->
     <section id="order-preview" class="bg-orange text-white py-5">
@@ -104,7 +107,8 @@
     </section>
 
     <!-- Волна: оранжевый → белый -->
-    <?php $waveColors = ['#ff8c1a', '#ffffff']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ff8c1a', '#ffffff'];
+require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= РАЗДЕЛ «КОНТАКТЫ» (карточки + соцсети) ================= -->
     <section id="contacts-preview" class="lp-section py-5">
@@ -115,11 +119,11 @@
             </div>
             <div class="row g-4 justify-content-center">
                 <?php
-                // Контактные данные — из настроек сайта (Настройки → Контакты)
-                $homeContactEmail = trim((string) ($homeSettings['contactEmail'] ?? '')) ?: 'hello@moyblog.ru';
-                $homeContactPhone = trim((string) ($homeSettings['contactPhone'] ?? '')) ?: '+7 (900) 123-45-67';
-                $homeContactAddress = trim((string) ($homeSettings['contactAddress'] ?? '')) ?: 'г. Самара, ул. Примерная, 1';
-                ?>
+            // Контактные данные — из настроек сайта (Настройки → Контакты)
+            $homeContactEmail = trim((string) ($homeSettings['contactEmail'] ?? '')) ?: 'hello@moyblog.ru';
+$homeContactPhone = trim((string) ($homeSettings['contactPhone'] ?? '')) ?: '+7 (900) 123-45-67';
+$homeContactAddress = trim((string) ($homeSettings['contactAddress'] ?? '')) ?: 'г. Самара, ул. Примерная, 1';
+?>
                 <div class="col-md-4 text-center">
                     <div class="feature-item p-4 h-100">
                         <i class="bi bi-envelope display-6 text-orange"></i>
@@ -151,6 +155,7 @@
     </section>
 
     <!-- Волна: белый → тёмный подвал -->
-    <?php $waveColors = ['#ffffff', '#353535']; require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
+    <?php $waveColors = ['#ffffff', '#353535'];
+require APP_ROOT . '/app/Views/frontend/templates/default/partials/wave.php'; ?>
 
     <!-- ================= ПОДВАЛ ================= -->

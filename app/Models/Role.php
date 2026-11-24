@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
@@ -8,7 +10,7 @@ use App\Core\Database;
  * Роли админки и их права на разделы.
  * Ключ роли хранится в users.role и в сессии администратора.
  */
-class Role
+final class Role
 {
     /** Все роли с числом пользователей. */
     public function all(): array

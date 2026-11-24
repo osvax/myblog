@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
 use App\Core\ApiResource;
-use App\Core\Response;
 use App\Core\ApplicationLogger;
+use App\Core\Response;
 
-class MediaController extends Controller
+final class MediaController extends Controller
 {
     private $logger;
 

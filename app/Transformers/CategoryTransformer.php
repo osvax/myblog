@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Transformers;
 
 use App\DTO\CategoryDTO;
@@ -7,7 +9,7 @@ use App\DTO\CategoryDTO;
 /**
  * CategoryTransformer — трансформер для CategoryDTO.
  */
-class CategoryTransformer extends Transformer
+final class CategoryTransformer extends Transformer
 {
     /**
      * Полное представление рубрики.

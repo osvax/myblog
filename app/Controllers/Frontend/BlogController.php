@@ -1,13 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Frontend;
 
 use App\Controllers\Controller;
-use App\Core\Response;
 use App\Models\ContentRepository;
 use App\Models\SiteSettings;
 
-class BlogController extends Controller
+final class BlogController extends Controller
 {
     private $content;
     private $settings;

@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -8,7 +10,7 @@ use App\Models\ContentRepository;
 use App\Models\SettingsRepository;
 use App\Models\UserActivity;
 
-class DashboardController extends Controller
+final class DashboardController extends Controller
 {
     private $content;
     private $settings;

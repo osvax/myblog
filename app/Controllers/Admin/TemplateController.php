@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
@@ -14,7 +16,7 @@ use SplFileInfo;
  * Редактор шаблонов: выбор шаблона (default и другие), правка его PHP-файлов,
  * общих CSS/JS и статических страниц (через API /api/admin/pages).
  */
-class TemplateController extends Controller
+final class TemplateController extends Controller
 {
     private $settings;
     private $logger;
@@ -174,7 +176,9 @@ class TemplateController extends Controller
 
     private function removeDirectory(string $directory): void
     {
-        if (!is_dir($directory)) return;
+        if (!is_dir($directory)) {
+            return;
+        }
         $iterator = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($directory, RecursiveDirectoryIterator::SKIP_DOTS), RecursiveIteratorIterator::CHILD_FIRST);
         foreach ($iterator as $item) {
             $item->isDir() ? rmdir($item->getPathname()) : unlink($item->getPathname());

@@ -1,32 +1,32 @@
 <?php
-    // Обложка карточки — первый снимок проекта из галереи.
-    $projectCover = null;
-    $projectCoverRegex = '#^(?:uploads/portfolio/[A-Za-z0-9_-]+/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$#';
-    foreach ((array) (isset($project['screenshots']) ? $project['screenshots'] : []) as $shot) {
-        if (is_string($shot) && preg_match($projectCoverRegex, $shot)) {
-            $projectCover = $shot;
-            break;
-        }
+// Обложка карточки — первый снимок проекта из галереи.
+$projectCover = null;
+$projectCoverRegex = '#^(?:uploads/portfolio/[A-Za-z0-9_-]+/[a-f0-9]{32}\.(?:jpg|png|webp)|uploads/images/portfolio/[a-z0-9][a-z0-9-]*\.(?:jpg|jpeg|png))$#';
+foreach ((array) (isset($project['screenshots']) ? $project['screenshots'] : []) as $shot) {
+    if (is_string($shot) && preg_match($projectCoverRegex, $shot)) {
+        $projectCover = $shot;
+        break;
     }
-    // Год и клиент — из настроек (Настройки → Портфолио)
-    $cardMeta = [];
-    if (!empty($showPortfolioDate)) {
-        $cardYear = !empty($project['project_year']) ? (string) $project['project_year'] : '';
-        if ($cardYear === '' && !empty($project['created_at'])) {
-            $cardYear = date('Y', strtotime((string) $project['created_at']));
-        }
-        if ($cardYear !== '') {
-            $cardMeta[] = $cardYear;
-        }
+}
+// Год и клиент — из настроек (Настройки → Портфолио)
+$cardMeta = [];
+if (!empty($showPortfolioDate)) {
+    $cardYear = !empty($project['project_year']) ? (string) $project['project_year'] : '';
+    if ($cardYear === '' && !empty($project['created_at'])) {
+        $cardYear = date('Y', strtotime((string) $project['created_at']));
     }
-    if (!empty($showPortfolioClient) && !empty($project['client'])) {
-        $cardMeta[] = (string) $project['client'];
+    if ($cardYear !== '') {
+        $cardMeta[] = $cardYear;
     }
-    // Ширина карточки в ряду (Настройки → Портфолио → «Работ в ряд»):
-    // 1 — во всю ширину, 2 — половина, 3 — текущая треть; мозаика — без колонок
-    $portfolioCardClass = !empty($portfolioMasonry)
-        ? 'work-masonry-item'
-        : ((isset($portfolioCardCol) && is_string($portfolioCardCol) && $portfolioCardCol !== '') ? $portfolioCardCol : 'col-md-6 col-lg-4');
+}
+if (!empty($showPortfolioClient) && !empty($project['client'])) {
+    $cardMeta[] = (string) $project['client'];
+}
+// Ширина карточки в ряду (Настройки → Портфолио → «Работ в ряд»):
+// 1 — во всю ширину, 2 — половина, 3 — текущая треть; мозаика — без колонок
+$portfolioCardClass = !empty($portfolioMasonry)
+    ? 'work-masonry-item'
+    : ((isset($portfolioCardCol) && is_string($portfolioCardCol) && $portfolioCardCol !== '') ? $portfolioCardCol : 'col-md-6 col-lg-4');
 ?>
 <div class="<?= $portfolioCardClass ?>">
     <a href="/<?= htmlspecialchars($projectSlug, ENT_QUOTES, 'UTF-8') ?>.html" class="text-decoration-none">

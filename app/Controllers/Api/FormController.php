@@ -1,12 +1,14 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Api;
 
 use App\Controllers\Controller;
 use App\Core\ApiResource;
 use App\Models\ContentRepository;
 
-class FormController extends Controller
+final class FormController extends Controller
 {
     private $content;
 

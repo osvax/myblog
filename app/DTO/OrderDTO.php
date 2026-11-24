@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DTO;
 
 /**
@@ -65,7 +67,7 @@ namespace App\DTO;
  * - notes: заметки менеджера
  * - calculatorDetails: данные калькулятора
  */
-class OrderDTO
+final class OrderDTO
 {
     // === Основные поля (колонки va_orders) ===
 

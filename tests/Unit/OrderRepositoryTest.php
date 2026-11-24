@@ -1,13 +1,15 @@
 <?php
 
+declare(strict_types=1);
+
 namespace Tests\Unit;
 
-use App\Models\OrderRepository;
 use App\DTO\OrderDTO;
+use App\Models\OrderRepository;
 use PDO;
 use PHPUnit\Framework\TestCase;
 
-class OrderRepositoryTest extends TestCase
+final class OrderRepositoryTest extends TestCase
 {
     private PDO $pdo;
     private OrderRepository $repo;
@@ -19,7 +21,7 @@ class OrderRepositoryTest extends TestCase
             PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
             PDO::ATTR_EMULATE_PREPARES => false,
         ]);
-        $this->pdo->exec("PRAGMA foreign_keys = ON");
+        $this->pdo->exec('PRAGMA foreign_keys = ON');
 
         // Create tables
         $this->pdo->exec("
@@ -67,19 +69,19 @@ class OrderRepositoryTest extends TestCase
 
         $this->assertIsArray($result);
         $this->assertArrayHasKey('id', $result);
-        $this->assertEquals('Test Client', $result['client_name']);
-        $this->assertEquals('test@example.com', $result['email']);
+        $this->assertSame('Test Client', $result['clientName']);
+        $this->assertSame('test@example.com', $result['email']);
 
-        // Проверяем что details_json сохранён корректно
-        $details = json_decode($result['details_json'], true);
-        $this->assertIsArray($details);
-        $this->assertArrayHasKey('calculatorDetails', $details);
-        $this->assertIsArray($details['calculatorDetails']);
+        // Проверяем что details_json сохранён корректно (orderRow возвращает декодированные details)
+        $this->assertArrayHasKey('calculatorDetails', $result);
+        $this->assertIsArray($result['calculatorDetails']);
+        $this->assertSame('Сайт-визитка', $result['calculatorDetails']['type']);
     }
 
     public function testOrdersAsDto(): void
     {
-        // Insert test orders
+        // Insert test orders with different dates
+        // Order by order_date DESC means latest date first
         $this->pdo->exec("
             INSERT INTO va_orders (client_name, email, phone, project_type, budget, deadline, order_date, status, details_json)
             VALUES
@@ -92,9 +94,10 @@ class OrderRepositoryTest extends TestCase
 
         $this->assertCount(3, $orders);
         $this->assertInstanceOf(OrderDTO::class, $orders[0]);
-        $this->assertEquals('Client 1', $orders[0]->clientName);
-        $this->assertEquals('Client 2', $orders[1]->clientName);
-        $this->assertEquals('Client 3', $orders[2]->clientName);
+        // Order by order_date DESC: Client 3 (2025-11-03) should be first
+        $this->assertSame('Client 3', $orders[0]->clientName);
+        $this->assertSame('Client 2', $orders[1]->clientName);
+        $this->assertSame('Client 1', $orders[2]->clientName);
     }
 
     public function testOrderDtoById(): void
@@ -108,8 +111,8 @@ class OrderRepositoryTest extends TestCase
         $dto = $this->repo->orderDtoById((int)$id);
 
         $this->assertInstanceOf(OrderDTO::class, $dto);
-        $this->assertEquals((int)$id, $dto->id);
-        $this->assertEquals('Test Client', $dto->clientName);
+        $this->assertSame((int)$id, $dto->id);
+        $this->assertSame('Test Client', $dto->clientName);
     }
 
     public function testOrderDtoByIdReturnsNullForMissing(): void
@@ -139,8 +142,8 @@ class OrderRepositoryTest extends TestCase
 
         $result = $this->repo->saveOrderFromDTO($dto);
 
-        $this->assertEquals($id, $result['id']);
-        $this->assertEquals('Updated', $result['client_name']);
-        $this->assertEquals('В работе', $result['status']);
+        $this->assertSame($id, $result['id']);
+        $this->assertSame('Updated', $result['clientName']);
+        $this->assertSame('В работе', $result['status']);
     }
 }

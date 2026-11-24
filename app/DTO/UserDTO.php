@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\DTO;
 
 /**
@@ -59,7 +61,7 @@ namespace App\DTO;
  * - 'manager' — editor + заказы, сообщения, пользователи
  * - 'admin' — полный доступ (настройки, роли, логи, бэкапы)
  */
-class UserDTO
+final class UserDTO
 {
     // === Основные поля (колонки va_users) ===
 

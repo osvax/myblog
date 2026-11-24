@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Controllers\Api;
 
 use App\Controllers\Controller;
@@ -8,7 +10,7 @@ use App\Core\ApplicationLogger;
 use App\Models\Consultant;
 use PDO;
 
-class ConsultantController extends Controller
+final class ConsultantController extends Controller
 {
     private $logger;
 
@@ -91,21 +93,21 @@ class ConsultantController extends Controller
 
     private function getState(PDO $pdo)
     {
-        $users = $pdo->query("SELECT u.id, u.name, u.phone, u.source, u.status, u.created_at, u.updated_at,
-                (SELECT m.message FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessage,
-                (SELECT m.id FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageId,
-                (SELECT m.role FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageRole,
-                (SELECT m.id FROM " . db_table('consultant_messages') . " m WHERE m.user_id = u.id AND m.role = 'user' ORDER BY m.id DESC LIMIT 1) AS lastUserMessageId,
+        $users = $pdo->query('SELECT u.id, u.name, u.phone, u.source, u.status, u.created_at, u.updated_at,
+                (SELECT m.message FROM ' . db_table('consultant_messages') . ' m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessage,
+                (SELECT m.id FROM ' . db_table('consultant_messages') . ' m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageId,
+                (SELECT m.role FROM ' . db_table('consultant_messages') . ' m WHERE m.user_id = u.id ORDER BY m.id DESC LIMIT 1) AS lastMessageRole,
+                (SELECT m.id FROM ' . db_table('consultant_messages') . " m WHERE m.user_id = u.id AND m.role = 'user' ORDER BY m.id DESC LIMIT 1) AS lastUserMessageId,
                 (SELECT r.viewed_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'admin') AS viewedByAdminMessageId,
                 (SELECT r.read_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'admin') AS readByAdminMessageId,
                 (SELECT r.viewed_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'user') AS viewedByUserMessageId,
                 (SELECT r.read_message_id FROM " . db_table('consultant_message_reads') . " r WHERE r.user_id = u.id AND r.reader_role = 'user') AS readByUserMessageId,
                 (SELECT t.role FROM " . db_table('consultant_typing') . " t WHERE t.user_id = u.id AND t.role != 'admin' AND t.updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1) AS typingRole
-            FROM " . db_table('consultant_users') . " u ORDER BY u.updated_at DESC LIMIT 200")->fetchAll();
-        $messageQuery = $pdo->query("SELECT m.id, m.user_id AS userId, m.role, m.message AS text, m.created_at AS createdAt
-            FROM " . db_table('consultant_messages') . " m
-            JOIN " . db_table('consultant_users') . " u ON u.id = m.user_id
-            ORDER BY u.updated_at DESC, m.id ASC");
+            FROM " . db_table('consultant_users') . ' u ORDER BY u.updated_at DESC LIMIT 200')->fetchAll();
+        $messageQuery = $pdo->query('SELECT m.id, m.user_id AS userId, m.role, m.message AS text, m.created_at AS createdAt
+            FROM ' . db_table('consultant_messages') . ' m
+            JOIN ' . db_table('consultant_users') . ' u ON u.id = m.user_id
+            ORDER BY u.updated_at DESC, m.id ASC');
         $messages = [];
         foreach ($messageQuery as $message) {
             $message['createdAt'] = $this->isoDate($message['createdAt']);
@@ -181,7 +183,7 @@ class ConsultantController extends Controller
     {
         try {
             $pdo->beginTransaction();
-            $delete = $pdo->prepare("DELETE FROM " . db_table('consultant_users') . " WHERE status = 'answered'");
+            $delete = $pdo->prepare('DELETE FROM ' . db_table('consultant_users') . " WHERE status = 'answered'");
             $delete->execute();
             $deletedCount = $delete->rowCount();
             $pdo->commit();
@@ -201,7 +203,7 @@ class ConsultantController extends Controller
         if (!$this->validUserId($userId)) {
             return $this->json(ApiResource::error('Не удалось проверить чат.'), 400);
         }
-        $close = $pdo->prepare("UPDATE " . db_table('consultant_users') . " SET status = 'closed', updated_at = ? WHERE id = ? AND status != 'closed'");
+        $close = $pdo->prepare('UPDATE ' . db_table('consultant_users') . " SET status = 'closed', updated_at = ? WHERE id = ? AND status != 'closed'");
         $close->execute([gmdate('Y-m-d H:i:s'), $userId]);
         if ($close->rowCount() === 0) {
             $exists = $pdo->prepare('SELECT status FROM ' . db_table('consultant_users') . ' WHERE id = ?');
@@ -396,7 +398,7 @@ class ConsultantController extends Controller
                 'read' => $row['read_message_id'] === null ? null : (string) $row['read_message_id'],
             ];
         }
-        $query = $pdo->prepare("SELECT role FROM " . db_table('consultant_typing') . "
+        $query = $pdo->prepare('SELECT role FROM ' . db_table('consultant_typing') . "
             WHERE user_id = ? AND role = 'admin' AND updated_at >= UTC_TIMESTAMP() - INTERVAL 5 SECOND LIMIT 1");
         $query->execute([$userId]);
         $typingRole = $query->fetchColumn();

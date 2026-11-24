@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 function admin_start_session()
 {
     if (session_status() === PHP_SESSION_ACTIVE) {

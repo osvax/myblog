@@ -1,5 +1,7 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Models;
 
 use App\Core\Database;
@@ -8,7 +10,7 @@ use App\Core\Database;
  * Пользовательские поля — произвольные данные и изображения,
  * редактируемые в админке и доступные шаблонам через custom_field().
  */
-class CustomField
+final class CustomField
 {
     /**
      * Все поля (для админки).
@@ -17,7 +19,7 @@ class CustomField
     {
         $db = Database::connection();
         return $db->query(
-            "SELECT * FROM " . db_table('custom_fields') . " ORDER BY field_group ASC, display_order ASC, id ASC"
+            'SELECT * FROM ' . db_table('custom_fields') . ' ORDER BY field_group ASC, display_order ASC, id ASC'
         )->fetchAll();
     }
 
@@ -27,7 +29,7 @@ class CustomField
     public function byKey(string $key): ?array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("SELECT * FROM " . db_table('custom_fields') . " WHERE field_key = :key LIMIT 1");
+        $stmt = $db->prepare('SELECT * FROM ' . db_table('custom_fields') . ' WHERE field_key = :key LIMIT 1');
         $stmt->execute(['key' => $key]);
         $row = $stmt->fetch();
         return $row ?: null;
@@ -69,7 +71,7 @@ class CustomField
         $db = Database::connection();
 
         // Проверяем уникальность ключа
-        $stmt = $db->prepare("SELECT id FROM " . db_table('custom_fields') . " WHERE field_key = :key AND id != :id LIMIT 1");
+        $stmt = $db->prepare('SELECT id FROM ' . db_table('custom_fields') . ' WHERE field_key = :key AND id != :id LIMIT 1');
         $stmt->execute(['key' => $key, 'id' => $id]);
         if ($stmt->fetch()) {
             return ['success' => false, 'error' => 'Поле с таким ключом уже существует'];
@@ -77,8 +79,8 @@ class CustomField
 
         if ($id <= 0) {
             $stmt = $db->prepare(
-                "INSERT INTO " . db_table('custom_fields') . " (field_key, label, field_type, field_value, field_group, is_active, display_order)
-                 VALUES (:key, :label, :type, :value, :group, :active, :order)"
+                'INSERT INTO ' . db_table('custom_fields') . ' (field_key, label, field_type, field_value, field_group, is_active, display_order)
+                 VALUES (:key, :label, :type, :value, :group, :active, :order)'
             );
             $stmt->execute([
                 'key' => $key,
@@ -93,10 +95,10 @@ class CustomField
         }
 
         $stmt = $db->prepare(
-            "UPDATE " . db_table('custom_fields') . "
+            'UPDATE ' . db_table('custom_fields') . '
              SET field_key = :key, label = :label, field_type = :type, field_value = :value,
                  field_group = :group, is_active = :active, display_order = :order
-             WHERE id = :id"
+             WHERE id = :id'
         );
         $stmt->execute([
             'key' => $key,
@@ -118,7 +120,7 @@ class CustomField
     public function delete(int $id): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("DELETE FROM " . db_table('custom_fields') . " WHERE id = :id");
+        $stmt = $db->prepare('DELETE FROM ' . db_table('custom_fields') . ' WHERE id = :id');
         $stmt->execute(['id' => $id]);
         return ['success' => $stmt->rowCount() > 0];
     }
@@ -129,7 +131,7 @@ class CustomField
     public function toggleActive(int $id): array
     {
         $db = Database::connection();
-        $stmt = $db->prepare("UPDATE " . db_table('custom_fields') . " SET is_active = 1 - is_active WHERE id = :id");
+        $stmt = $db->prepare('UPDATE ' . db_table('custom_fields') . ' SET is_active = 1 - is_active WHERE id = :id');
         $stmt->execute(['id' => $id]);
         return ['success' => $stmt->rowCount() > 0];
     }
