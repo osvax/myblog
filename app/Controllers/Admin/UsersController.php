@@ -3,11 +3,18 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
-use App\Models\Role;
-use App\Models\User;
+use App\Models\UserRepository;
+use App\DTO\UserDTO;
 
 class UsersController extends Controller
 {
+    private $users;
+
+    public function __construct()
+    {
+        $this->users = new UserRepository();
+    }
+
     /**
      * Получить список всех пользователей.
      */
@@ -23,23 +30,13 @@ class UsersController extends Controller
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
 
-        $users = (new User())->all();
-        $roleNames = $this->roleNamesMap();
+        // Новый API: используем UserDTO
+        $users = $this->users->allAsDto();
 
         return $this->json([
             'success' => true,
-            'users' => array_map(function ($user) use ($roleNames) {
-                return [
-                    'id' => (int) $user['id'],
-                    'email' => $user['email'],
-                    'name' => $user['name'],
-                    'avatar_path' => $user['avatar_path'] ?? '',
-                    'role' => $user['role'],
-                    'role_name' => $roleNames[$user['role']] ?? $user['role'],
-                    'is_active' => (bool) $user['is_active'],
-                    'created_at' => $user['created_at'],
-                    'last_visit' => $user['last_visit'] ?? null,
-                ];
+            'users' => array_map(function (UserDTO $user) {
+                return $user->toApiArray();
             }, $users),
         ]);
     }
@@ -64,25 +61,14 @@ class UsersController extends Controller
             return $this->json(['success' => false, 'error' => 'Неверный ID'], 400);
         }
 
-        $user = (new User())->findById($id);
+        $user = $this->users->findDtoById($id);
         if (!$user) {
             return $this->json(['success' => false, 'error' => 'Пользователь не найден'], 404);
         }
 
         return $this->json([
             'success' => true,
-            'user' => [
-                'id' => (int) $user['id'],
-                'email' => $user['email'],
-                'name' => $user['name'],
-                'avatar_path' => $user['avatar_path'] ?? '',
-                'role' => $user['role'],
-                'role_name' => $this->roleNamesMap()[$user['role']] ?? $user['role'],
-                'is_active' => (bool) $user['is_active'],
-                'created_at' => $user['created_at'],
-                'updated_at' => $user['updated_at'],
-                'last_visit' => $user['last_visit'] ?? null,
-            ],
+            'user' => $user->toApiArray(),
         ]);
     }
 
@@ -109,50 +95,55 @@ class UsersController extends Controller
         }
 
         $input = $request->json();
-        $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
-        $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
-        $role = isset($input['role']) && is_string($input['role']) ? $input['role'] : '';
-        $isActive = isset($input['is_active']) ? filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN) : false;
 
-        if (strlen($name) < 2 || strlen($name) > 160) {
-            return $this->json(['success' => false, 'error' => 'Имя должно содержать от 2 до 160 символов'], 400);
-        }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->json(['success' => false, 'error' => 'Неверный email'], 400);
-        }
-        if (!(new Role())->exists($role)) {
-            return $this->json(['success' => false, 'error' => 'Неверная роль'], 400);
-        }
-
-        // Email должен быть уникальным (кроме текущего пользователя)
-        $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT id FROM " . db_table('users') . " WHERE email = :email AND id != :id LIMIT 1");
-        $stmt->execute([':email' => $email, ':id' => $id]);
-        if ($stmt->fetch()) {
-            return $this->json(['success' => false, 'error' => 'Пользователь с таким email уже существует'], 400);
+        // Получаем существующего пользователя
+        $existingUser = $this->users->findDtoById($id);
+        if (!$existingUser) {
+            return $this->json(['success' => false, 'error' => 'Пользователь не найден'], 404);
         }
 
         // Защита от само-блокировки: свою роль и статус изменить нельзя
         if ($id === \admin_get_user_id()) {
-            $current = (new User())->findById($id);
-            if ($current && ($role !== $current['role'] || !$isActive)) {
+            $currentRole = $existingUser->role;
+            $currentActive = $existingUser->isActive;
+            $newRole = $input['role'] ?? $currentRole;
+            $newActive = isset($input['is_active']) ? filter_var($input['is_active'], FILTER_VALIDATE_BOOLEAN) : $currentActive;
+
+            if ($newRole !== $currentRole || $newActive !== $currentActive) {
                 return $this->json(['success' => false, 'error' => 'Нельзя изменить свою роль или заблокировать свой аккаунт'], 400);
             }
         }
 
-        $stmt = $db->prepare(
-            "UPDATE " . db_table('users') . " SET name = :name, email = :email, role = :role, is_active = :is_active, updated_at = NOW()
-             WHERE id = :id"
-        );
-        $stmt->execute([
-            ':name' => $name,
-            ':email' => $email,
-            ':role' => $role,
-            ':is_active' => $isActive ? 1 : 0,
-            ':id' => $id,
-        ]);
+        // Создаём DTO из запроса (для обновления пароль не требуется)
+        $dto = UserDTO::fromRequest($input, $id);
 
-        return $this->json(['success' => true]);
+        // Для обновления используем validateUpdate (без проверки пароля)
+        if (!$dto->validateUpdate()) {
+            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
+        }
+
+        // Проверяем уникальность email (кроме текущего пользователя)
+        if ($this->users->emailExists($dto->email, $id)) {
+            return $this->json(['success' => false, 'error' => 'Пользователь с таким email уже существует'], 400);
+        }
+
+        // Проверяем, что роль существует
+        if (!$this->users->roleExists($dto->role)) {
+            return $this->json(['success' => false, 'error' => 'Неверная роль'], 400);
+        }
+
+        try {
+            $savedId = $this->users->updateUserFromDTO($dto);
+            if ($savedId === false) {
+                return $this->json(['success' => false, 'error' => 'Пользователь не найден'], 404);
+            }
+            return $this->json(['success' => true]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            error_log('User update error: ' . $e->getMessage());
+            return $this->json(['success' => false, 'error' => 'Ошибка обновления пользователя'], 500);
+        }
     }
 
     /**
@@ -182,11 +173,11 @@ class UsersController extends Controller
             return $this->json(['success' => false, 'error' => 'Нельзя удалить свою учётную запись'], 400);
         }
 
-        $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("DELETE FROM " . db_table('users') . " WHERE id = :id");
-        $stmt->execute([':id' => $id]);
+        $deleted = $this->users->delete($id);
 
-        return $this->json(['success' => true]);
+        return $deleted
+            ? $this->json(['success' => true])
+            : $this->json(['success' => false, 'error' => 'Пользователь не найден'], 404);
     }
 
     /**
@@ -207,36 +198,32 @@ class UsersController extends Controller
         \admin_require_csrf();
 
         $input = $request->json();
-        $name = isset($input['name']) && is_string($input['name']) ? trim($input['name']) : '';
-        $email = isset($input['email']) && is_string($input['email']) ? trim($input['email']) : '';
-        $password = isset($input['password']) && is_string($input['password']) ? $input['password'] : '';
-        $role = isset($input['role']) && is_string($input['role']) ? $input['role'] : 'user';
 
-        if (strlen($name) < 2 || strlen($name) > 160) {
-            return $this->json(['success' => false, 'error' => 'Имя должно содержать от 2 до 160 символов'], 400);
+        // Создаём DTO из запроса
+        $dto = UserDTO::fromRequest($input);
+
+        // Валидация для создания (требует пароль)
+        if (!$dto->validate()) {
+            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
         }
-        if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return $this->json(['success' => false, 'error' => 'Неверный email'], 400);
-        }
-        if (strlen($password) < 8) {
-            return $this->json(['success' => false, 'error' => 'Пароль должен содержать минимум 8 символов'], 400);
-        }
-        if (!(new Role())->exists($role)) {
+
+        // Проверяем, что роль существует
+        if (!$this->users->roleExists($dto->role)) {
             return $this->json(['success' => false, 'error' => 'Неверная роль'], 400);
         }
 
-        $passwordHash = password_hash($password, PASSWORD_DEFAULT);
-        $result = (new User())->create($email, $passwordHash, $name);
-        if (!$result['success']) {
-            return $this->json(['success' => false, 'error' => $result['error']], 400);
+        try {
+            $id = $this->users->saveUserFromDTO($dto);
+            if ($id === false) {
+                return $this->json(['success' => false, 'error' => 'Не удалось создать пользователя'], 500);
+            }
+            return $this->json(['success' => true, 'user_id' => $id]);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            error_log('User create error: ' . $e->getMessage());
+            return $this->json(['success' => false, 'error' => 'Ошибка создания пользователя'], 500);
         }
-
-        // Роль задаётся при создании (дефолт БД — 'user')
-        $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("UPDATE " . db_table('users') . " SET role = :role, is_active = 1, updated_at = NOW() WHERE id = :id");
-        $stmt->execute([':role' => $role, ':id' => $result['user_id']]);
-
-        return $this->json(['success' => true, 'user_id' => $result['user_id']]);
     }
 
     /**
@@ -296,21 +283,19 @@ class UsersController extends Controller
         }
 
         // Удаляем старый аватар (только из каталога аватаров)
-        $db = \App\Core\Database::connection();
-        $stmt = $db->prepare("SELECT avatar_path FROM " . db_table('users') . " WHERE id = :id");
-        $stmt->execute([':id' => $id]);
-        $user = $stmt->fetch();
-        if (!empty($user['avatar_path'])
-            && strpos($user['avatar_path'], '/uploads/profile/') === 0
-            && file_exists(APP_ROOT . '/public' . $user['avatar_path'])) {
-            unlink(APP_ROOT . '/public' . $user['avatar_path']);
+        $oldAvatarPath = $this->users->getAvatarPath($id);
+        if (!empty($oldAvatarPath)
+            && strpos($oldAvatarPath, '/uploads/profile/') === 0
+            && file_exists(APP_ROOT . '/public' . $oldAvatarPath)) {
+            unlink(APP_ROOT . '/public' . $oldAvatarPath);
         }
 
         $avatarPath = '/uploads/profile/' . $filename;
-        $stmt = $db->prepare("UPDATE " . db_table('users') . " SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id");
-        $stmt->execute([':avatar_path' => $avatarPath, ':id' => $id]);
+        $updated = $this->users->updateAvatar($id, $avatarPath);
 
-        return $this->json(['success' => true, 'avatar_path' => $avatarPath]);
+        return $updated
+            ? $this->json(['success' => true, 'avatar_path' => $avatarPath])
+            : $this->json(['success' => false, 'error' => 'Не удалось обновить аватар в БД'], 500);
     }
 
     /**
@@ -346,26 +331,10 @@ class UsersController extends Controller
             return $this->json(['success' => false, 'error' => 'Пароль должен содержать минимум 8 символов'], 400);
         }
 
-        $stmt = \App\Core\Database::connection()->prepare(
-            "UPDATE " . db_table('users') . " SET password_hash = :password_hash, updated_at = NOW() WHERE id = :id"
-        );
-        $stmt->execute([
-            ':password_hash' => password_hash($password, PASSWORD_DEFAULT),
-            ':id' => $id,
-        ]);
+        $updated = $this->users->updatePassword($id, password_hash($password, PASSWORD_DEFAULT));
 
-        return $this->json(['success' => true]);
-    }
-
-    /**
-     * Соответствие role_key → название из таблицы ролей.
-     */
-    private function roleNamesMap(): array
-    {
-        $map = [];
-        foreach ((new Role())->all() as $role) {
-            $map[$role['role_key']] = $role['name'];
-        }
-        return $map;
+        return $updated
+            ? $this->json(['success' => true])
+            : $this->json(['success' => false, 'error' => 'Пользователь не найден'], 404);
     }
 }

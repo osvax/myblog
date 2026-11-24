@@ -3,10 +3,20 @@
 namespace App\Controllers\Admin;
 
 use App\Controllers\Controller;
-use App\Models\SiteSettings;
+use App\Core\Response;
+use App\Models\SettingsRepository;
+use App\DTO\SiteSettingsDTO;
+use App\Models\UserActivity;
 
 class SiteSettingsController extends Controller
 {
+    private $settings;
+
+    public function __construct()
+    {
+        $this->settings = new SettingsRepository();
+    }
+
     /**
      * Получить все настройки.
      */
@@ -19,12 +29,11 @@ class SiteSettingsController extends Controller
             return $this->json(['success' => false, 'error' => 'Метод не поддерживается'], 405);
         }
 
-        $settings = (new SiteSettings())->all();
-        $grouped = (new SiteSettings())->grouped();
+        // Новый API: используем SiteSettingsDTO
+        $grouped = $this->settings->groupedAsDto();
 
         return $this->json([
             'success' => true,
-            'settings' => $settings,
             'grouped' => $grouped,
         ]);
     }
@@ -45,6 +54,7 @@ class SiteSettingsController extends Controller
             return $this->json(['success' => false, 'error' => 'Нет данных'], 400);
         }
 
+        // Очистка HTML для contactsAboutHtml
         if (array_key_exists('contactsAboutHtml', $input) && is_string($input['contactsAboutHtml'])) {
             $input['contactsAboutHtml'] = \App\Core\Sanitizer::get()->purify($input['contactsAboutHtml']);
         }
@@ -59,22 +69,25 @@ class SiteSettingsController extends Controller
         // до сохранения, чтобы после удалить данные по выключенным разделам
         $oldStatisticsSections = null;
         if (array_key_exists('statisticsSections', $input)) {
-            $oldStatisticsSections = (new SiteSettings())->get('statisticsSections', '');
+            $oldStatisticsSections = $this->settings->get('statisticsSections', '');
         }
 
-        $result = (new \App\Models\SiteSettings())->saveAllWithType($input);
+        // Сохраняем через новый DTO
+        $dto = SiteSettingsDTO::fromRequest($input);
+        $result = $this->settings->saveAllFromDTO($dto);
+
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить'], 500);
         }
 
         $response = ['success' => true];
         if ($oldStatisticsSections !== null) {
-            $oldAllowed = \App\Models\UserActivity::parseSections($oldStatisticsSections);
-            $newAllowed = \App\Models\UserActivity::parseSections($input['statisticsSections']);
+            $oldAllowed = UserActivity::parseSections($oldStatisticsSections);
+            $newAllowed = UserActivity::parseSections($input['statisticsSections']);
             $removed = array_values(array_diff($oldAllowed, $newAllowed));
             if ($removed !== []) {
                 try {
-                    $deleted = (new \App\Models\UserActivity())->deleteSections($removed);
+                    $deleted = (new UserActivity())->deleteSections($removed);
                 } catch (\Exception $e) {
                     return $this->json(['success' => false, 'error' => 'Настройки сохранены, но данные по выключенным разделам не удалены: ' . $e->getMessage()], 500);
                 }
@@ -102,17 +115,17 @@ class SiteSettingsController extends Controller
         $key = isset($input['key']) && is_string($input['key']) ? trim($input['key']) : '';
         $value = isset($input['value']) && is_string($input['value']) ? $input['value'] : '';
         $type = isset($input['type']) && is_string($input['type']) ? $input['type'] : 'text';
-        $tabGroup = isset($input['tab_group']) && is_string($input['tab_group']) ? $input['tab_group'] : 'general';
+        $tabGroup = isset($input['tab_group']) && is_string($input['tab_group']) ? $input['tab_group'] : 'custom';
         $placeholder = isset($input['placeholder']) && is_string($input['placeholder']) ? $input['placeholder'] : '';
 
         if (strlen($key) < 1 || strlen($key) > 100) {
             return $this->json(['success' => false, 'error' => 'Неверное имя поля'], 400);
         }
-        if (!in_array($type, ['text', 'textarea', 'number', 'email', 'tel', 'url', 'color', 'checkbox', 'select'], true)) {
+        if (!in_array($type, SiteSettingsDTO::getSupportedTypes(), true)) {
             return $this->json(['success' => false, 'error' => 'Неверный тип поля'], 400);
         }
 
-        $result = (new SiteSettings())->addCustomField($key, $value, $type, $tabGroup, $placeholder);
+        $result = $this->settings->addCustomField($key, $value, $type, $tabGroup, $placeholder);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось добавить'], 500);
         }
@@ -136,7 +149,7 @@ class SiteSettingsController extends Controller
             return $this->json(['success' => false, 'error' => 'Не указано имя поля'], 400);
         }
 
-        $result = (new SiteSettings())->deleteCustomField($key);
+        $result = $this->settings->deleteCustomField($key);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось удалить'], 404);
         }
@@ -162,27 +175,27 @@ class SiteSettingsController extends Controller
     public function serveContactsAboutPhoto($request, array $parameters = [])
     {
         if (!in_array($request->method(), ['GET', 'HEAD'], true)) {
-            return new \App\Core\Response('', 405, ['Allow' => 'GET, HEAD']);
+            return new Response('', 405, ['Allow' => 'GET, HEAD']);
         }
         $filename = (string) ($parameters['filename'] ?? '');
         if (!preg_match('/^[a-f0-9]{32}\.(jpg|png|webp)$/', $filename)) {
-            return new \App\Core\Response('', 404);
+            return new Response('', 404);
         }
         $directory = APP_ROOT . '/public/uploads/contacts';
         $path = $directory . '/' . $filename;
         $realDirectory = realpath($directory);
         $realPath = realpath($path);
         if ($realDirectory === false || $realPath === false || dirname($realPath) !== $realDirectory || is_link($realPath) || !is_file($realPath)) {
-            return new \App\Core\Response('', 404);
+            return new Response('', 404);
         }
         $mime = (new \finfo(FILEINFO_MIME_TYPE))->file($realPath);
         $types = ['jpg' => 'image/jpeg', 'png' => 'image/png', 'webp' => 'image/webp'];
         $extension = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
         if (!is_string($mime) || ($types[$extension] ?? '') !== $mime) {
-            return new \App\Core\Response('', 404);
+            return new Response('', 404);
         }
         $body = $request->method() === 'HEAD' ? '' : file_get_contents($realPath);
-        return new \App\Core\Response($body === false ? '' : $body, 200, [
+        return new Response($body === false ? '' : $body, 200, [
             'Content-Type' => $mime,
             'Content-Length' => (string) filesize($realPath),
             'Cache-Control' => 'public, max-age=3600',
@@ -240,23 +253,27 @@ class SiteSettingsController extends Controller
         if (!move_uploaded_file($file['tmp_name'], $target)) {
             return $this->json(['success' => false, 'error' => 'Не удалось сохранить фото'], 500);
         }
-        $settings = new SiteSettings();
-        $oldPath = (string) $settings->get('contactsAboutPhoto', '');
-        $path = 'uploads/contacts/' . $filename;
-        $saveResult = $settings->saveAllWithType(['contactsAboutPhoto' => $path]);
+
+        // Сохраняем путь через DTO
+        $dto = SiteSettingsDTO::fromRequest(['contactsAboutPhoto' => 'uploads/contacts/' . $filename]);
+        $saveResult = $this->settings->saveAllFromDTO($dto);
         if (!$saveResult['success']) {
             if (is_file($target) && !is_link($target)) {
                 @unlink($target);
             }
             return $this->json(['success' => false, 'error' => $saveResult['error'] ?? 'Не удалось сохранить путь к фото'], 500);
         }
+
+        // Удаляем старый файл, если он был в uploads/contacts/
+        $oldPath = $this->settings->get('contactsAboutPhoto', '');
         if (preg_match('#^uploads/contacts/[a-f0-9]{32}\.(?:jpg|png|webp)$#', $oldPath)) {
             $oldFile = APP_ROOT . '/public/' . $oldPath;
             if (is_file($oldFile) && !is_link($oldFile)) {
                 @unlink($oldFile);
             }
         }
-        return $this->json(['success' => true, 'path' => $path]);
+
+        return $this->json(['success' => true, 'path' => 'uploads/contacts/' . $filename]);
     }
 
     /**
@@ -290,13 +307,15 @@ class SiteSettingsController extends Controller
             return $this->json(['success' => false, 'error' => 'Не удалось создать каталог для шрифтов'], 500);
         }
 
-        $oldPath = trim((string) (new SiteSettings())->get('themeFontFile', ''));
+        $oldPath = trim((string) $this->settings->get('themeFontFile', ''));
         $newName = md5(uniqid('', true)) . '.' . $extension;
         if (!move_uploaded_file($file['tmp_name'], $targetDir . '/' . $newName)) {
             return $this->json(['success' => false, 'error' => 'Не удалось сохранить файл шрифта'], 500);
         }
 
-        (new SiteSettings())->saveAllWithType(['themeFontFile' => 'uploads/fonts/' . $newName]);
+        // Сохраняем путь через DTO
+        $dto = SiteSettingsDTO::fromRequest(['themeFontFile' => 'uploads/fonts/' . $newName]);
+        $this->settings->saveAllFromDTO($dto);
 
         // Удаляем прежний файл (только если он лежит в uploads/fonts/)
         if ($oldPath !== '' && preg_match('#^uploads/fonts/[A-Za-z0-9._-]+\.(woff|woff2|ttf|otf)$#i', $oldPath)) {

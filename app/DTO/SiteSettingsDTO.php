@@ -482,4 +482,14 @@ class SiteSettingsDTO
     {
         return self::SYSTEM_KEYS;
     }
+
+    /**
+     * Получить список поддерживаемых типов полей.
+     *
+     * @return string[]
+     */
+    public static function getSupportedTypes(): array
+    {
+        return self::TYPE_VALUES;
+    }
 }

@@ -5,17 +5,25 @@ namespace App\Controllers\Admin;
 use App\Controllers\Controller;
 use App\Core\Response;
 use App\Models\ContentRepository;
+use App\Models\OrderRepository;
+use App\Models\MessageRepository;
 use App\DTO\ArticleDTO;
 use App\DTO\ProjectDTO;
 use App\DTO\CategoryDTO;
+use App\DTO\OrderDTO;
+use App\DTO\MessageDTO;
 
 class ContentController extends Controller
 {
     private $content;
+    private $orders;
+    private $messages;
 
     public function __construct()
     {
         $this->content = new ContentRepository();
+        $this->orders = new OrderRepository();
+        $this->messages = new MessageRepository();
     }
 
     public function articles($request, array $params = [])
@@ -121,11 +129,17 @@ class ContentController extends Controller
             return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
         }
         if ($request->method() === 'GET') {
-            return $this->json(['success' => true, 'orders' => $this->content->orderList()]);
+            // Новый API: возвращаем DTO с toApiArray для полной структуры
+            $orders = $this->orders->ordersAsDto();
+            return $this->json(['success' => true, 'orders' => array_map(fn($o) => $o->toApiArray(), $orders)]);
         }
         if ($request->method() === 'DELETE') {
             \admin_require_csrf();
-            return $this->content->deleteOrder($params['id'] ?? '')
+            $id = $params['id'] ?? '';
+            if (!ctype_digit((string) $id)) {
+                return $this->json(['success' => false, 'error' => 'Некорректный ID заказа'], 400);
+            }
+            return $this->orders->deleteOrder((int) $id)
                 ? $this->json(['success' => true])
                 : $this->json(['success' => false, 'error' => 'Заказ не найден'], 404);
         }
@@ -133,45 +147,43 @@ class ContentController extends Controller
             return $this->methodNotAllowed(['GET', 'PUT', 'PATCH', 'DELETE']);
         }
         \admin_require_csrf();
-        $data = $request->json();
+
         $id = $params['id'] ?? '';
-        if ($request->method() === 'PATCH' && ctype_digit((string) $id)) {
-            $existing = $this->content->orderById((int) $id);
+        if (!ctype_digit((string) $id)) {
+            return $this->json(['success' => false, 'error' => 'Некорректный ID заказа'], 400);
+        }
+
+        $jsonData = $request->json();
+
+        // Для PATCH сливаем с существующими данными
+        if ($request->method() === 'PATCH') {
+            $existing = $this->orders->orderDtoById((int) $id);
             if ($existing === null) {
                 return $this->json(['success' => false, 'error' => 'Заказ не найден'], 404);
             }
-            $data = array_merge($existing, $data);
+            // Преобразуем существующий DTO в массив и мержим
+            $existingArray = $existing->toApiArray();
+            $jsonData = array_merge($existingArray, $jsonData);
         }
-        if (!ctype_digit((string) $id) || !isset($data['clientName'], $data['email'], $data['budget'], $data['orderDate'], $data['status']) ||
-            !is_string($data['clientName']) || trim($data['clientName']) === '' ||
-            !is_string($data['email']) || !filter_var($data['email'], FILTER_VALIDATE_EMAIL) ||
-            !is_numeric($data['budget']) || (float) $data['budget'] < 0 ||
-            !in_array($data['status'], ['Новый', 'В работе', 'Завершён', 'Отменён'], true) ||
-            !$this->validDate($data['orderDate'])) {
-            return $this->json(['success' => false, 'error' => 'Проверьте данные заказа'], 400);
+
+        // Создаём DTO из запроса
+        $dto = OrderDTO::fromRequest($jsonData, (int) $id);
+
+        if (!$dto->validate()) {
+            return $this->json(['success' => false, 'error' => 'Ошибки валидации', 'errors' => $dto->getErrors()], 400);
         }
-        $data = array_merge([
-            'phone' => '',
-            'projectType' => '',
-            'deadline' => '',
-            'completedAt' => '',
-            'paidAmount' => 0,
-        ], $data);
-        if ((!is_string($data['deadline']) && $data['deadline'] !== null) ||
-            ($data['deadline'] !== '' && $data['deadline'] !== null &&
-                (!$this->validDate($data['deadline']) || $data['deadline'] < $data['orderDate'])) ||
-            (!is_string($data['completedAt']) && $data['completedAt'] !== null) ||
-            ($data['completedAt'] !== '' && $data['completedAt'] !== null &&
-                (!$this->validDate($data['completedAt']) || $data['completedAt'] < $data['orderDate'])) ||
-            !is_numeric($data['paidAmount']) || (float) $data['paidAmount'] < 0 ||
-            (isset($data['phone']) && !is_string($data['phone'])) ||
-            (isset($data['projectType']) && !is_string($data['projectType']))) {
-            return $this->json(['success' => false, 'error' => 'Проверьте даты и дополнительные данные заказа'], 400);
+
+        try {
+            $savedOrder = $this->orders->saveOrderFromDTO($dto);
+            return $savedOrder
+                ? $this->json(['success' => true, 'order' => $savedOrder])
+                : $this->json(['success' => false, 'error' => 'Заказ не найден'], 404);
+        } catch (\InvalidArgumentException $e) {
+            return $this->json(['success' => false, 'error' => $e->getMessage()], 400);
+        } catch (\Throwable $e) {
+            error_log('Order save error: ' . $e->getMessage());
+            return $this->json(['success' => false, 'error' => 'Ошибка сохранения заказа'], 500);
         }
-        $order = $this->content->saveOrder((int) $id, $data);
-        return $order
-            ? $this->json(['success' => true, 'order' => $order])
-            : $this->json(['success' => false, 'error' => 'Заказ не найден'], 404);
     }
 
     public function exportOrders($request)
@@ -189,9 +201,7 @@ class ContentController extends Controller
         if (!$this->validDate($from) || !$this->validDate($to) || $from > $to || $to > date('Y-m-d')) {
             return $this->json(['success' => false, 'error' => 'Укажите корректный диапазон дат'], 400);
         }
-        $orders = array_values(array_filter($this->content->orderList(), function ($order) use ($from, $to) {
-            return $order['createdAt'] >= $from && $order['createdAt'] <= $to;
-        }));
+        $orders = $this->orders->exportOrders($from, $to);
         $headers = ['ID', 'Клиент', 'Email', 'Телефон', 'Тип проекта', 'Бюджет, руб.', 'Дата заявки', 'Срок', 'Статус'];
         $xml = '<?xml version="1.0" encoding="UTF-8"?>' . "\n" .
             '<?mso-application progid="Excel.Sheet"?>' . "\n" .
@@ -335,7 +345,9 @@ class ContentController extends Controller
             return $this->json(['success' => false, 'error' => 'Требуется авторизация'], 401);
         }
         if ($request->method() === 'GET') {
-            return $this->json(['success' => true, 'messages' => $this->content->messages()]);
+            // Новый API: возвращаем DTO с toApiArray
+            $messages = $this->messages->messagesAsDto();
+            return $this->json(['success' => true, 'messages' => array_map(fn($m) => $m->toApiArray(), $messages)]);
         }
         \admin_require_csrf();
         $id = $params['id'] ?? '';
@@ -343,19 +355,28 @@ class ContentController extends Controller
             return $this->json(['success' => false, 'error' => 'Некорректный идентификатор обращения'], 400);
         }
         if ($request->method() === 'DELETE') {
-            return $this->content->deleteMessage((int) $id)
+            return $this->messages->deleteMessage((int) $id)
                 ? $this->json(['success' => true])
                 : $this->json(['success' => false, 'error' => 'Обращение не найдено'], 404);
         }
         if ($request->method() !== 'PATCH') {
             return $this->methodNotAllowed(['GET', 'PATCH', 'DELETE']);
         }
-        $data = $request->json();
-        if (!isset($data['isRead'], $data['isApproved']) ||
-            !is_bool($data['isRead']) || !is_bool($data['isApproved'])) {
+        $jsonData = $request->json();
+
+        // Создаём DTO из запроса (для PATCH обычно приходят только isRead, isApproved)
+        $dto = MessageDTO::fromRequest($jsonData, (int) $id);
+
+        // Валидация для обновления статусов — используем validate() который проверяет базовые поля
+        // Для PATCH мы хотим обновить только isRead/isApproved, поэтому валидация должна быть мягкой
+        // Но MessageDTO::validate() требует name, email, body, type — это не подходит для PATCH
+        // Поэтому для PATCH используем прямое обновление через репозиторий (обратная совместимость)
+        if (!isset($jsonData['isRead'], $jsonData['isApproved']) ||
+            !is_bool($jsonData['isRead']) || !is_bool($jsonData['isApproved'])) {
             return $this->json(['success' => false, 'error' => 'Некорректный статус обращения'], 400);
         }
-        return $this->content->updateMessage((int) $id, $data)
+
+        return $this->messages->updateMessage((int) $id, $jsonData)
             ? $this->json(['success' => true])
             : $this->json(['success' => false, 'error' => 'Обращение не найдено'], 404);
     }
@@ -378,9 +399,9 @@ class ContentController extends Controller
             return $this->json(['success' => false, 'error' => 'Некорректный идентификатор комментария'], 400);
         }
 
-        $data = $request->json();
-        $name = isset($data['name']) && is_string($data['name']) ? trim($data['name']) : '';
-        $body = isset($data['body']) && is_string($data['body']) ? trim($data['body']) : '';
+        $jsonData = $request->json();
+        $name = isset($jsonData['name']) && is_string($jsonData['name']) ? trim($jsonData['name']) : '';
+        $body = isset($jsonData['body']) && is_string($jsonData['body']) ? trim($jsonData['body']) : '';
 
         if (mb_strlen($name) < 2 || mb_strlen($name) > 160) {
             return $this->json(['success' => false, 'error' => 'Укажите имя автора (от 2 до 160 символов)'], 400);
@@ -389,13 +410,15 @@ class ContentController extends Controller
             return $this->json(['success' => false, 'error' => 'Введите текст ответа (до 10000 символов)'], 400);
         }
 
-        $result = $this->content->staffReply((int) $id, $name, $body);
+        $result = $this->messages->staffReply((int) $id, $name, $body);
         if (!$result['success']) {
             return $this->json(['success' => false, 'error' => $result['error'] ?? 'Не удалось сохранить ответ'], 400);
         }
 
         return $this->json(['success' => true, 'id' => $result['id']]);
     }
+
+    // === Legacy private methods (для обратной совместимости duplicateArticle/duplicateProject) ===
 
     private function articleInput(array $data, $id)
     {
