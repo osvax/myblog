@@ -4,243 +4,99 @@ declare(strict_types=1);
 
 namespace App\Models;
 
-use App\Core\Database;
+use App\DTO\UserDTO;
+use PDO;
 
+/**
+ * User — legacy модель пользователей.
+ *
+ * === МИГРАЦИЯ ===
+ * - Конструктор принимает PDO (для тестов — SQLite :memory:)
+ * - Делегирует работу в UserRepository
+ * - Статические методы-обёртки для обратной совместимости
+ */
 final class User
 {
-    /**
-     * Создать нового пользователя.
-     *
-     * @param string $email
-     * @param string $passwordHash
-     * @param string $name
-     * @param string $phone
-     * @param string $position
-     * @return array
-     */
-    public function create(string $email, string $passwordHash, string $name, string $phone = '', string $position = ''): array
-    {
-        $db = Database::connection();
-
-        // Проверяем, не занят ли email
-        $stmt = $db->prepare('SELECT id FROM ' . db_table('users') . ' WHERE email = :email LIMIT 1');
-        $stmt->execute([':email' => $email]);
-        if ($stmt->fetch()) {
-            return ['success' => false, 'error' => 'Пользователь с таким email уже существует'];
-        }
-
-        $stmt = $db->prepare(
-            'INSERT INTO ' . db_table('users') . ' (email, password_hash, name, phone, position, created_at, updated_at)
-             VALUES (:email, :password_hash, :name, :phone, :position, NOW(), NOW())'
-        );
-        $stmt->execute([
-            ':email' => $email,
-            ':password_hash' => $passwordHash,
-            ':name' => $name,
-            ':phone' => $phone,
-            ':position' => $position,
-        ]);
-
-        return ['success' => true, 'user_id' => (int) $db->lastInsertId()];
-    }
+    private UserRepository $repo;
 
     /**
-     * Найти пользователя по email.
-     *
-     * @param string $email
-     * @return array|null
+     * @param PDO|null $db PDO соединение (по умолчанию Database::connection())
      */
-    public function findByEmail(string $email): ?array
+    public function __construct(?PDO $db = null)
     {
-        $db = Database::connection();
-        $stmt = $db->prepare('SELECT * FROM ' . db_table('users') . ' WHERE email = :email LIMIT 1');
-        $stmt->execute([':email' => $email]);
-        $user = $stmt->fetch();
-        return $user ?: null;
+        $this->repo = new UserRepository($db);
     }
 
-    public function findByYandexId(string $yandexId): ?array
+    // ===================== ОБРАТНАЯ СОВМЕСТИМОСТЬ (статические) =====================
+
+    /** @return array */
+    public static function create(string $email, string $passwordHash, string $name, string $phone = '', string $position = ''): array
     {
-        $stmt = Database::connection()->prepare('SELECT * FROM ' . db_table('users') . ' WHERE yandex_id = :id LIMIT 1');
-        $stmt->execute(['id' => $yandexId]);
-        return $stmt->fetch() ?: null;
+        return (new self())->createNew($email, $passwordHash, $name, $phone, $position);
     }
 
-    public function linkYandex(int $userId, string $yandexId): void
+    /** @return array|null */
+    public static function findByEmail(string $email): ?array
     {
-        $stmt = Database::connection()->prepare('UPDATE ' . db_table('users') . ' SET yandex_id = :id, updated_at = NOW() WHERE id = :user');
-        $stmt->execute(['id' => $yandexId, 'user' => $userId]);
+        return (new self())->findByEmailNew($email)?->toApiArray();
     }
 
-    /** Пользователь, созданный через внешний OAuth, всегда получает обычную роль. */
-    public function setRole(int $userId, string $role): void
+    /** @return array|null */
+    public static function findByYandexId(string $yandexId): ?array
     {
-        $allowed = ['user', 'editor', 'manager', 'admin'];
-        if (!in_array($role, $allowed, true)) {
-            $role = 'user';
-        }
-        $stmt = Database::connection()->prepare('UPDATE ' . db_table('users') . ' SET role = :role, updated_at = NOW() WHERE id = :id');
-        $stmt->execute(['role' => $role, 'id' => $userId]);
+        return (new self())->findByYandexIdNew($yandexId)?->toApiArray();
     }
 
-    /**
-     * Найти пользователя по ID.
-     *
-     * @param int $id
-     * @return array|null
-     */
-    public function findById(int $id): ?array
+    /** @return void */
+    public static function linkYandex(int $userId, string $yandexId): void
     {
-        $db = Database::connection();
-        $stmt = $db->prepare(
-            'SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
-                    last_visit, last_ip, phone, about, position, bio, timezone, language,
-                    totp_secret, totp_enabled
-             FROM ' . db_table('users') . ' WHERE id = :id LIMIT 1'
-        );
-        $stmt->execute([':id' => $id]);
-        $user = $stmt->fetch();
-        return $user ?: null;
+        (new self())->linkYandexNew($userId, $yandexId);
     }
 
-    /**
-     * Проверить учётные данные.
-     *
-     * @param string $email
-     * @param string $password
-     * @return array
-     */
-    public function verifyCredentials(string $email, string $password): array
+    /** @return void */
+    public static function setRole(int $userId, string $role): void
     {
-        $db = Database::connection();
-        $stmt = $db->prepare('SELECT * FROM ' . db_table('users') . ' WHERE email = :email LIMIT 1');
-        $stmt->execute([':email' => $email]);
-        $user = $stmt->fetch();
-
-        if (!$user) {
-            return ['valid' => false, 'error' => 'Неверный email или пароль'];
-        }
-
-        if (!$user['is_active']) {
-            return ['valid' => false, 'error' => 'Аккаунт заблокирован'];
-        }
-
-        if (!password_verify($password, $user['password_hash'])) {
-            return ['valid' => false, 'error' => 'Неверный email или пароль'];
-        }
-
-        return [
-            'valid' => true,
-            'user' => [
-                'id' => (int) $user['id'],
-                'email' => $user['email'],
-                'name' => $user['name'],
-                'avatar_path' => $user['avatar_path'] ?? '',
-                'role' => $user['role'],
-                'phone' => $user['phone'] ?? '',
-                'position' => $user['position'] ?? '',
-                'about' => $user['about'] ?? '',
-                'bio' => $user['bio'] ?? '',
-                'last_visit' => $user['last_visit'] ?? null,
-                'last_ip' => $user['last_ip'] ?? '',
-                'timezone' => $user['timezone'] ?? '',
-                'language' => $user['language'] ?? '',
-                'totp_enabled' => !empty($user['totp_enabled']),
-            ],
-        ];
+        (new self())->setRoleNew($userId, $role);
     }
 
-    /**
-     * Найти пользователя по токену сброса пароля.
-     *
-     * @param string $token
-     * @return array|null
-     */
-    public function findByResetToken(string $token): ?array
+    /** @return array */
+    public static function verifyCredentials(string $email, string $password): array
     {
-        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
-            return null;
-        }
-
-        $db = Database::connection();
-        $stmt = $db->prepare(
-            'SELECT * FROM ' . db_table('users') . ' WHERE reset_token = :token AND reset_expires > NOW() LIMIT 1'
-        );
-        $stmt->execute([':token' => $token]);
-        $user = $stmt->fetch();
-        return $user ?: null;
+        return (new self())->verifyCredentialsNew($email, $password);
     }
 
-    /**
-     * Обновить пароль и очистить токен сброса.
-     *
-     * @param int $userId
-     * @param string $newPasswordHash
-     * @return array
-     */
-    public function updateAvatar(int $userId, string $avatarPath): bool
+    /** @return array|null */
+    public static function findById(int $id): ?array
     {
-        $stmt = Database::connection()->prepare(
-            'UPDATE ' . db_table('users') . ' SET avatar_path = :avatar_path, updated_at = NOW() WHERE id = :id'
-        );
-        return $stmt->execute(['avatar_path' => $avatarPath, 'id' => $userId]);
+        return (new self())->findByIdNew($id)?->toApiArray();
     }
 
-    public function updatePassword(int $userId, string $newPasswordHash): array
+    /** @return array|null */
+    public static function findByResetToken(string $token): ?array
     {
-        $db = Database::connection();
-        $stmt = $db->prepare(
-            'UPDATE ' . db_table('users') . " SET password_hash = :password_hash, reset_token = '', reset_expires = NULL, updated_at = NOW()
-             WHERE id = :id"
-        );
-        $stmt->execute([
-            ':password_hash' => $newPasswordHash,
-            ':id' => $userId,
-        ]);
-
-        return ['success' => true];
+        return (new self())->findByResetTokenNew($token)?->toApiArray();
     }
 
-    /**
-     * Установить токен сброса пароля.
-     *
-     * @param int $userId
-     * @return array
-     */
-    public function updateResetToken(int $userId): array
+    /** @return array */
+    public static function updatePassword(int $userId, string $newPasswordHash): array
     {
-        $token = bin2hex(random_bytes(32));
-        $expires = date('Y-m-d H:i:s', time() + 3600); // 1 час
-
-        $db = Database::connection();
-        $stmt = $db->prepare(
-            'UPDATE ' . db_table('users') . ' SET reset_token = :token, reset_expires = :expires, updated_at = NOW()
-             WHERE id = :id'
-        );
-        $stmt->execute([
-            ':token' => $token,
-            ':expires' => $expires,
-            ':id' => $userId,
-        ]);
-
-        return ['success' => true, 'token' => $token, 'expires' => $expires];
+        return (new self())->updatePasswordWithTokenNew($userId, $newPasswordHash);
     }
 
-    /**
-     * Обновить полный профиль пользователя.
-     *
-     * @param int $id
-     * @param string $name
-     * @param string $phone
-     * @param string $about
-     * @param string $position
-     * @param string $bio
-     * @param string $avatarPath
-     * @param string $timezone
-     * @param string $language
-     * @return array
-     */
-    public function updateFullProfile(
+    /** @return array */
+    public static function updateResetToken(int $userId): array
+    {
+        return (new self())->updateResetTokenNew($userId);
+    }
+
+    /** @return bool */
+    public static function updateAvatar(int $userId, string $avatarPath): bool
+    {
+        return (new self())->updateAvatarNew($userId, $avatarPath);
+    }
+
+    /** @return array */
+    public static function updateFullProfile(
         int $id,
         string $name,
         string $phone = '',
@@ -251,150 +107,189 @@ final class User
         string $timezone = '',
         string $language = ''
     ): array {
-        $db = Database::connection();
-        $stmt = $db->prepare(
-            'UPDATE ' . db_table('users') . ' SET
-                name = :name,
-                phone = :phone,
-                about = :about,
-                position = :position,
-                bio = :bio,
-                avatar_path = :avatar_path,
-                timezone = :timezone,
-                language = :language,
-                updated_at = NOW()
-             WHERE id = :id'
-        );
-        $stmt->execute([
-            ':name' => $name,
-            ':phone' => $phone,
-            ':about' => $about,
-            ':position' => $position,
-            ':bio' => $bio,
-            ':avatar_path' => $avatarPath,
-            ':timezone' => $timezone,
-            ':language' => $language,
-            ':id' => $id,
-        ]);
-
-        return ['success' => true];
+        return (new self())->updateFullProfileNew($id, $name, $phone, $about, $position, $bio, $avatarPath, $timezone, $language);
     }
 
-    /**
-     * Записать посещение и обновить последнее время.
-     *
-     * @param int $userId
-     * @param string $pageUrl
-     * @param string $pageTitle
-     * @param string $ipAddress
-     * @param string $userAgent
-     * @return array
-     */
-    public function logVisit(int $userId, string $pageUrl, string $pageTitle, string $ipAddress, string $userAgent): array
+    /** @return array */
+    public static function logVisit(int $userId, string $pageUrl, string $pageTitle, string $ipAddress, string $userAgent): array
     {
-        $db = Database::connection();
+        return (new self())->logVisitNew($userId, $pageUrl, $pageTitle, $ipAddress, $userAgent);
+    }
 
-        // Обновляем last_visit и last_ip
-        try {
-            $stmt = $db->prepare(
-                'UPDATE ' . db_table('users') . ' SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id'
-            );
-            $stmt->execute([
-                ':ip_address' => $ipAddress,
-                ':id' => $userId,
-            ]);
-        } catch (\Exception $e) {
-            // Поле может не существовать в старых версиях БД
+    /** @return array */
+    public static function updateProfile(int $id, string $name, string $avatarPath = ''): array
+    {
+        return (new self())->updateProfileNew($id, $name, $avatarPath);
+    }
+
+    /** @return array */
+    public static function setTotpSecret(int $userId, string $secret): array
+    {
+        return (new self())->setTotpSecretNew($userId, $secret);
+    }
+
+    /** @return array */
+    public static function setTotpEnabled(int $userId, bool $enabled): array
+    {
+        return (new self())->setTotpEnabledNew($userId, $enabled);
+    }
+
+    /** @return array */
+    public static function all(): array
+    {
+        return array_map(fn (UserDTO $dto) => $dto->toApiArray(), (new self())->allNew());
+    }
+
+    /** @return bool */
+    public static function isAdmin(int $userId): bool
+    {
+        return (new self())->isAdminNew($userId);
+    }
+
+    // ===================== НОВЫЙ API (DTO-based) =====================
+
+    /** @return array ['success' => bool, 'user_id' => int|null, 'error' => string|null] */
+    public function createNew(string $email, string $passwordHash, string $name, string $phone = '', string $position = ''): array
+    {
+        // Проверяем, не занят ли email
+        if ($this->repo->emailExists($email)) {
+            return ['success' => false, 'user_id' => null, 'error' => 'Пользователь с таким email уже существует'];
         }
 
-        // Записываем активность
+        $dto = new UserDTO();
+        $dto->email = $email;
+        $dto->passwordHash = $passwordHash;
+        $dto->name = $name;
+        $dto->phone = $phone;
+        $dto->position = $position;
+        $dto->role = 'user';
+        $dto->isActive = true;
+
         try {
-            $stmt = $db->prepare(
-                'INSERT INTO ' . db_table('user_activities') . ' (user_id, page_url, page_title, ip_address, user_agent, visited_at)
-                 VALUES (:user_id, :page_url, :page_title, :ip_address, :user_agent, NOW())'
-            );
-            $stmt->execute([
-                ':user_id' => $userId,
-                ':page_url' => $pageUrl,
-                ':page_title' => $pageTitle,
-                ':ip_address' => $ipAddress,
-                ':user_agent' => $userAgent,
-            ]);
-        } catch (\Exception $e) {
-            // Таблица может не существовать
+            $id = $this->repo->saveUserFromDTO($dto);
+            if ($id === false) {
+                return ['success' => false, 'user_id' => null, 'error' => 'Не удалось создать пользователя'];
+            }
+            return ['success' => true, 'user_id' => $id, 'error' => null];
+        } catch (\InvalidArgumentException $e) {
+            return ['success' => false, 'user_id' => null, 'error' => $e->getMessage()];
         }
-
-        return ['success' => true];
     }
 
-    /**
-     * Обновить данные пользователя (устаревший, используйте updateFullProfile).
-     *
-     * @param int $id
-     * @param string $name
-     * @param string $avatarPath
-     * @return array
-     */
-    public function updateProfile(int $id, string $name, string $avatarPath = ''): array
+    /** @return UserDTO|null */
+    public function findByEmailNew(string $email): ?UserDTO
     {
-        return $this->updateFullProfile($id, $name);
+        return $this->repo->findDtoByEmail($email);
     }
 
-    /**
-     * Сохранить секрет TOTP (двухфакторная аутентификация) и сбросить флаг включения
-     * до подтверждения кода из приложения-аутентификатора.
-     */
-    public function setTotpSecret(int $userId, string $secret): array
+    /** @return UserDTO|null */
+    public function findByYandexIdNew(string $yandexId): ?UserDTO
     {
-        $db = Database::connection();
-        $stmt = $db->prepare(
-            'UPDATE ' . db_table('users') . ' SET totp_secret = :secret, totp_enabled = 0, updated_at = NOW() WHERE id = :id'
-        );
-        $stmt->execute(['secret' => $secret, 'id' => $userId]);
-        return ['success' => true];
+        return $this->repo->findDtoByYandexId($yandexId);
     }
 
-    /**
-     * Включить или выключить двухфакторную аутентификацию.
-     */
-    public function setTotpEnabled(int $userId, bool $enabled): array
+    /** @return void */
+    public function linkYandexNew(int $userId, string $yandexId): void
     {
-        $db = Database::connection();
-        $stmt = $db->prepare(
-            'UPDATE ' . db_table('users') . ' SET totp_enabled = :enabled, updated_at = NOW() WHERE id = :id'
-        );
-        $stmt->execute([
-            'enabled' => $enabled ? 1 : 0,
-            'id' => $userId,
-        ]);
-        return ['success' => true];
+        $this->repo->linkYandex($userId, $yandexId);
     }
 
-    /**
-     * Получить всех пользователей.
-     *
-     * @return array
-     */
-    public function all(): array
+    /** @return void */
+    public function setRoleNew(int $userId, string $role): void
     {
-        $db = Database::connection();
-        $stmt = $db->query(
-            'SELECT id, email, name, avatar_path, role, is_active, created_at, updated_at,
-                    last_visit, last_ip, phone, about, position
-             FROM ' . db_table('users') . ' ORDER BY created_at DESC'
-        );
-        return $stmt->fetchAll();
+        $this->repo->setRole($userId, $role);
     }
 
-    /**
-     * Проверить, является ли пользователь администратором.
-     *
-     * @param int $userId
-     * @return bool
-     */
-    public function isAdmin(int $userId): bool
+    /** @return array ['valid' => bool, 'user' => UserDTO|null, 'error' => string|null] */
+    public function verifyCredentialsNew(string $email, string $password): array
     {
-        $user = $this->findById($userId);
-        return $user && $user['role'] === 'admin';
+        return $this->repo->verifyCredentials($email, $password);
+    }
+
+    /** @return UserDTO|null */
+    public function findByIdNew(int $id): ?UserDTO
+    {
+        return $this->repo->findDtoById($id);
+    }
+
+    /** @return UserDTO|null */
+    public function findByResetTokenNew(string $token): ?UserDTO
+    {
+        return $this->repo->findDtoByResetToken($token);
+    }
+
+    /** @return array ['success' => bool] */
+    public function updatePasswordWithTokenNew(int $userId, string $newPasswordHash): array
+    {
+        $ok = $this->repo->updatePasswordWithToken($userId, $newPasswordHash);
+        return ['success' => $ok];
+    }
+
+    /** @return array ['success' => bool, 'token' => string|null, 'expires' => string|null] */
+    public function updateResetTokenNew(int $userId): array
+    {
+        return $this->repo->updateResetToken($userId);
+    }
+
+    /** @return bool */
+    public function updateAvatarNew(int $userId, string $avatarPath): bool
+    {
+        return $this->repo->updateAvatar($userId, $avatarPath);
+    }
+
+    /** @return array ['success' => bool] */
+    public function updateFullProfileNew(
+        int $id,
+        string $name,
+        string $phone = '',
+        string $about = '',
+        string $position = '',
+        string $bio = '',
+        string $avatarPath = '',
+        string $timezone = '',
+        string $language = ''
+    ): array {
+        $ok = $this->repo->updateFullProfile($id, $name, $phone, $about, $position, $bio, $avatarPath, $timezone, $language);
+        return ['success' => $ok];
+    }
+
+    /** @return array ['success' => bool] */
+    public function logVisitNew(int $userId, string $pageUrl, string $pageTitle, string $ipAddress, string $userAgent): array
+    {
+        $ok = $this->repo->logVisit($userId, $pageUrl, $pageTitle, $ipAddress, $userAgent);
+        return ['success' => $ok];
+    }
+
+    /** @return array ['success' => bool] */
+    public function updateProfileNew(int $id, string $name, string $avatarPath = ''): array
+    {
+        $ok = $this->repo->updateProfile($id, $name, $avatarPath);
+        return ['success' => $ok];
+    }
+
+    /** @return array ['success' => bool] */
+    public function setTotpSecretNew(int $userId, string $secret): array
+    {
+        $ok = $this->repo->setTotpSecret($userId, $secret);
+        return ['success' => $ok];
+    }
+
+    /** @return array ['success' => bool] */
+    public function setTotpEnabledNew(int $userId, bool $enabled): array
+    {
+        $ok = $this->repo->setTotpEnabled($userId, $enabled);
+        return ['success' => $ok];
+    }
+
+    /** @return UserDTO[] */
+    public function allNew(): array
+    {
+        return $this->repo->allAsDto();
+    }
+
+    /** @return bool */
+    public function isAdminNew(int $userId): bool
+    {
+        return $this->repo->isAdmin($userId);
     }
 }

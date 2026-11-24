@@ -427,4 +427,325 @@ final class UserRepository
         $stmt = $this->db->query('SELECT COUNT(*) FROM ' . db_table('users'));
         return (int) $stmt->fetchColumn();
     }
+
+    // ===================== НОВЫЕ МЕТОДЫ (из User.php) =====================
+
+    /**
+     * Найти пользователя по Яндекс ID (обратная совместимость — возвращает массив).
+     *
+     * @param string $yandexId
+     * @return array|null
+     */
+    public function findByYandexId(string $yandexId): ?array
+    {
+        $row = $this->baseQuery()
+            ->where('u.yandex_id', '=', $yandexId)
+            ->first();
+
+        return $row ?: null;
+    }
+
+    /**
+     * Найти пользователя по Яндекс ID (новый API — возвращает UserDTO).
+     *
+     * @param string $yandexId
+     * @return UserDTO|null
+     */
+    public function findDtoByYandexId(string $yandexId): ?UserDTO
+    {
+        $row = $this->baseQuery()
+            ->where('u.yandex_id', '=', $yandexId)
+            ->first();
+
+        return $row ? UserDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Связать пользователя с Яндекс ID.
+     *
+     * @param int $userId
+     * @param string $yandexId
+     * @return void
+     */
+    public function linkYandex(int $userId, string $yandexId): void
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE ' . db_table('users') . ' SET yandex_id = :id, updated_at = NOW() WHERE id = :user'
+        );
+        $stmt->execute(['id' => $yandexId, 'user' => $userId]);
+    }
+
+    /**
+     * Установить роль пользователя.
+     *
+     * @param int $userId
+     * @param string $role
+     * @return void
+     */
+    public function setRole(int $userId, string $role): void
+    {
+        $allowed = ['user', 'editor', 'manager', 'admin'];
+        if (!in_array($role, $allowed, true)) {
+            $role = 'user';
+        }
+        $stmt = $this->db->prepare(
+            'UPDATE ' . db_table('users') . ' SET role = :role, updated_at = NOW() WHERE id = :id'
+        );
+        $stmt->execute(['role' => $role, 'id' => $userId]);
+    }
+
+    /**
+     * Проверить учётные данные (логин).
+     *
+     * @param string $email
+     * @param string $password
+     * @return array ['valid' => bool, 'user' => UserDTO|null, 'error' => string|null]
+     */
+    public function verifyCredentials(string $email, string $password): array
+    {
+        $userDto = $this->findDtoByEmail($email);
+
+        if (!$userDto) {
+            return ['valid' => false, 'user' => null, 'error' => 'Неверный email или пароль'];
+        }
+
+        if (!$userDto->isActive) {
+            return ['valid' => false, 'user' => null, 'error' => 'Аккаунт заблокирован'];
+        }
+
+        if (!password_verify($password, $userDto->passwordHash)) {
+            return ['valid' => false, 'user' => null, 'error' => 'Неверный email или пароль'];
+        }
+
+        return [
+            'valid' => true,
+            'user' => $userDto,
+            'error' => null,
+        ];
+    }
+
+    /**
+     * Найти пользователя по токену сброса пароля (обратная совместимость — возвращает массив).
+     *
+     * @param string $token
+     * @return array|null
+     */
+    public function findByResetToken(string $token): ?array
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+            return null;
+        }
+
+        $row = $this->baseQuery()
+            ->where('u.reset_token', '=', $token)
+            ->where('u.reset_expires', '>', date('Y-m-d H:i:s'))
+            ->first();
+
+        return $row ?: null;
+    }
+
+    /**
+     * Найти пользователя по токену сброса пароля (новый API — возвращает UserDTO).
+     *
+     * @param string $token
+     * @return UserDTO|null
+     */
+    public function findDtoByResetToken(string $token): ?UserDTO
+    {
+        if (!preg_match('/^[a-f0-9]{64}$/', $token)) {
+            return null;
+        }
+
+        $row = $this->baseQuery()
+            ->where('u.reset_token', '=', $token)
+            ->where('u.reset_expires', '>', date('Y-m-d H:i:s'))
+            ->first();
+
+        return $row ? UserDTO::fromDatabase($row) : null;
+    }
+
+    /**
+     * Обновить пароль и очистить токен сброса.
+     *
+     * @param int $userId
+     * @param string $newPasswordHash
+     * @return bool
+     */
+    public function updatePasswordWithToken(int $userId, string $newPasswordHash): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE ' . db_table('users') . " SET password_hash = :password_hash, reset_token = '', reset_expires = NULL, updated_at = NOW()
+             WHERE id = :id"
+        );
+        $stmt->execute([
+            ':password_hash' => $newPasswordHash,
+            ':id' => $userId,
+        ]);
+
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Установить токен сброса пароля.
+     *
+     * @param int $userId
+     * @return array ['success' => bool, 'token' => string|null, 'expires' => string|null]
+     */
+    public function updateResetToken(int $userId): array
+    {
+        $token = bin2hex(random_bytes(32));
+        $expires = date('Y-m-d H:i:s', time() + 3600); // 1 час
+
+        $stmt = $this->db->prepare(
+            'UPDATE ' . db_table('users') . ' SET reset_token = :token, reset_expires = :expires, updated_at = NOW()
+             WHERE id = :id'
+        );
+        $stmt->execute([
+            ':token' => $token,
+            ':expires' => $expires,
+            ':id' => $userId,
+        ]);
+
+        return ['success' => $stmt->rowCount() > 0, 'token' => $token, 'expires' => $expires];
+    }
+
+    /**
+     * Обновить полный профиль пользователя.
+     *
+     * @param int $id
+     * @param string $name
+     * @param string $phone
+     * @param string $about
+     * @param string $position
+     * @param string $bio
+     * @param string $avatarPath
+     * @param string $timezone
+     * @param string $language
+     * @return bool
+     */
+    public function updateFullProfile(
+        int $id,
+        string $name,
+        string $phone = '',
+        string $about = '',
+        string $position = '',
+        string $bio = '',
+        string $avatarPath = '',
+        string $timezone = '',
+        string $language = ''
+    ): bool {
+        $userDto = $this->findDtoById($id);
+        if (!$userDto) {
+            return false;
+        }
+
+        $userDto->name = $name;
+        $userDto->phone = $phone;
+        $userDto->about = $about;
+        $userDto->position = $position;
+        $userDto->bio = $bio;
+        $userDto->avatarPath = $avatarPath ?: $userDto->avatarPath;
+        $userDto->timezone = $timezone ?: $userDto->timezone;
+        $userDto->language = $language ?: $userDto->language;
+
+        $savedId = $this->updateUserFromDTO($userDto);
+        return $savedId !== false;
+    }
+
+    /**
+     * Обновить профиль (устаревший метод, делегирует к updateFullProfile).
+     *
+     * @param int $id
+     * @param string $name
+     * @param string $avatarPath
+     * @return bool
+     */
+    public function updateProfile(int $id, string $name, string $avatarPath = ''): bool
+    {
+        return $this->updateFullProfile($id, $name, '', '', '', '', $avatarPath);
+    }
+
+    /**
+     * Записать посещение и обновить последнее время.
+     * Делегирует запись активности в UserActivity.
+     *
+     * @param int $userId
+     * @param string $pageUrl
+     * @param string $pageTitle
+     * @param string $ipAddress
+     * @param string $userAgent
+     * @return bool
+     */
+    public function logVisit(int $userId, string $pageUrl, string $pageTitle, string $ipAddress, string $userAgent): bool
+    {
+        // Обновляем last_visit и last_ip
+        try {
+            $stmt = $this->db->prepare(
+                'UPDATE ' . db_table('users') . ' SET last_visit = NOW(), last_ip = :ip_address WHERE id = :id'
+            );
+            $stmt->execute([
+                ':ip_address' => $ipAddress,
+                ':id' => $userId,
+            ]);
+        } catch (\Exception $e) {
+            // Поле может не существовать в старых версиях БД
+        }
+
+        // Записываем активность через UserActivity
+        try {
+            $activity = new UserActivity();
+            $activity->logVisit($userId, $pageUrl, $pageTitle, $ipAddress, $userAgent);
+        } catch (\Exception $e) {
+            // Таблица может не существовать
+        }
+
+        return true;
+    }
+
+    /**
+     * Сохранить секрет TOTP (двухфакторная аутентификация) и сбросить флаг включения.
+     *
+     * @param int $userId
+     * @param string $secret
+     * @return bool
+     */
+    public function setTotpSecret(int $userId, string $secret): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE ' . db_table('users') . ' SET totp_secret = :secret, totp_enabled = 0, updated_at = NOW() WHERE id = :id'
+        );
+        $stmt->execute(['secret' => $secret, 'id' => $userId]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Включить или выключить двухфакторную аутентификацию.
+     *
+     * @param int $userId
+     * @param bool $enabled
+     * @return bool
+     */
+    public function setTotpEnabled(int $userId, bool $enabled): bool
+    {
+        $stmt = $this->db->prepare(
+            'UPDATE ' . db_table('users') . ' SET totp_enabled = :enabled, updated_at = NOW() WHERE id = :id'
+        );
+        $stmt->execute([
+            'enabled' => $enabled ? 1 : 0,
+            'id' => $userId,
+        ]);
+        return $stmt->rowCount() > 0;
+    }
+
+    /**
+     * Проверить, является ли пользователь администратором.
+     *
+     * @param int $userId
+     * @return bool
+     */
+    public function isAdmin(int $userId): bool
+    {
+        $user = $this->findDtoById($userId);
+        return $user && $user->role === 'admin';
+    }
 }
